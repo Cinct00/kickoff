@@ -4,7 +4,7 @@ A token-efficient, queryable map of a repository, so agents navigate code throug
 
 ## Results
 
-Measured with [`tests/bench_codemap.py`](../tests/bench_codemap.py) on six public repositories in six languages (tokens ≈ characters / 4 on both sides).
+Measured with [`tests/bench_codemap.py`](../tests/bench_codemap.py) on ten public repositories (Python, TypeScript, Go, Java, three C#, three Rust), with the structural C# and Rust parsers. Tokens are estimated at characters ÷ 4 on both sides.
 
 **Locate and understand a symbol.** Baseline: `git grep -n -w NAME` (capped at 250 lines), read the defining file, read the two files that use it most. codemap: `def` + `refs` + `show`.
 
@@ -18,41 +18,41 @@ Measured with [`tests/bench_codemap.py`](../tests/bench_codemap.py) on six publi
 | cobra | `Command` | 69,391 | 2,603 | 96% |
 | gson (Java) | `TypeAdapterFactory` | 20,428 | 1,085 | 95% |
 | gson | `JsonReader` | 63,644 | 3,975 | 94% |
-| Newtonsoft.Json (C#) | `JsonSerializerInternalReader` | 46,282 | 2,748 | 94% |
-| Newtonsoft.Json | `JsonConvert` | 134,299 | 3,300 | 98% |
-| ripgrep (Rust) | `Searcher` | 52,411 | 667 | 99% |
-| ripgrep | `search_slice` | 18,330 | 500 | 97% |
-| **total** | | **597,696** | **22,421** | **96%** |
+| Newtonsoft.Json (C#) | `JsonSerializerInternalReader` | 46,282 | 2,806 | 94% |
+| Newtonsoft.Json | `JsonConvert` | 134,299 | 5,679 | 96% |
+| Polly (C#) | `ResiliencePipeline` | 34,898 | 2,437 | 93% |
+| Polly | `RetryStrategyOptions` | 31,818 | 2,874 | 91% |
+| eShop (C#) | `OrderingContext` | 3,416 | 1,628 | 52% |
+| eShop | `BasketService` | 4,616 | 1,979 | 57% |
+| ripgrep (Rust) | `Searcher` | 52,411 | 758 | 99% |
+| ripgrep | `search_slice` | 18,330 | 502 | 97% |
+| axum (Rust) | `Router` | 48,457 | 1,387 | 97% |
+| axum | `IntoResponse` | 37,452 | 236 | 99% |
+| serde (Rust) | `Deserializer` | 62,561 | 3,472 | 94% |
+| serde | `Serialize` | 34,283 | 717 | 98% |
+| **total** | | **855,197** | **39,681** | **95%** |
+
+Where files are small (eShop's services are a few hundred lines), grep-and-read is already cheap and codemap saves about half. Its value there is structure (confirmed vs name-only references, enclosing members) more than tokens.
 
 **Orient in a new repo.** Baseline: `git ls-files` + README + the three most central files. codemap: `overview` + `map --budget 1024`.
 
-| Repo | Files | Baseline | codemap | Saved | Full index | Index size |
-|---|---:|---:|---:|---:|---:|---:|
-| requests | 130 | 13,656 | 1,232 | 91% | 0.3 s | 0.8 MB |
-| hono | 584 | 37,339 | 1,238 | 97% | 1.9 s | 2.7 MB |
-| cobra | 66 | 28,494 | 1,186 | 96% | 0.3 s | 0.7 MB |
-| gson | 313 | 20,397 | 1,300 | 94% | 1.2 s | 4.2 MB |
-| Newtonsoft.Json | 1,176 | 47,451 | 1,305 | 97% | 7.2 s | 23 MB |
-| ripgrep | 226 | 48,781 | 1,232 | 97% | 2.8 s | 2.4 MB |
+| Repo | Baseline | codemap | Saved | Full index |
+|---|---:|---:|---:|---:|
+| requests | 13,656 | 1,232 | 91% | 0.5 s |
+| hono | 37,339 | 1,238 | 97% | 2.2 s |
+| cobra | 28,494 | 1,186 | 96% | 0.3 s |
+| gson | 20,397 | 1,300 | 94% | 1.2 s |
+| Newtonsoft.Json | 42,395 | 1,301 | 97% | 5.3 s |
+| Polly | 19,562 | 1,318 | 93% | 3.8 s |
+| eShop | 16,535 | 1,344 | 92% | 1.0 s |
+| ripgrep | 48,781 | 1,231 | 97% | 1.2 s |
+| axum | 13,556 | 1,296 | 90% | 1.3 s |
+| serde | 70,170 | 1,224 | 98% | 0.8 s |
+| **total** | **310,885** | **12,670** | **96%** | |
 
-After the first build, a query that also checks for changes takes about 0.15 s; after editing a file in the 1,176-file C# repo, the next query picked the change up in 0.21 s. `codemap savings` keeps a running total for your own work.
+After the first build, a query that also checks for changes takes about 0.15 s; after editing a file in a 1,176-file C# repo, the next query picked the change up in 0.21 s. `codemap savings` keeps a running total for your own work.
 
 Run it yourself: `python3 tests/bench_codemap.py path/to/repo:SymbolName …`.
-
-## Why this design
-
-| Option | Verdict |
-|---|---|
-| **In-memory DB in Docker** (Redis, Memgraph, Neo4j…) | Rejected. Needs Docker and a running service, loses state when it stops, can't run in the Copilot cloud agent, and the data is small enough that the server adds nothing but startup time. |
-| **Graph database** | Rejected for the same reasons; the queries agents need (definitions, references, one or two hops of dependencies, PageRank) are a few indexed joins in SQLite. |
-| **SQLite file in the user cache** ✅ | In-process, zero install (it's in Python's stdlib, with FTS5 full-text search), persistent across sessions, incremental, concurrent readers (WAL), and SQL as an escape hatch. Kept outside the repo so it never gets committed. |
-| **Language servers / SCIP indexers** | Most precise, but one heavy toolchain per language, slow to start, and they need the project to build. Good complement, wrong default. |
-| **tree-sitter** | The best general parser, and what Aider's repo map uses, but it needs native wheels per platform. For the languages that matter most here (C#, Rust), codemap has its own structural parsers that match tree-sitter to within 0.1–0.4%, and tree-sitter serves as the test oracle (`tests/eval_extraction.py`). |
-| **Embeddings / vector search** | Needs a model or API, costs money and setup, and returns fuzzy chunks. Agents mostly need exact structure, so it isn't included. |
-
-The map itself follows the approach Aider documented for repo maps: extract definitions and references, build a file graph weighted by how distinctive each referenced name is, rank it with PageRank (personalised to the files you are working on), and render only signatures, choosing as many as fit a token budget.
-
-Tools such as Graphify build richer knowledge graphs of a codebase. codemap is deliberately narrow, deterministic and local: you can read every line of what gets indexed, nothing leaves the machine, and the output formats are tuned for tokens rather than for humans.
 
 ## Accuracy by language
 

@@ -123,7 +123,7 @@ Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer
 - A **risk-ranked review order**.
 - Affected and missing tests, and dependency changes.
 
-It renders as a PR comment with a Mermaid dependency view, an interactive HTML report, or a budgeted pack for AI reviewers (92–96% fewer tokens than patch + files on real multi-file changes). `toolkit.py adopt <repo> --review-workflow` adds it to every pull request. See [docs/change-review.md](docs/change-review.md).
+It renders as a PR comment with a Mermaid dependency view, an interactive HTML report, or a budgeted pack for AI reviewers (84–99% fewer tokens than patch + files on real multi-file changes). `toolkit.py adopt <repo> --review-workflow` adds it to every pull request. See [docs/change-review.md](docs/change-review.md).
 
 ![Change map report](docs/img/change-map-report.png)
 

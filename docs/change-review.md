@@ -51,18 +51,31 @@ Security: the action runs codemap from its own pinned ref, never from the pull r
 
 ## Measured
 
-Review pack (budget 8,000) vs what a reviewer otherwise reads (the full patch plus the changed files), on real commit ranges (`python3 tests/bench_codemap.py --review repo:BASE..HEAD`):
+Review pack (budget 8,000) vs what a reviewer otherwise reads (the full patch plus every changed text file), on real commit ranges (`python3 tests/bench_codemap.py --review repo:BASE..HEAD`):
 
 | Repo | Range | Files | Patch + files | Review pack | Saved | Analysis |
 |---|---|---:|---:|---:|---:|---:|
 | hono (TS) | `HEAD~25..HEAD` | 53 | 223,407 | 8,013 | 96% | 1.2 s |
-| hono | `HEAD~5..HEAD` | 14 | 92,571 | 7,623 | 92% | 0.5 s |
-| cobra (Go) | `HEAD~20..HEAD` | 20 | 98,506 | 7,649 | 92% | 0.3 s |
+| hono | `HEAD~5..HEAD` | 14 | 92,571 | 7,623 | 92% | 0.4 s |
+| cobra (Go) | `HEAD~20..HEAD` | 20 | 98,506 | 7,649 | 92% | 0.4 s |
 | cobra | `HEAD~3..HEAD` | 8 | 54,935 | 2,277 | 96% | 0.2 s |
 | requests (Python) | `HEAD~20..HEAD` | 10 | 5,757 | 2,105 | 63% | < 0.1 s |
 | requests | `HEAD~4..HEAD` | 4 | 1,728 | 703 | 59% | < 0.1 s |
+| Newtonsoft.Json (C#) | `HEAD~30..HEAD` | 138 | 1,014,874 | 8,039 | 99% | 4.0 s |
+| Newtonsoft.Json | `HEAD~5..HEAD` | 10 | 115,902 | 7,555 | 93% | 0.3 s |
+| Polly (C#) | `HEAD~30..HEAD` | 35 | 74,037 | 8,030 | 89% | 0.3 s |
+| Polly | `HEAD~5..HEAD` | 4 | 3,358 | 731 | 78% | < 0.1 s |
+| eShop (C#) | `HEAD~30..HEAD` | 251 | 490,529 | 8,022 | 98% | 1.6 s |
+| eShop | `HEAD~5..HEAD` | 24 | 51,734 | 8,027 | 84% | 0.2 s |
+| ripgrep (Rust) | `HEAD~30..HEAD` | 42 | 245,130 | 8,022 | 97% | 1.1 s |
+| ripgrep | `HEAD~5..HEAD` | 7 | 63,767 | 5,277 | 92% | 0.3 s |
+| axum (Rust) | `HEAD~30..HEAD` | 54 | 285,368 | 8,030 | 97% | 1.0 s |
+| axum | `HEAD~5..HEAD` | 14 | 100,695 | 8,030 | 92% | 0.2 s |
+| serde (Rust) | `HEAD~30..HEAD` | 34 | 132,033 | 8,016 | 94% | 0.8 s |
+| serde | `HEAD~5..HEAD` | 11 | 37,348 | 1,817 | 95% | 0.2 s |
+| **total** | | | **3,091,679** | **107,966** | **96.5%** (median 92.5%) | |
 
-On large changes the pack spends its budget on the riskiest files first and names the rest. On small PRs it carries nearly the whole diff plus the structure, so the saving is smaller but each token carries more context.
+On large changes the pack spends its budget on the riskiest files first and names the rest; above about 100k tokens of change it is a triage view, not a full review. On small PRs it carries nearly the whole diff plus the structure, so the saving is smaller but each token carries more context.
 
 ## Limits
 

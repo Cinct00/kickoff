@@ -38,10 +38,14 @@ def cm(repo: Path, line: str) -> str:
 
 
 def read(repo: Path, rel: str) -> str:
+    """Text of a file as an agent would read it; binary files (images, archives) count as nothing."""
     try:
-        return (repo / rel).read_text(encoding="utf-8", errors="replace")
+        data = (repo / rel).read_bytes()
     except OSError:
         return ""
+    if b"\0" in data[:8000]:
+        return ""
+    return data.decode("utf-8", errors="replace")
 
 
 def baseline_symbol(repo: Path, name: str, def_file: str) -> int:

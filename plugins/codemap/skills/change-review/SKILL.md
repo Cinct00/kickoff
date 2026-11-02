@@ -29,7 +29,7 @@ The default text brief (~1k tokens) gives the summary, **attention** items, the 
 
 ## 3. For AI reviewers (including you)
 
-`codemap review --format context --budget 8000` produces a risk-ordered pack: summary, attention, dependencies, affected tests, then each file's symbol changes and hunks, highest risk first, until the budget is spent, with the rest listed by name. Give this to a reviewer instead of the full patch. Measured: 92–96% fewer tokens than patch + changed files on 8–53-file changes; 59–63% on small PRs, where it adds structure rather than cutting much.
+`codemap review --format context --budget 8000` produces a risk-ordered pack: summary, attention, dependencies, affected tests, then each file's symbol changes and hunks, highest risk first, until the budget is spent, with the rest listed by name. Give this to a reviewer instead of the full patch. Measured on 18 real commit ranges: 84–99% fewer tokens than patch + changed files on 7–251-file changes; 59–78% on 4-file PRs, where it adds structure rather than cutting much.
 
 ## 4. Show it visually
 
