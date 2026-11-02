@@ -65,7 +65,7 @@ Write every component down, because the base is only one lever and often the sti
 - With a competing offer: be truthful about it and specific about what matters ("the other offer is higher on base; I'd prefer to join you").
 
 **Raises in your current job**
-Make the case on impact and market, not on need. Bring your wins file, a market range and a specific ask, and do it ahead of the budget cycle, not after it ([[navigating-your-career]]). If the answer is no, ask what would need to be true for yes, and by when, and write it down.
+Make the case on impact and market, not on need. Bring your wins file, a market range and a specific ask, and do it ahead of the budget cycle, not after it. If the answer is no, ask what would need to be true for yes, and by when, and write it down.
 
 ## The relationship is the long game
 

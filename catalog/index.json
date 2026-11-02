@@ -40,6 +40,35 @@
           "mcp": []
         },
         {
+          "name": "codemap",
+          "description": "Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server.",
+          "source": "bundled",
+          "status": "own",
+          "skills": [
+            {
+              "name": "change-review",
+              "description": "Review a pull request, branch or local diff from its structural change map instead of a raw diff: symbol-level changes, a risk-ranked review order, callers outside the diff that a change may break, affected and missing tests, dependency changes, plus a visual report (PR comment with a Mermaid dependency view, interactive HTML) and a token-budgeted pack for AI reviewers. Use when reviewing or self…"
+            },
+            {
+              "name": "codemap",
+              "description": "Navigate a codebase through its indexed map instead of grepping and reading whole files: overview, ranked repo map, symbol search, definitions, outlines, exact symbol source, references, callers, dependencies, change impact and affected tests, at roughly 5% of the tokens. Use whenever you need to find where something lives, understand how code fits together, trace who calls what, or plan a change…"
+            }
+          ],
+          "agents": [
+            {
+              "name": "code-navigator",
+              "description": "Read-only code navigator. Answers structural questions about a repository (where is X implemented, how does a flow work end to end, what calls Y, what would changing Z affect, which tests cover it) using the codemap index, and returns a short answer with file:line references. Delegate to it for any exploration that would otherwise mean grepping and reading many files."
+            }
+          ],
+          "commands": [],
+          "hooks": [
+            "SessionStart"
+          ],
+          "mcp": [
+            "codemap"
+          ]
+        },
+        {
           "name": "engineering-craft",
           "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
           "source": "bundled",
@@ -180,66 +209,6 @@
             {
               "name": "writing-clearly",
               "description": "How to write prose that works — essays, emails, proposals, articles, anything meant to be read — through reader-first structure, drafting fast and editing slow, concrete language, and ruthless cutting. Use this when writing or improving any piece of prose, when a draft feels muddy or bloated, when an important email or document keeps being misread, when facing a blank page, or when someone asks \"…"
-            }
-          ],
-          "agents": [],
-          "commands": [],
-          "hooks": [],
-          "mcp": []
-        },
-        {
-          "name": "life-and-career",
-          "description": "Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance.",
-          "source": "bundled",
-          "status": "own",
-          "skills": [
-            {
-              "name": "building-habits",
-              "description": "How to build habits that stick and dismantle ones that don't — the cue-craving-response-reward loop, environment design over willpower, identity-based change, and recovering from misses. Use this when starting any recurring practice (exercise, writing, studying, code review hygiene), when a good intention keeps dying by week three, when trying to break a bad habit (phone, snacking, doomscrolling)…"
-            },
-            {
-              "name": "endurance-training",
-              "description": "How to train for endurance sports — aerobic base and polarized intensity, progressive load without injury, fueling, recovery, racing by effort, plus trail and skyrunning craft. Use when training for running, trail/skyrunning, cycling or triathlon, when progress stalls, injuries recur, or a race is coming."
-            },
-            {
-              "name": "health-fundamentals",
-              "description": "The durable, boring, overwhelming-consensus fundamentals of physical health — movement, sleep, food, stress, and prevention — and how to hold them against an industry selling complexity. Use this when building or rebuilding health habits, when energy and focus are chronically low, when evaluating a diet, supplement, or fitness trend, when work has quietly consumed the body's maintenance budget, o…"
-            },
-            {
-              "name": "learning-anything",
-              "description": "How to actually learn — deliberate practice at the edge of ability, active recall over rereading, spacing over cramming, tightening feedback loops, and surviving the plateau. Use this when starting to learn any skill or subject (language, instrument, sport, field of knowledge, professional skill), when studying for anything, when progress has stalled despite effort, when choosing between courses/…"
-            },
-            {
-              "name": "managing-yourself",
-              "description": "How to work with your own mind — procrastination as emotion regulation, imposter syndrome, sustainable stress and recovery, self-talk that helps instead of corrodes, and asking for help early. Use this when a task keeps getting avoided despite mattering, when feeling like a fraud despite the evidence, when running on chronic stress or approaching burnout, when rumination is masquerading as reflec…"
-            },
-            {
-              "name": "navigating-your-career",
-              "description": "How to steer a career deliberately — compounding skills and reputation, visibility, managing up, stay-or-go calls, networks and job interviews. Use when weighing an offer or role change, preparing for promotion or interviews, or when growth has flatlined."
-            },
-            {
-              "name": "personal-finance-principles",
-              "description": "The durable principles of personal money management — paying yourself first, letting compounding run, buying the market instead of beating it, insuring catastrophes only, and defeating the behavioral saboteurs. Use this when thinking through savings, investing, debt, insurance, or big purchases; when a windfall or raise arrives; when market panic or a hot investment tempts; when helping someone s…"
-            },
-            {
-              "name": "prioritization-and-focus",
-              "description": "How to do the right things instead of many things — choosing the vital few, protecting deep work, saying no gracefully, managing energy rather than minutes, and reviewing weekly so nothing drives blind. Use this when overwhelmed by competing demands, when busy weeks keep producing thin results, when everything is \"urgent\", when a calendar is full and the important project is starving, when decidi…"
-            },
-            {
-              "name": "starting-a-business",
-              "description": "How to find, validate, and build a business — spotting real problems, testing demand before building supply, distribution as the half that kills, unit economics literacy, and climbing the risk ladder instead of jumping. Use this when evaluating a business or side-project idea, when someone is about to spend months building before talking to a customer, when weighing quitting a job to found someth…"
-            },
-            {
-              "name": "trading-and-markets",
-              "description": "The honest playbook on active trading — the base rates nobody leads with, what edge actually means, the behavioral failure modes that empty accounts, position sizing and ruin math, and how to engage markets without being the fish. Use this when tempted to trade actively (stocks, options, crypto, forex), when evaluating a trading strategy, signal service, or backtest, when a friend's gains or a ma…"
-            },
-            {
-              "name": "tutor",
-              "description": "Builds a persistent, personalised tutor app for a technical subject — diagnostic quiz, phased roadmap, AI lessons with practice and saved progress — published as an artifact the user comes back to. Use when the user wants a course or tutor for a language, framework or domain, or wants to resume one. Not for a one-off explanation (use learn)."
-            },
-            {
-              "name": "understanding-finance",
-              "description": "How finance actually works — time value of money, risk as the price of return, what markets do, how anything gets valued, reading financial statements, and the double edge of leverage. Use this when reading financial news or a company's numbers, when evaluating any investment or business proposition, when discounting future money against present money, when leverage or debt is on the table, when…"
             }
           ],
           "agents": [],
@@ -11306,7 +11275,7 @@
     },
     {
       "name": "tutor",
-      "description": "Builds a persistent tutor artifact (vendored in life-and-career, but needs Claude app Artifacts)."
+      "description": "Builds a persistent tutor artifact for learning a subject over weeks."
     }
   ]
 }

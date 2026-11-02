@@ -51,7 +51,7 @@ Find the toolkit checkout: `$AI_TOOLKIT_HOME`, else the path in `~/.config/ai-to
 - **Project-specific, or no toolkit here** (e.g. Copilot cloud agent in someone else's repo) → write into the project where every client reads it: `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md`. Mention that `toolkit.py promote <path> --plugin <plugin>` moves it into the toolkit later.
 - **Claude app** → call `propose_skills` once with all skill proposals (max 3). An improvement must carry the complete updated SKILL.md, not a partial edit, so read the current one first. Write agent or hook files and send them with `SendUserFile`.
 
-Choosing the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; personal → `life-and-career`; routing and toolkit mechanics → `kickoff`. If none fits, propose a new plugin (it also needs an entry in `toolkit.json`).
+Choosing the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; routing and toolkit mechanics → `kickoff`. If none fits, propose a new plugin (it also needs an entry in `toolkit.json`).
 
 ## 5. Portable format rules
 

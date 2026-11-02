@@ -40,9 +40,9 @@ GitHub Copilot (CLI, cloud agent and VS Code) and Claude Code both load skills, 
 Every installed skill's name and description, every agent description and every MCP tool schema is sent on **every** request. `toolkit.py audit` prints the total per bundle:
 
 ```
-bundle core  ~  760 tokens  (kickoff, codemap)
-bundle dev   ~3,250 tokens  (+ engineering-craft, thinking-tools, doc-coauthor)
-bundle full  ~5,150 tokens  (+ communication-and-leadership, life-and-career)
+bundle core  ~  860 tokens  (kickoff, codemap)
+bundle dev   ~3,360 tokens  (+ engineering-craft, thinking-tools, doc-coauthor)
+bundle full  ~4,070 tokens  (+ communication-and-leadership)
 ```
 
 Install the smallest bundle that covers your work on each device (`install --bundle dev`). Keep descriptions under ~700 characters, and when harvest finds two overlapping skills, merge them instead of adding a third.

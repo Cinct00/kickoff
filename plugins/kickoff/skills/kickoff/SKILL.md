@@ -22,7 +22,7 @@ It works the same on every platform. Only the way a tool is *invoked* changes; s
 
 ## Two kinds of tool
 
-- **Judgment skills** (this toolkit's `engineering-craft`, `thinking-tools`, `communication-and-leadership`, `life-and-career`) hold how to think: method, trade-offs, failure modes. Load these for quality.
+- **Judgment skills** (this toolkit's `engineering-craft`, `thinking-tools`, `communication-and-leadership`) hold how to think: method, trade-offs, failure modes. Load these for quality.
 - **Procedure tools** (plugin commands, agents, and procedural skills from Anthropic, GitHub and partner plugins) hold how to execute: phases, templates, parallel agents, output formats. Use these to drive the work.
 
 The best results come from pairing one of each. When two have the same name (e.g. `testing-strategy`, `incident-response`), load the toolkit skill for judgment and use the `engineering` plugin's one for its output template.
@@ -50,7 +50,7 @@ The best results come from pairing one of each. When two have the same name (e.g
 | README, runbook, API docs | technical-communication | `engineering` documentation |
 | Research question → report | researching-a-topic, evaluating-information | `deep-research` (Claude app, parallel subagents); elsewhere run parallel read-only subagents + web search and write the report yourself |
 | Decision with real stakes | making-decisions, probabilistic-thinking | — (pre-mortem, base rates, reversibility) |
-| Learn a subject over weeks | learning-anything | `tutor` (Claude app: builds the persistent tutor artifact); elsewhere `learn-with-coursera` |
+| Learn a subject over weeks | teaching-and-explaining | `tutor` (Claude app: builds the persistent tutor artifact); elsewhere `learn-with-coursera` |
 | Understand one concept now | teaching-and-explaining | `learn` (Claude app); elsewhere explain directly |
 | UI / landing page / visual | — | `modern-web-guidance` first for any HTML/CSS/JS, then `frontend-design`; `design` design-critique to review |
 | Accessibility | — | `design` accessibility-review |
@@ -64,7 +64,7 @@ The best results come from pairing one of each. When two have the same name (e.g
 | Create or improve a skill, agent or hook | — | `skill-creator` for skills; the `harvest` skill for agents, hooks and where to put them |
 | Nothing above fits, or you are unsure what exists | — | `toolkit-scout` agent (searches the full catalog and returns a route plus gaps) |
 
-Life and career tasks (negotiation, career moves, hard conversations, meetings, presenting, habits, finance, health, endurance training) map one-to-one to the toolkit skill of that name. Load it directly.
+People tasks (negotiation, hard conversations, running meetings, presenting, leading a team, teaching) map one-to-one to the `communication-and-leadership` skill of that name. Load it directly.
 
 ## Availability and gap check
 

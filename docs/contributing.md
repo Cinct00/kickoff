@@ -4,7 +4,7 @@ Most additions happen through **harvest** at the end of a kickoff run. This page
 
 ## A skill
 
-1. Pick the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; personal → `life-and-career`; routing/toolkit mechanics → `kickoff`.
+1. Pick the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; routing/toolkit mechanics → `kickoff`.
 2. Create `plugins/<plugin>/skills/<name>/SKILL.md`:
    ```markdown
    ---

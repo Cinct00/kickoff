@@ -23,7 +23,7 @@ Working memory is small and yours is pre-loaded with the material; theirs isn't.
 
 ## Check by generation, never by nods
 
-"Does that make sense?" is a politeness ritual — it measures social comfort, not comprehension, and it returns "yes" unconditionally. Recognition feels like understanding from the inside too ([[learning-anything]] — the fluency illusion), so the learner's own nod is sincere *and* worthless. The only trustworthy check is **generation**: have them produce something with the idea —
+"Does that make sense?" is a politeness ritual — it measures social comfort, not comprehension, and it returns "yes" unconditionally. Recognition feels like understanding from the inside too (the fluency illusion), so the learner's own nod is sincere *and* worthless. The only trustworthy check is **generation**: have them produce something with the idea —
 
 - "Walk me through how you'd apply this to ___" (a case you haven't covered)
 - "Explain it back in your own words" (framed as checking *your* explanation, which is even true)
@@ -39,4 +39,4 @@ The teacher's hardest discipline is not rescuing. Watching someone grope toward 
 
 Facts without structure fall through; give learners the **schema** to hang them on — "there are three basic approaches, and today is the first" beats diving in cold ([[researching-a-topic]] maps before digging for the same reason). Attach *why it matters* before *how it works*: motivation is load-bearing, and "here's the problem this solves — here's what breaks without it" turns passive reception into active want. It's also honest to simplify: teach the clean 90%-true version first and refine later ("lies to children" is the fond name for this — every intro course does it on purpose); just flag it — "this is the simplified version; the edges get weirder" — so later refinement lands as depth, not betrayal.
 
-And the meta-point that makes teaching worth volunteering for: **explaining is the most demanding retrieval practice there is** ([[learning-anything]]). Every gap in your own understanding announces itself the moment you try to explain past it. Teach the thing to learn the thing — the learner is not the only beneficiary in the room.
+And the meta-point that makes teaching worth volunteering for: **explaining is the most demanding retrieval practice there is**. Every gap in your own understanding announces itself the moment you try to explain past it. Teach the thing to learn the thing — the learner is not the only beneficiary in the room.

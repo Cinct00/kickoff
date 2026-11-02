@@ -71,4 +71,4 @@ A small working set of mental models, each with the moment to reach for it. Don'
 
 ## Keep a decision journal
 
-For consequential calls, write at decision time: the situation, the options, what you expect to happen and with what confidence, and what would make you wrong. Review it when outcomes land. This is the only reliable defense against hindsight bias — the mind that "knew it all along" — and it's how you find *your* systematic tilts (too optimistic on timelines? too conservative on people?). Feedback is how judgment compounds; without the journal, you're practicing without a scoreboard ([[learning-anything]]).
+For consequential calls, write at decision time: the situation, the options, what you expect to happen and with what confidence, and what would make you wrong. Review it when outcomes land. This is the only reliable defense against hindsight bias — the mind that "knew it all along" — and it's how you find *your* systematic tilts (too optimistic on timelines? too conservative on people?). Feedback is how judgment compounds; without the journal, you're practicing without a scoreboard.

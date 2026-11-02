@@ -24,7 +24,7 @@ scripts/toolkit.py catalog ─▶ catalog/index.json, catalog/CATALOG.md,
 | Plugin | Role |
 |---|---|
 | `kickoff` | The router (`kickoff`), the growth loop (`harvest`), project adoption (`toolkit-adopt`), the catalog search agent (`toolkit-scout`), and hooks: SessionStart context in both clients, plus a Claude `Stop` reminder when a route ran without a harvest |
-| `engineering-craft`, `thinking-tools`, `communication-and-leadership`, `life-and-career` | Judgment skills: how to think about a kind of task. Kickoff pairs each with a procedure tool |
+| `engineering-craft`, `thinking-tools`, `communication-and-leadership` | Judgment skills: how to think about a kind of task. Kickoff pairs each with a procedure tool |
 | `codemap` | The repo map: SQLite index + CLI + single-tool MCP server, `codemap` skill (navigation ladder), `code-navigator` agent, session hook that keeps the index warm. See [codemap.md](codemap.md). Also `codemap review` + the `change-review` skill + the `change-map` GitHub Action for structural PR review. See [change-review.md](change-review.md) |
 | `doc-coauthor` | A complete procedure: coordinator skill + three isolated sub-agents |
 

@@ -80,7 +80,6 @@ This writes `extraKnownMarketplaces` + `enabledPlugins` into the project's `.cla
 | [`engineering-craft`](plugins/engineering-craft) | 11 | 0 | — | Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication. |
 | [`thinking-tools`](plugins/thinking-tools) | 10 | 0 | — | Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research. |
 | [`communication-and-leadership`](plugins/communication-and-leadership) | 7 | 0 | — | Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team. |
-| [`life-and-career`](plugins/life-and-career) | 12 | 0 | — | Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance. |
 | [`doc-coauthor`](plugins/doc-coauthor) | 1 | 3 | — | Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals. |
 <!-- END GENERATED:plugins -->
 
@@ -173,18 +172,6 @@ It renders as a PR comment with a Mermaid dependency view, an interactive HTML r
 | `running-meetings` | communication-and-leadership | How to make meetings earn their cost — deciding whether to meet at all, agendas as questions, facilitation that surfaces the quiet voices,… |
 | `teaching-and-explaining` | communication-and-leadership | How to teach and explain so understanding actually transfers — defeating the curse of knowledge, anchoring to what learners already know, e… |
 | `writing-clearly` | communication-and-leadership | How to write prose that works — essays, emails, proposals, articles, anything meant to be read — through reader-first structure, drafting f… |
-| `building-habits` | life-and-career | How to build habits that stick and dismantle ones that don't — the cue-craving-response-reward loop, environment design over willpower, ide… |
-| `endurance-training` | life-and-career | How to train for endurance sports — aerobic base and polarized intensity, progressive load without injury, fueling, recovery, racing by eff… |
-| `health-fundamentals` | life-and-career | The durable, boring, overwhelming-consensus fundamentals of physical health — movement, sleep, food, stress, and prevention — and how to ho… |
-| `learning-anything` | life-and-career | How to actually learn — deliberate practice at the edge of ability, active recall over rereading, spacing over cramming, tightening feedbac… |
-| `managing-yourself` | life-and-career | How to work with your own mind — procrastination as emotion regulation, imposter syndrome, sustainable stress and recovery, self-talk that… |
-| `navigating-your-career` | life-and-career | How to steer a career deliberately — compounding skills and reputation, visibility, managing up, stay-or-go calls, networks and job intervi… |
-| `personal-finance-principles` | life-and-career | The durable principles of personal money management — paying yourself first, letting compounding run, buying the market instead of beating… |
-| `prioritization-and-focus` | life-and-career | How to do the right things instead of many things — choosing the vital few, protecting deep work, saying no gracefully, managing energy rat… |
-| `starting-a-business` | life-and-career | How to find, validate, and build a business — spotting real problems, testing demand before building supply, distribution as the half that… |
-| `trading-and-markets` | life-and-career | The honest playbook on active trading — the base rates nobody leads with, what edge actually means, the behavioral failure modes that empty… |
-| `tutor` | life-and-career | Builds a persistent, personalised tutor app for a technical subject — diagnostic quiz, phased roadmap, AI lessons with practice and saved p… |
-| `understanding-finance` | life-and-career | How finance actually works — time value of money, risk as the price of return, what markets do, how anything gets valued, reading financial… |
 | `doc-coauthor` | doc-coauthor | Co-author a substantial document (RFC, PRD, decision doc, architecture or technical spec, proposal) through three isolated stages: context… |
 <!-- END GENERATED:skills -->
 

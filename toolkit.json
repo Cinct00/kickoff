@@ -1,6 +1,6 @@
 {
   "name": "ai-toolkit",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
   "owner": {
     "name": "gimarais"
@@ -34,11 +34,6 @@
       "category": "productivity",
       "keywords": ["writing", "communication", "leadership", "meetings", "negotiation"]
     },
-    "life-and-career": {
-      "description": "Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance.",
-      "category": "productivity",
-      "keywords": ["career", "habits", "learning", "finance", "health"]
-    },
     "doc-coauthor": {
       "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
       "category": "productivity",
@@ -49,7 +44,7 @@
   "bundles": {
     "core": ["kickoff", "codemap"],
     "dev": ["kickoff", "codemap", "engineering-craft", "thinking-tools", "doc-coauthor"],
-    "full": ["kickoff", "codemap", "engineering-craft", "thinking-tools", "communication-and-leadership", "life-and-career", "doc-coauthor"]
+    "full": ["kickoff", "codemap", "engineering-craft", "thinking-tools", "communication-and-leadership", "doc-coauthor"]
   },
 
   "upstream": {
@@ -116,7 +111,7 @@
       "built-in-browser": "Drives the app's built-in browser.",
       "chrome-browser": "Drives Chrome through the Claude extension.",
       "computer-use": "Operates the desktop.",
-      "tutor": "Builds a persistent tutor artifact (vendored in life-and-career, but needs Claude app Artifacts)."
+      "tutor": "Builds a persistent tutor artifact for learning a subject over weeks."
     }
   }
 }

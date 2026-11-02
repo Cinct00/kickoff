@@ -12,11 +12,11 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 
 | Plugin | Status | Skills | Agents | Commands | Hooks | MCP | Description |
 |---|---|---|---|---|---|---|---|
+| `codemap` | **own** | 2 | 1 | 0 | SessionStart | codemap | Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact s… |
 | `communication-and-leadership` | **own** | 7 | 0 | 0 | — | — | Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team. |
 | `doc-coauthor` | **own** | 1 | 3 | 0 | — | — | Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and pr… |
 | `engineering-craft` | **own** | 11 | 0 | 0 | — | — | Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring,… |
 | `kickoff` | **own** | 3 | 1 | 0 | SessionStart, Stop | — | The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plu… |
-| `life-and-career` | **own** | 12 | 0 | 0 | — | — | Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance. |
 | `thinking-tools` | **own** | 10 | 0 | 0 | — | — | Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and resea… |
 
 ## claude-plugins-official
