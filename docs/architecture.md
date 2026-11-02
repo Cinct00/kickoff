@@ -25,6 +25,7 @@ scripts/toolkit.py catalog ─▶ catalog/index.json, catalog/CATALOG.md,
 |---|---|
 | `kickoff` | The router (`kickoff`), the growth loop (`harvest`), project adoption (`toolkit-adopt`), the catalog search agent (`toolkit-scout`), and hooks: SessionStart context in both clients, plus a Claude `Stop` reminder when a route ran without a harvest |
 | `engineering-craft`, `thinking-tools`, `communication-and-leadership`, `life-and-career` | Judgment skills: how to think about a kind of task. Kickoff pairs each with a procedure tool |
+| `codemap` | The repo map: SQLite index + CLI + single-tool MCP server, `codemap` skill (navigation ladder), `code-navigator` agent, session hook that keeps the index warm. See [codemap.md](codemap.md) |
 | `doc-coauthor` | A complete procedure: coordinator skill + three isolated sub-agents |
 
 ### Upstream profile
@@ -59,4 +60,6 @@ run ─▶ verify ─▶ harvest ─┬─ procedure/correction ─▶ skill  �
 - **Two hook files per plugin.** Both clients default to `hooks/hooks.json`, but the formats differ. Claude reads its own format there; the Copilot manifest points at `hooks/copilot-hooks.json`. One Python script serves both via `--format`.
 - **Two manifests per plugin.** Copilot checks a root `plugin.json` before `.claude-plugin/plugin.json`, so each client gets the manifest written for it.
 - **Repo adoption is declarative.** `extraKnownMarketplaces` + `enabledPlugins` in `.claude/settings.json` and `.github/copilot/settings.json` make the plugins auto-install for every collaborator in Claude Code, Copilot CLI and the Copilot cloud agent, scoped to that repo.
+- **Token cost is a first-class metric.** Navigation goes through codemap; MCP servers expose one tool; `audit` reports the always-on cost of every bundle; harvest prunes as well as adds.
+- **User level first.** Personal tooling installs once per device at user level (where Copilot and Claude now look for it); repositories get declarative plugin settings, not copies. `doctor` finds and removes copies that shadow the user-level versions. See [maintenance.md](maintenance.md).
 - **Stdlib Python only.** `toolkit.py` and the hooks run on any machine with Python 3.9+, including Windows, with nothing to `pip install`.

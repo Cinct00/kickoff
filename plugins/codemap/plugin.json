@@ -1,0 +1,26 @@
+{
+  "name": "codemap",
+  "version": "2.1.0",
+  "description": "Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read.",
+  "author": {
+    "name": "gimarais"
+  },
+  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/codemap",
+  "repository": "https://github.com/gimarais/ai-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "repo-map",
+    "code-navigation",
+    "mcp",
+    "token-efficiency",
+    "dependency-graph",
+    "sqlite"
+  ],
+  "category": "development",
+  "skills": [
+    "skills/"
+  ],
+  "agents": "agents/",
+  "hooks": "hooks/copilot-hooks.json",
+  "mcpServers": "copilot-mcp.json"
+}

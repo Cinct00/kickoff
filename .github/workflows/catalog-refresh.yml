@@ -27,6 +27,8 @@ jobs:
         run: python3 scripts/toolkit.py catalog
       - name: Validate
         run: python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate
+      - name: Audit (report only)
+        run: python3 scripts/toolkit.py audit || true
       - name: Open PR if the catalog changed
         env:
           GH_TOKEN: ${{ github.token }}

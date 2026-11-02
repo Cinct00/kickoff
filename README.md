@@ -1,12 +1,14 @@
 # AI Toolkit
 
-A portable, self-growing toolkit for AI coding agents. One repo gives you the same **kickoff routing, judgment skills, agents and hooks** in **Claude Code, the Claude app, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client**, plus a curated profile of Anthropic, GitHub and partner plugins, and a catalog of ~700 more that kickoff searches when it hits a gap.
+A portable, self-growing, token-frugal environment for AI coding agents. One repo gives you the same **kickoff routing, judgment skills, agents, hooks and a code map** in **Claude Code, the Claude app, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client**, plus a curated profile of Anthropic, GitHub and partner plugins, and a catalog of ~700 more that kickoff searches when it hits a gap.
 
 ```
 task ──▶ kickoff ──▶ route: judgment skill + procedure tool ──▶ do the work ──▶ harvest
-            │                                                                  │
+            │             │                                                    │
+            │             └─ code questions ─▶ codemap index (≈5% of grep-and-read tokens)
             └── gap? search catalog (700 plugins) ─▶ install / recommend        └─▶ new skill / agent / hook / route
                      nothing fits ─▶ log gap ───────────────────────────────────────▶ written back into this repo
+doctor / audit / catalog refresh keep installs current, duplicates out and the always-on token cost visible
 ```
 
 ---
@@ -33,11 +35,13 @@ python3 ~/.ai-toolkit/scripts/toolkit.py install
 |---|---|
 | Claude Code (`claude`) | `claude plugin marketplace add …` + `claude plugin install <plugin>@<marketplace>` for the toolkit and every profile plugin |
 | GitHub Copilot CLI (`copilot`) | the same with `copilot plugin …` (Copilot reads the same marketplace format) |
-| Everything else (VS Code Copilot, Codex, Cursor, Gemini CLI…) | toolkit skills symlinked into `~/.agents/skills` (`--skills-dir` to add more, e.g. `~/.copilot/skills`) |
+| GitHub Copilot, user level (`~/.copilot` exists) | skills → `~/.copilot/skills`, agents → `~/.copilot/agents`, hooks → `~/.copilot/hooks/ai-toolkit.json`, codemap MCP → `~/.copilot/mcp-config.json`: one install serves every repo on the device (CLI, cloud-agent-style sessions and VS Code) |
+| Everything else (Codex, Cursor, Gemini CLI…) | toolkit skills symlinked into `~/.agents/skills` (`--skills-dir` to add more) |
+| Shell | a `codemap` command in `~/.local/bin` |
 
-Options: `--bundle core|dev|full`, `--target claude|copilot|skills`, `--no-upstream`, `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
+Options: `--bundle core|dev|full`, `--target claude|copilot|copilot-user|claude-user|skills`, `--no-upstream`, `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
 
-Keep a device current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync`.
+Keep a device current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync`, and healthy with `doctor` (see [Keeping it alive](#keeping-it-alive)).
 
 ### Just the marketplace
 
@@ -72,6 +76,7 @@ This writes `extraKnownMarketplaces` + `enabledPlugins` into the project's `.cla
 | Plugin | Skills | Agents | Hooks | What it is for |
 |---|---|---|---|---|
 | [`kickoff`](plugins/kickoff) | 3 | 1 | yes | The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows. |
+| [`codemap`](plugins/codemap) | 1 | 1 | yes | Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read. |
 | [`engineering-craft`](plugins/engineering-craft) | 11 | 0 | — | Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication. |
 | [`thinking-tools`](plugins/thinking-tools) | 10 | 0 | — | Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research. |
 | [`communication-and-leadership`](plugins/communication-and-leadership) | 7 | 0 | — | Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team. |
@@ -95,6 +100,22 @@ Installed by `toolkit.py install` from their upstream marketplaces, so they stay
 | work-and-domain | `productivity@knowledge-work-plugins`, `cowork-plugin-management@knowledge-work-plugins`, `market-researcher@claude-for-financial-services`, `ai-governance-legal@claude-for-legal`, `learn-with-coursera@claude-plugins-official` |
 <!-- END GENERATED:profile -->
 
+### codemap: navigate code at ~5% of the tokens
+
+`codemap` indexes a repository's symbols, imports, references and packages into SQLite (in your user cache, not the repo) and answers in compact, line-numbered text:
+
+```bash
+codemap overview                      # ~250 tokens: languages, dirs, entry points, central files, packages
+codemap map --focus src/auth.py       # ranked signatures around what you're working on, within a token budget
+codemap find user session             # symbol search (camelCase/snake_case aware)
+codemap outline src/auth.py           # every symbol with line ranges, instead of reading the file
+codemap show AuthService.login        # exactly one symbol's source
+codemap refs AuthService              # uses grouped by file and enclosing function
+codemap impact src/models/user.py     # dependents by distance + tests to run
+```
+
+Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer tokens** to locate and understand a symbol than grep-and-read, **91–97% fewer** to orient in a new repo. It's also an MCP server with a single tool, so Claude Code and Copilot call it directly. Python, TS/JS, Go, Java, Kotlin, Scala, C#, Rust, C/C++, PHP, Ruby, Swift and Markdown; stdlib only. Design, benchmark and the rejected alternatives (Docker in-memory DBs, graph DBs, LSP, embeddings) are in [docs/codemap.md](docs/codemap.md).
+
 ### The catalog
 
 [`catalog/CATALOG.md`](catalog/CATALOG.md) lists every plugin in the tracked marketplaces (Anthropic official, knowledge-work, agent skills, financial services, legal, GitHub `copilot-plugins` and `awesome-copilot`), with their skills, agents, commands, hooks and MCP servers. The kickoff skill ships a grep-friendly copy ([`catalog.tsv`](plugins/kickoff/skills/kickoff/references/catalog.tsv)) so it can find an existing plugin before building anything. Refresh with `python3 scripts/toolkit.py catalog`.
@@ -110,6 +131,7 @@ Installed by `toolkit.py install` from their upstream marketplaces, so they stay
 | `harvest` | kickoff | Turns reusable work from the current session into new or improved skills, agents, hooks and kickoff routes, written in a portable format th… |
 | `kickoff` | kickoff | Routes a task to the right skills, agents and plugin commands on whatever platform you are running on (Claude Code, Claude app, GitHub Copi… |
 | `toolkit-adopt` | kickoff | Brings the AI toolkit into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work ther… |
+| `codemap` | codemap | Navigate a codebase through its indexed map instead of grepping and reading whole files: overview, ranked repo map, symbol search, definiti… |
 | `architecting-solutions` | engineering-craft | How to design a solution before building it — generating options, weighing trade-offs, choosing where to spend design effort, and writing d… |
 | `debugging-systematically` | engineering-craft | A hypothesis-driven method for diagnosing and fixing bugs — reproduction, bisection, instrumentation, and verifying the real cause instead… |
 | `exploring-unfamiliar-code` | engineering-craft | How to orient quickly in an unfamiliar codebase or an unfamiliar corner of a familiar one — building a working mental model without reading… |
@@ -164,7 +186,16 @@ Installed by `toolkit.py install` from their upstream marketplaces, so they stay
 3. **Promote** project-local discoveries with `toolkit.py promote <dir> --plugin <plugin>`.
 4. **Validate, commit, push**, and every device picks it up with `toolkit.py sync`; every adopted project picks it up on its next plugin update.
 
-See [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
+## Keeping it alive
+
+| | |
+|---|---|
+| `toolkit.py doctor [--repo PATH] [--fix]` | Broken or stale user-level installs, new toolkit items not yet installed, uncommitted harvests, and **repo-vendored copies that shadow your user-level skills** (Copilot lets project skills override personal ones). `--fix` repairs the safe cases. Runs automatically (quietly) once a day at session start. |
+| `toolkit.py audit` | Always-on token cost per bundle, oversized descriptions, overlapping skills, routes and profile plugins that vanished upstream, skills untouched for six months. |
+| `toolkit.py catalog` | Rescans upstream marketplaces; a weekly workflow opens a PR when something new appears. |
+| `python3 -m unittest discover -s tests` | 28 tests: codemap extraction/resolution/queries/MCP across languages, install, adopt, doctor, hooks. |
+
+See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot user-level migration, [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
 
 ---
 

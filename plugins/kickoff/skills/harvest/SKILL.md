@@ -59,14 +59,23 @@ These keep every artefact working in Claude Code, Copilot and other clients:
 
 - **Skill**: folder name = `name` (lowercase-hyphenated, ≤ 64 chars); frontmatter has only `name` and `description` (≤ 1024 chars; say what it does *and* when to use it, with trigger phrases). Body under ~500 lines; push detail into `references/`. Refer to other skills as `[[name]]`. Don't assume a specific tool name; say "delegate to a subagent", "search the code".
 - **Agent**: file `<name>.agent.md`, frontmatter `name` (= file stem) and `description` (when to delegate to it). Omit `tools` and `model` unless essential: tool ids differ between Claude (`Read`, `Grep`) and Copilot (`read`, `search`), and an unknown id can break one of them. State restrictions in the prompt instead ("read-only: never edit files").
+- **MCP server**: ship `.mcp.json` (Claude, `${CLAUDE_PLUGIN_ROOT}`) and `copilot-mcp.json` (Copilot, `${PLUGIN_ROOT}`, `"type": "local"`). Prefer one tool with a command-string parameter over many tools: every tool schema is paid on every request.
 - **Hook**: one script (Python 3 stdlib, or POSIX shell) that takes `--format claude|copilot`; Claude config uses PascalCase events and `"command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/x.py\" --format claude"`; Copilot config uses `"version": 1`, camelCase events, and a `bash` field that tolerates a missing `PLUGIN_ROOT`. Copy the pattern in `plugins/kickoff/hooks/`.
 - Create files without asking. Committing, pushing or opening a PR still needs the user's yes; when they agree, commit in the toolkit and push so every device picks it up (`toolkit.py sync`).
 
-## 6. Record gaps
+## 6. Prune
+
+Growth without pruning makes every request more expensive: each installed skill's description is paid on every turn.
+
+- If this session showed two skills overlapping, merge them (keep the better name, fold in the other's unique content, delete the loser).
+- If a skill was loaded and turned out stale (wrong commands, renamed tools), fix it now rather than adding a new one.
+- When a toolkit checkout is available, `python3 scripts/toolkit.py audit` lists oversized descriptions, overlaps, stale routes and skills untouched for six months; `doctor` lists stale or duplicate installs. Act on at most one item per harvest; mention the rest in the summary.
+
+## 7. Record gaps
 
 If a gap was found and *not* closed this run, append one row to the gaps ledger: the toolkit's `catalog/gaps.md`, or the project's `.github/ai-toolkit/gaps.md` if that exists. Format: `| YYYY-MM-DD | task | gap | open |`. When a later harvest closes it, change `open` to what closed it.
 
-## 7. Report in one block
+## 8. Report in one block
 
 End the response with a short harvest summary so it is visible every time:
 

@@ -11,6 +11,8 @@ What works where, and how to set each client up.
 | Agents (`toolkit-scout`, `doc-*`) | ✅ | ⚠️ follows the agent prompt in-session | ✅ | ✅ | ✅ vendored to `.github/agents/` | ⚠️ follows the agent prompt in-session |
 | SessionStart hook | ✅ | — | ✅ when the runtime exposes `PLUGIN_ROOT`, else a silent no-op; ✅ vendored | ✅ vendored to `.github/hooks/` | not verified | — |
 | Harvest `Stop` reminder | ✅ | — | — | — | — | — |
+| codemap (CLI + MCP) | ✅ plugin MCP + `codemap` command | — (no local shell) | ✅ plugin MCP, or `~/.copilot/mcp-config.json` | ✅ plugin via repo settings, or vendored `.mcp.json` | ✅ MCP from `~/.copilot/mcp-config.json` or project `.mcp.json` (verify on first use) | ✅ `codemap` command |
+| User-level install (`~/.copilot/…`, `~/.claude/…`) | ✅ `claude-user` target (plugins preferred) | — | ✅ `copilot-user` target | — (uses repo settings) | ✅ reads `~/.copilot/skills` and agents | `~/.agents/skills` |
 | Upstream plugin profile | ✅ | ✅ (installed in the app) | ✅ skills, agents, hooks, MCP; ⚠️ Claude slash commands don't load | ✅ via repo settings | partial | skills only (copy them) |
 
 ✅ verified or documented · ⚠️ works with a fallback · — not applicable

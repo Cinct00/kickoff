@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "plugins": [
     {
       "name": "kickoff",
       "source": "./plugins/kickoff",
       "description": "The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },
@@ -28,10 +28,29 @@
       ]
     },
     {
+      "name": "codemap",
+      "source": "./plugins/codemap",
+      "description": "Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read.",
+      "version": "2.1.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "repo-map",
+        "code-navigation",
+        "mcp",
+        "token-efficiency",
+        "dependency-graph",
+        "sqlite"
+      ]
+    },
+    {
       "name": "engineering-craft",
       "source": "./plugins/engineering-craft",
       "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },
@@ -50,7 +69,7 @@
       "name": "thinking-tools",
       "source": "./plugins/thinking-tools",
       "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },
@@ -67,7 +86,7 @@
       "name": "communication-and-leadership",
       "source": "./plugins/communication-and-leadership",
       "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },
@@ -85,7 +104,7 @@
       "name": "life-and-career",
       "source": "./plugins/life-and-career",
       "description": "Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },
@@ -103,7 +122,7 @@
       "name": "doc-coauthor",
       "source": "./plugins/doc-coauthor",
       "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "author": {
         "name": "gimarais"
       },

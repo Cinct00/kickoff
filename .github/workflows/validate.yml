@@ -18,6 +18,10 @@ jobs:
           python-version: "3.12"
       - name: Lint skills, agents, hooks; check generated files are current
         run: python3 scripts/toolkit.py validate
+      - name: Unit tests (codemap + toolkit)
+        run: python3 -m unittest discover -s tests -v
+      - name: Audit (routes and profile must resolve; token report)
+        run: python3 scripts/toolkit.py audit --strict --no-git
       - name: Hooks run and emit valid JSON
         run: |
           set -euo pipefail

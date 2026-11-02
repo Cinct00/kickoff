@@ -37,7 +37,7 @@ def open_gaps(cwd: Path) -> int:
 
 def build_context() -> str:
     parts = [
-        "ai-toolkit is installed (skills: kickoff, harvest, toolkit-adopt, plus judgment skills such as "
+        "ai-toolkit is installed (skills: kickoff, harvest, toolkit-adopt, codemap, plus judgment skills such as "
         "understanding-the-problem, debugging-systematically, reviewing-code, writing-clearly).",
         "For any substantial task, load the `kickoff` skill first: it routes the task to the right skills, "
         "agents and plugin commands for this platform, checks the catalog for gaps, and ends with `harvest`.",
@@ -48,7 +48,28 @@ def build_context() -> str:
     gaps = open_gaps(Path.cwd())
     if gaps:
         parts.append(f"{gaps} open toolkit gap(s) are logged in this repo's gaps ledger; harvest can close them.")
+    if home:
+        nudge = doctor_nudge(Path(home))
+        if nudge:
+            parts.append(nudge)
     return " ".join(parts)
+
+
+def doctor_nudge(home: Path) -> str:
+    """At most once a day, run a quick device health check and surface one line if something is off."""
+    import subprocess
+    import time
+    stamp = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ai-toolkit" / "last-doctor"
+    try:
+        if stamp.exists() and time.time() - stamp.stat().st_mtime < 86400:
+            return ""
+        stamp.parent.mkdir(parents=True, exist_ok=True)
+        stamp.touch()
+        out = subprocess.run([sys.executable, str(home / "scripts" / "toolkit.py"), "doctor", "--quick", "--summary"],
+                             capture_output=True, text=True, timeout=5).stdout.strip()
+        return out
+    except Exception:
+        return ""
 
 
 def main() -> None:

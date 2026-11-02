@@ -13,11 +13,14 @@ A plugin marketplace and skills library that must work identically in Claude Cod
 - `plugins/<name>/.claude-plugin/plugin.json` and `plugins/<name>/plugin.json`: **generated** (Claude and Copilot manifests).
 - `.claude-plugin/marketplace.json` and `.github/plugin/marketplace.json`: **generated**, identical.
 - `catalog/`: **generated** by `toolkit.py catalog` (index.json, CATALOG.md) plus the hand-kept `gaps.md` ledger. The kickoff skill's `references/catalog.tsv` is generated too.
-- `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+).
+- `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+): build, validate, catalog, install, adopt, promote, doctor, audit, sync.
+- `plugins/codemap/scripts/`: the codemap engine (`codemap_core/`), also stdlib-only.
+- `tests/`: unit tests (`python3 -m unittest discover -s tests`) and the codemap token benchmark.
 
 ## Working rules
 
-- After any change: `python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate`. CI runs `validate`.
+- After any change: `python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate`, then the unit tests. CI runs all three plus `audit --strict`.
+- Navigate this repo with `codemap` too (`python3 plugins/codemap/scripts/codemap.py overview`).
 - Never hand-edit generated files, including the README sections between `BEGIN GENERATED` markers.
 - Keep artefacts portable (see the "Portable format rules" in `plugins/kickoff/skills/harvest/SKILL.md`): skill frontmatter is only `name` + `description`; agents are `<name>.agent.md` with no `tools`/`model` unless essential; hooks ship in both formats.
 - Never vendor third-party content with a proprietary license. Reference the plugin in `toolkit.json` → `upstream.profile` instead.

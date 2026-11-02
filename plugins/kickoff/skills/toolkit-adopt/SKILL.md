@@ -21,7 +21,9 @@ Note conflicts (an existing skill with the same name as a toolkit one, contradic
 
 ## 2. Choose the set
 
-Default to the `dev` bundle: `kickoff`, `engineering-craft`, `thinking-tools`, `doc-coauthor`. Add `communication-and-leadership` for teams that write a lot of docs and proposals. `life-and-career` almost never belongs in a project repo.
+First decide **where** things live. Copilot (CLI, cloud agent, VS Code) and Claude Code now load skills, agents, hooks and MCP servers from the user level (`~/.copilot/…`, `~/.claude/…`) across every repo on a device, so personal tooling belongs there (`toolkit.py install`), not in each repository. Put things in the repo only when collaborators or the Copilot cloud agent need them, and prefer `--mode plugins` (a few lines of settings) over vendoring copies, which go stale and, for skills, shadow the user-level versions. If the repo already has vendored copies, run `toolkit.py doctor --repo . --fix` to remove duplicates of what is installed at user level.
+
+Default to the `dev` bundle: `kickoff`, `codemap`, `engineering-craft`, `thinking-tools`, `doc-coauthor`. Add `communication-and-leadership` for teams that write a lot of docs and proposals. `life-and-career` almost never belongs in a project repo.
 
 Then pick upstream plugins from the catalog (`kickoff/references/catalog.tsv`) that match the stack. Typical picks:
 

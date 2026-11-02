@@ -31,6 +31,14 @@ Write one script in `plugins/<plugin>/hooks/` that accepts `--format claude|copi
 
 Hooks must fail open: catch everything and exit 0 unless blocking is the point.
 
+## An MCP server
+
+Ship `.mcp.json` (Claude Code, paths via `${CLAUDE_PLUGIN_ROOT}`) and `copilot-mcp.json` (Copilot, `${PLUGIN_ROOT}`, `"type": "local"`, `"tools": ["*"]`); `build` points the Copilot manifest at the second. Prefer one tool taking a command string over many tools: every schema is paid on every request (see `plugins/codemap/scripts/codemap_core/mcp.py`).
+
+## Tests
+
+`python3 -m unittest discover -s tests` must pass. Add a fixture case to `tests/test_codemap.py` when you teach codemap a new language construct, and check token impact with `tests/bench_codemap.py`.
+
 ## A new toolkit plugin
 
 Create `plugins/<name>/`, add an entry under `plugins` in `toolkit.json` (description, category, keywords), optionally add it to a bundle, then build. Manifests and READMEs are generated.

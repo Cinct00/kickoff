@@ -1,0 +1,17 @@
+{
+  "description": "codemap hooks (Claude Code format). Copilot uses copilot-hooks.json.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py\" --format claude",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
