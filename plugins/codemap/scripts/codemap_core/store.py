@@ -247,11 +247,84 @@ class Store:
             names = json.loads(imp["names"]) if imp["names"] else []
             targets, external = resolver.resolve(f["path"], f["lang"], imp["raw"], names, imp["level"] or 0)
             tids = [path_id[t] for t in targets if t in path_id and path_id[t] != imp["file_id"]]
+            if not tids and targets and all(path_id.get(t) == imp["file_id"] for t in targets):
+                external = "self"  # refers to this file (e.g. Rust `use self::Kind::*`): not external, no edge
             updates.append((tids[0] if tids else None, external, imp["rowid"]))
             for t in tids[1:]:
                 extra.append((imp["file_id"], imp["raw"], imp["names"], imp["level"], imp["line"], t, None))
         self.db.executemany("UPDATE imports SET target_id=?, external=? WHERE rowid=?", updates)
         self.db.executemany("INSERT INTO imports(file_id, raw, names, level, line, target_id, external) VALUES(?,?,?,?,?,?,?)", extra)
+        cs = [r["id"] for r in rows if r["lang"] == "csharp"]
+        if cs:
+            self._csharp_scope_imports(cs if only_files is None else [f for f in only_files if f in set(cs)])
+
+    def _csharp_scope_imports(self, file_ids):
+        """C# names resolve through `using` namespaces plus the file's own namespace and its parents.
+
+        Replace namespace-level import rows with one row per file that defines a type this file actually
+        uses, found the way the compiler would look it up. Same-namespace uses (no `using` needed) get
+        implicit rows (line 0).
+        """
+        if not file_ids:
+            return
+        db = self.db
+        type_kinds = "('class','struct','interface','enum','record','delegate')"
+        ns_of = {r[0]: r[1] or "" for r in db.execute("SELECT id, package FROM files WHERE lang='csharp'")}
+        by_ns: dict = {}  # namespace -> type name -> {file ids}
+        for fid, name in db.execute(f"SELECT s.file_id, s.name FROM symbols s JOIN files f ON f.id=s.file_id "
+                                    f"WHERE f.lang='csharp' AND s.kind IN {type_kinds}"):
+            by_ns.setdefault(ns_of.get(fid, ""), {}).setdefault(name, set()).add(fid)
+        known_ns = set(by_ns)
+        # `global using` lines apply to every file of the same project (nearest .csproj directory).
+        paths = {r[0]: r[1] for r in db.execute("SELECT id, path FROM files")}
+        projects = sorted({p.rsplit("/", 1)[0] if "/" in p else "" for p in paths.values() if p.endswith(".csproj")},
+                          key=len, reverse=True)
+
+        def project_of(path):
+            return next((d for d in projects if d == "" or path.startswith(d + "/")), None)
+        global_usings: dict = {}
+        for fid, raw in db.execute("SELECT file_id, raw FROM imports WHERE names LIKE '%global%'"):
+            global_usings.setdefault(project_of(paths.get(fid, "")), set()).add(raw)
+        # MSBuild global usings: <Using Include="Ns" /> in a .csproj (that project) or Directory.Build.props (below it).
+        props = []
+        for path in paths.values():
+            base = path.rsplit("/", 1)[-1]
+            if path.endswith(".csproj") or base == "Directory.Build.props":
+                try:
+                    text = (self.root / path).read_text(encoding="utf-8", errors="replace")
+                except OSError:
+                    continue
+                found = set(re.findall(r'<Using\s+Include="([\w.]+)"(?![^>]*Static="true")', text))
+                if found:
+                    d = path.rsplit("/", 1)[0] if "/" in path else ""
+                    if path.endswith(".csproj"):
+                        global_usings.setdefault(d, set()).update(found)
+                    else:
+                        props.append((d, found))
+        for d, found in props:
+            for proj in projects:
+                if d == "" or proj == d or proj.startswith(d + "/"):
+                    global_usings.setdefault(proj, set()).update(found)
+        for fid in file_ids:
+            own = ns_of.get(fid, "")
+            parts = own.split(".") if own else []
+            scope = {".".join(parts[:k]) for k in range(len(parts), 0, -1)} | {""}
+            using_rows = list(db.execute("SELECT raw, MIN(line) FROM imports WHERE file_id=? GROUP BY raw", (fid,)))
+            usings = {raw: line for raw, line in using_rows if raw in known_ns}
+            scope |= set(usings) | (global_usings.get(project_of(paths.get(fid, "")), set()) & known_ns)
+            used = {r[0] for r in db.execute("SELECT name FROM idents WHERE file_id=?", (fid,))}
+            hits: dict = {}
+            for ns in scope:
+                for name, files in by_ns.get(ns, {}).items():
+                    if name in used:
+                        for t in files:
+                            if t != fid:
+                                hits.setdefault((ns, t), None)
+            db.executemany("DELETE FROM imports WHERE file_id=? AND raw=?", [(fid, ns) for ns in usings])
+            rows = [(fid, ns, None, 0, usings.get(ns, 0), t, None) for (ns, t) in hits]
+            rows += [(fid, ns, None, 0, line, None, None) for ns, line in usings.items()
+                     if not any(h[0] == ns for h in hits)]  # keep unused usings visible, unlinked
+            db.executemany("INSERT INTO imports(file_id, raw, names, level, line, target_id, external) VALUES(?,?,?,?,?,?,?)", rows)
 
     def _index_deps(self):
         self.db.execute("DELETE FROM deps")

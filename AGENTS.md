@@ -16,7 +16,7 @@ A plugin marketplace and skills library that must work identically in Claude Cod
 - `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+): build, validate, catalog, install, adopt, promote, doctor, audit, sync.
 - `plugins/codemap/scripts/`: the codemap engine (`codemap_core/`), also stdlib-only.
 - `.github/actions/change-map/`: the reusable PR change-map action (used by other repos via `adopt --review-workflow`).
-- `tests/`: unit tests (`python3 -m unittest discover -s tests`) and the codemap token benchmark.
+- `tests/`: unit tests (`python3 -m unittest discover -s tests`), the codemap token benchmark, and `eval_extraction.py` (C#/Rust accuracy vs tree-sitter; run it after any parser change).
 
 ## Working rules
 

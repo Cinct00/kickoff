@@ -113,7 +113,7 @@ codemap refs AuthService              # uses grouped by file and enclosing funct
 codemap impact src/models/user.py     # dependents by distance + tests to run
 ```
 
-Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer tokens** to locate and understand a symbol than grep-and-read, **91–97% fewer** to orient in a new repo. It's also an MCP server with a single tool, so Claude Code and Copilot call it directly. Python, TS/JS, Go, Java, Kotlin, Scala, C#, Rust, C/C++, PHP, Ruby, Swift and Markdown; stdlib only. Design, benchmark and the rejected alternatives (Docker in-memory DBs, graph DBs, LSP, embeddings) are in [docs/codemap.md](docs/codemap.md).
+Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer tokens** to locate and understand a symbol than grep-and-read, **91–97% fewer** to orient in a new repo. It's also an MCP server with a single tool, so Claude Code and Copilot call it directly. C# and Rust use dedicated structural parsers that match tree-sitter (99.9% and 100% recall on 37k declarations across six real repos), Python uses its own `ast`, and TS/JS, Go, Java, Kotlin, Scala, C/C++, PHP, Ruby, Swift and Markdown use patterns; stdlib only. Design, benchmark and the rejected alternatives (Docker in-memory DBs, graph DBs, LSP, embeddings) are in [docs/codemap.md](docs/codemap.md).
 
 ### Change review: see what a PR really changed
 

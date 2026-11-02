@@ -279,44 +279,79 @@ class Resolver:
             return [], "stdlib:" + ".".join(raw.split(".")[:2])
         return [], ".".join(raw.split(".")[:2])
 
+    def _rust_crate_root(self, path):
+        """Directory holding the crate root (lib.rs / main.rs) that owns `path`."""
+        d = posixpath.dirname(path)
+        while True:
+            for root_file in ("lib.rs", "main.rs"):
+                if (f"{d}/{root_file}" if d else root_file) in self.paths:
+                    return d
+            if (f"{d}/Cargo.toml" if d else "Cargo.toml") in self.paths or not d:
+                return posixpath.join(d, "src") if d else "src"
+            d = posixpath.dirname(d)
+
+    def _rust_module_dir(self, path):
+        """Directory where child modules of `path`'s module live (foo.rs -> foo/, mod.rs/lib.rs -> same dir)."""
+        d, stem = posixpath.dirname(path), posixpath.basename(path).rsplit(".", 1)[0]
+        return d if stem in ("mod", "lib", "main") else posixpath.join(d, stem)
+
+    def _rust_walk(self, base, rest, path):
+        for k in range(len(rest), 0, -1):
+            stem = posixpath.normpath(posixpath.join(base, *rest[:k])) if base else posixpath.join(*rest[:k])
+            for cand in (stem + ".rs", stem + "/mod.rs"):
+                if cand in self.paths:
+                    return [cand]
+        return []
+
     def _r_rust(self, path, raw, names, level):
-        root = next((r for r in self.cargo_roots if path.startswith(r + "/") or r == ""), None)
-        src = posixpath.join(root, "src") if root is not None else "src"
-        if "::" not in raw:  # `mod x;`
-            d = posixpath.dirname(path)
-            stem = posixpath.basename(path).rsplit(".", 1)[0]
-            if stem not in ("mod", "lib", "main"):
-                d = posixpath.join(d, stem)
+        if "::" not in raw and raw not in ("self", "super", "crate"):  # `mod x;` declaration
+            d = self._rust_module_dir(path)
             for cand in (f"{d}/{raw}.rs", f"{d}/{raw}/mod.rs"):
                 if posixpath.normpath(cand) in self.paths:
                     return [posixpath.normpath(cand)], None
             return [], None
         parts = raw.split("::")
         head = parts[0]
-        if head in ("crate", "self", "super"):
-            if head == "crate":
-                base = src
-            else:
-                base = posixpath.dirname(path)
-                if head == "super":
-                    base = posixpath.dirname(base)
-            rest = parts[1:]
-            for k in range(len(rest), 0, -1):
-                stem = posixpath.join(base, *rest[:k])
-                for cand in (stem + ".rs", stem + "/mod.rs"):
-                    if cand in self.paths:
-                        return [cand], None
+        if head == "crate":
+            hits = self._rust_walk(self._rust_crate_root(path), parts[1:], path)
+            if hits:
+                return hits, None
+            root = self._rust_crate_root(path)
+            for f in ("lib.rs", "main.rs"):
+                cand = posixpath.join(root, f) if root else f
+                if cand in self.paths:
+                    return [cand], None  # item defined (or re-exported) at the crate root
             return [], None
+        if head in ("self", "super"):
+            supers = 0
+            while supers < len(parts) and parts[supers] == "super":
+                supers += 1
+            rest = parts[supers:] if head == "super" else parts[1:]
+            # Inside inline modules, the first `level` supers stay within this file.
+            if supers <= level:
+                return [path], None
+            supers -= level
+            d = self._rust_module_dir(path)
+            for _ in range(supers):
+                d = posixpath.dirname(d)
+            hits = self._rust_walk(d, rest, path)
+            if hits:
+                return hits, None
+            if head == "self" or not rest:
+                return [path] if head == "self" else [], None
+            for f in ("mod.rs", "lib.rs", "main.rs"):  # item defined in the parent module's file
+                cand = posixpath.join(d, f) if d else f
+                if cand in self.paths:
+                    return [cand], None
+            parent_file = d + ".rs"
+            return ([parent_file], None) if parent_file in self.paths else ([], None)
         if head in ("std", "core", "alloc"):
             return [], "stdlib:" + head
         if head in self.crates:
             base = posixpath.join(self.crates[head], "src") if self.crates[head] else "src"
-            rest = parts[1:]
-            for k in range(len(rest), 0, -1):
-                stem = posixpath.join(base, *rest[:k])
-                for cand in (stem + ".rs", stem + "/mod.rs"):
-                    if cand in self.paths:
-                        return [cand], None
+            hits = self._rust_walk(base, parts[1:], path)
+            if hits:
+                return hits, None
             for cand in (base + "/lib.rs", base + "/main.rs"):
                 if cand in self.paths:
                     return [cand], None

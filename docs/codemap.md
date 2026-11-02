@@ -47,12 +47,32 @@ Run it yourself: `python3 tests/bench_codemap.py path/to/repo:SymbolName …`.
 | **Graph database** | Rejected for the same reasons; the queries agents need (definitions, references, one or two hops of dependencies, PageRank) are a few indexed joins in SQLite. |
 | **SQLite file in the user cache** ✅ | In-process, zero install (it's in Python's stdlib, with FTS5 full-text search), persistent across sessions, incremental, concurrent readers (WAL), and SQL as an escape hatch. Kept outside the repo so it never gets committed. |
 | **Language servers / SCIP indexers** | Most precise, but one heavy toolchain per language, slow to start, and they need the project to build. Good complement, wrong default. |
-| **tree-sitter** | The best general parser, and what Aider's repo map uses. Needs native wheels per platform, so it isn't the default here; it is the planned optional backend (see [gaps](../catalog/gaps.md)). |
+| **tree-sitter** | The best general parser, and what Aider's repo map uses, but it needs native wheels per platform. For the languages that matter most here (C#, Rust), codemap has its own structural parsers that match tree-sitter to within 0.1–0.4%, and tree-sitter serves as the test oracle (`tests/eval_extraction.py`). |
 | **Embeddings / vector search** | Needs a model or API, costs money and setup, and returns fuzzy chunks. Agents mostly need exact structure, so it isn't included. |
 
 The map itself follows the approach Aider documented for repo maps: extract definitions and references, build a file graph weighted by how distinctive each referenced name is, rank it with PageRank (personalised to the files you are working on), and render only signatures, choosing as many as fit a token budget.
 
 Tools such as Graphify build richer knowledge graphs of a codebase. codemap is deliberately narrow, deterministic and local: you can read every line of what gets indexed, nothing leaves the machine, and the output formats are tuned for tokens rather than for humans.
+
+## Accuracy by language
+
+| Language | Extractor | Measured against tree-sitter |
+|---|---|---|
+| **C#** | structural parser (`lang_cs.py`): real lexer (verbatim, raw `"""`, interpolated strings; keeps the first `#if` branch) + scope-aware member walker | 25,866 declarations in Newtonsoft.Json, Polly and eShop: **99.9% recall, 100.0% precision, 99.1% correct parent** (was 63.7% / 88.4% / 82.6% with patterns) |
+| **Rust** | structural parser (`lang_rs.py`): lexer (nested comments, raw/byte strings, char vs lifetime) + item walker | 11,625 items in ripgrep, axum and serde: **100.0% recall, 99.6% precision, 100% end lines and parents** (was 94.7% / 95.2%) |
+| **Python** | the stdlib `ast` parser | exact by construction |
+| TS/JS, Go, Java, Kotlin, Scala, C/C++, PHP, Ruby, Swift | comment/string-masking lexer + definition patterns | spot-checked on real repos, not yet measured |
+
+What each structural parser extracts:
+- **C#**: namespaces (block and file-scoped), classes, structs (incl. `ref struct`), interfaces, enums, records (with primary constructors), and delegates. Members: methods (generic, expression-bodied, bodyless interface/partial/abstract, explicit interface implementations), constructors and destructors, properties, indexers, events, fields and consts (multi-declarator), and operators. Also XML-doc summaries and base lists.
+- **Rust**: functions and methods (const/async/unsafe/extern; nested fns), structs, enums, unions, traits (with associated types and consts), `impl` blocks (trait impls recorded as the type's base, so `hierarchy Trait` lists implementors), type aliases, consts and statics, inline and file modules, and `macro_rules!` (template bodies are never mistaken for definitions). Also `///` docs through attributes.
+
+Measure it yourself with `tests/eval_extraction.py` (needs `pip install tree-sitter tree-sitter-c-sharp tree-sitter-rust` in a venv; tree-sitter is only the oracle, codemap stays stdlib-only). `--legacy` scores the old pattern extractor for comparison.
+
+### Dependency graph quality
+
+- **C#** resolves names the way the compiler does. Each file links to the files that define a type it actually uses, searched through its `using` namespaces, its own namespace and that namespace's parents, plus project-wide `global using` lines and MSBuild `<Using Include>` items (per `.csproj`, or `Directory.Build.props`). On Newtonsoft.Json this took import edges that point at a file defining a used type from **7.4% to 100%**. Coverage of real type dependencies rose from 7.4% to 65–77% (most of the rest are names that collide with a type but mean something else).
+- **Rust** expands `use` trees (`use a::{b, c::{d, e}}`), finds each crate's root (`lib.rs`/`main.rs`, wherever Cargo puts it), follows `mod x;` declarations, and resolves `super::` inside inline modules (`mod tests { use super::*; }`) to the file itself. Internal imports that resolve to a file: ripgrep 46% → 96%, axum 71% → 99.5%, serde 81% → 100%.
 
 ## How it works
 
@@ -69,8 +89,8 @@ git ls-files ──▶ changed? (size, mtime, then sha1) ──▶ extract ─�
                                                         └─ FTS5      camelCase/snake_case-aware symbol search
 ```
 
-- **Languages**: Python, TypeScript/JavaScript, Go, Java, Kotlin, Scala, C#, Rust, C, C++, PHP, Ruby, Swift, Markdown.
-- **Import resolution**: Python packages and relative imports; tsconfig/jsconfig `paths` and `baseUrl`; npm workspaces; Go modules (multi-module); Java/Kotlin packages and wildcards; C# namespaces, `using static` and aliases; Rust `mod`, `crate::`/`super::` and workspace crates; C/C++ includes; PHP namespaces; Ruby `require_relative`; Swift packages; Markdown links.
+- **Languages**: C# and Rust (structural parsers), Python (`ast`), and TypeScript/JavaScript, Go, Java, Kotlin, Scala, C, C++, PHP, Ruby, Swift and Markdown (patterns).
+- **Import resolution**: Python packages and relative imports; tsconfig/jsconfig `paths` and `baseUrl`; npm workspaces; Go modules (multi-module); Java/Kotlin packages and wildcards; C# compiler-style scoping (usings, own and parent namespaces, global usings, MSBuild usings); Rust use-trees, crate roots, `mod`, `self`/`super` (incl. inline modules) and workspace crates; C/C++ includes; PHP namespaces; Ruby `require_relative`; Swift packages; Markdown links.
 - **Manifests**: package.json, requirements*.txt, pyproject.toml (PEP 621 and Poetry), go.mod, Cargo.toml, *.csproj / Directory.Packages.props, pom.xml, build.gradle(.kts), Gemfile, composer.json.
 - **Freshness**: every query re-checks the working tree, throttled to once every 3 s, and only re-parses changed files. Ranks are recomputed when files are added or removed, or at most every 10 minutes during a session. A session-start hook refreshes the index in the background.
 - **References** are name-based (like tags-based repo maps), then made precise: `refs` marks a use as confirmed when the file imports the defining file (or shares its package in Go, Java, C#, Kotlin, Scala and Swift), and lists other same-name matches separately as "name-only".
@@ -107,6 +127,7 @@ The MCP server exposes **one** tool with a single string parameter. Its schema i
 
 ## Limits
 
-- Regex-based extraction outside Python is heuristic. It is checked against real repos in each language, but unusual syntax (macros generating functions, heavily nested generics, JS regex literals) can be missed. `show PATH:A-B` and grep remain available.
+- C#, Rust and Python are parsed structurally (see the accuracy table). For C#, only the first branch of each `#if` is indexed, and code generated by source generators is invisible. In Rust, items produced by macros are invisible, as they are to any non-compiling tool.
+- The other languages use pattern-based extraction, checked on real repos but not measured. Unusual syntax (heavily nested generics, JS regex literals) can be missed; `show PATH:A-B` and grep remain available.
 - References are by name. Common method names (`get`, `run`) are down-weighted in ranking, and `refs` separates confirmed from name-only matches, but dynamic dispatch and reflection are invisible.
 - Strings, comments and config values aren't indexed for search. Use grep for those.

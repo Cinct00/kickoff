@@ -488,11 +488,11 @@ def _doc_above(lines: list, line_no: int) -> str:
         if _NOT_COMMENT.match(s):
             i -= 1
             continue
-        if s.startswith(("//", "#", "*", "/*", "///", "--")) and not s.startswith("#["):
+        if s.startswith(("//", "#", "*", "/*", "///", "--")) and not s.startswith(("#[", "#![", "//!")):
             block.append(re.sub(r"^(/\*\*?|\*/|\*|///?|#+|--)\s?", "", s).rstrip("*/ ").strip())
             i -= 1
             continue
-        if s.startswith(("@", "[")):  # annotations / attributes between doc and def
+        if s.startswith(("@", "[", "#[", "#![")):  # annotations / attributes between doc and def
             i -= 1
             continue
         break
@@ -696,6 +696,15 @@ def extract_markdown(text: str) -> FileFacts:
 def extract(text: str, lang: str) -> FileFacts:
     if lang == "python":
         return extract_python(text)
+    if lang in ("csharp", "rust"):
+        try:
+            if lang == "csharp":
+                from .lang_cs import extract_csharp
+                return extract_csharp(text)
+            from .lang_rs import extract_rust
+            return extract_rust(text)
+        except (RecursionError, IndexError, KeyError, ImportError):
+            return extract_generic(text, lang)  # structural parser failed: fall back to patterns
     if lang == "markdown":
         return extract_markdown(text)
     if lang in SPECS:
