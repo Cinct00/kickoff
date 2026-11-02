@@ -15,7 +15,7 @@ Use the first that works:
 2. `codemap <cmd>` on the shell (installed on PATH by the toolkit installer).
 3. `python3 <this skill's folder>/../../scripts/codemap.py <cmd>`.
 
-The index lives in your user cache, not the repo. The first query builds it (seconds; about 8 s for a 1,000-file C# solution). After that, each query re-checks changed files in ~0.2 s, so you never need to reindex after editing.
+The index lives in your user cache, not the repo, and covers what git tracks (gitignored files only if `.codemap.json` includes them). The first query builds it (seconds; about 8 s for a 1,000-file C# solution). After that, each query re-checks changed files in ~0.2 s, so you never need to reindex after editing.
 
 ## The ladder: cheapest step that answers the question
 

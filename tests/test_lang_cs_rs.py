@@ -11,6 +11,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+os.environ.setdefault("CODEMAP_BACKGROUND", "0")  # no detached re-index processes during tests
+
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "plugins" / "codemap" / "scripts"))
 

@@ -14,13 +14,13 @@ from .extract import extract
 from .graph import pagerank
 from .manifests import is_manifest, parse_manifest
 from .resolve import Resolver
-from .util import CODE_LANGS, content_hash, est_tokens, git, is_test_path, lang_of, list_files, read_text, split_words
+from .util import CODE_LANGS, _glob_match, _skip, content_hash, included_ignored, is_generated, load_config, est_tokens, git, is_test_path, lang_of, list_files, read_text, split_words
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
 CREATE TABLE IF NOT EXISTS files(
   id INTEGER PRIMARY KEY, path TEXT UNIQUE NOT NULL, lang TEXT, size INT, mtime REAL, hash TEXT,
-  lines INT, tokens INT, is_test INT DEFAULT 0, package TEXT, rank REAL DEFAULT 0);
+  lines INT, tokens INT, is_test INT DEFAULT 0, package TEXT, rank REAL DEFAULT 0, generated INT DEFAULT 0);
 CREATE TABLE IF NOT EXISTS symbols(
   id INTEGER PRIMARY KEY, file_id INT NOT NULL, name TEXT NOT NULL, qualname TEXT, kind TEXT, line INT, end_line INT,
   signature TEXT, doc TEXT, parent_id INT, exported INT, rank REAL DEFAULT 0);
@@ -43,7 +43,9 @@ CREATE VIRTUAL TABLE IF NOT EXISTS symbols_fts USING fts5(
   name, words, qualname, signature, path, tokenize = "unicode61 tokenchars '_'");
 """
 
-RANK_MAX_AGE = 600  # seconds before a lazy refresh also recomputes ranks
+RANK_MAX_AGE = 600  # seconds before a lazy refresh also recomputes ranks (small repos only)
+MAX_DEFS_FOR_EDGES = 20  # names defined in more files than this add no ranking edges
+MAX_EDGES_PER_FILE = 40  # strongest outgoing edges stored per file
 LAZY_MIN_GAP = 3  # seconds between lazy refreshes
 
 
@@ -107,21 +109,87 @@ class Store:
         except BaseException:
             self.db.execute("ROLLBACK")
             raise
+        if stats.get("background_needed"):
+            self._spawn_background_index()
         return stats
+
+    def _spawn_background_index(self):
+        """Start a detached `codemap index` to redo global resolution and ranking (at most once a minute)."""
+        if os.environ.get("CODEMAP_BACKGROUND", "1") == "0":
+            return
+        if time.time() - float(self.meta("bg_index_at", 0)) < 60:
+            return
+        self.set_meta("bg_index_at", time.time())
+        import subprocess
+        import sys
+        script = Path(__file__).resolve().parent.parent / "codemap.py"
+        kwargs = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        if os.name == "nt":
+            kwargs["creationflags"] = 0x00000008 | 0x00000200
+        else:
+            kwargs["start_new_session"] = True
+        try:
+            subprocess.Popen([sys.executable, str(script), "--repo", str(self.root), "--db", str(self.db_path),
+                              "index", "--quiet"], **kwargs)
+        except OSError:
+            pass
+
+    def _candidates(self, lazy):
+        """Paths to (re)check. Lazy refreshes in git repos ask git what changed instead of stat-ing every file:
+        uncommitted/untracked changes, commits since the last index, and paths that were dirty last time.
+        Returns (paths, full_scan)."""
+        head = git(["rev-parse", "HEAD"], self.root)
+        head = head.strip() if head else ""
+        indexed = self.meta("indexed_head")
+        if not lazy or not head or not indexed:
+            return list_files(self.root), True
+        cands = set(json.loads(self.meta("dirty_paths", "[]")))
+        if indexed != head:
+            diff = git(["diff", "--name-only", "-z", "--no-renames", indexed, head], self.root)
+            if diff is None:  # indexed commit no longer exists (rebase, shallow fetch): rescan everything
+                return list_files(self.root), True
+            cands.update(p for p in diff.split("\0") if p)
+        status = git(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"], self.root)
+        if status is None:
+            return list_files(self.root), True
+        dirty = [entry[3:] for entry in status.split("\0") if len(entry) > 3]
+        cands.update(dirty)
+        self.set_meta("dirty_paths", json.dumps(sorted(dirty)))
+        cfg = load_config(self.root)
+        extra = set(included_ignored(self.root, cfg)) if cfg["include"] else set()
+        if cfg["include"]:  # git status does not report ignored files: check the included ones directly
+            cands |= extra | set(json.loads(self.meta("included_paths", "[]")))
+            self.set_meta("included_paths", json.dumps(sorted(extra)))
+        return sorted(p for p in cands if p in extra or not (_skip(p) or (cfg["exclude"] and _glob_match(p, cfg["exclude"])))), False
 
     def _refresh_locked(self, lazy, force_ranks, progress):
         t0 = time.time()
-        paths = list_files(self.root)
-        existing = {r["path"]: r for r in self.db.execute("SELECT id, path, size, mtime, hash, lang FROM files")}
-        current = set(paths)
-        deleted = [r["id"] for p, r in existing.items() if p not in current]
+        paths, full_scan = self._candidates(lazy)
+        if full_scan:
+            existing = {r["path"]: r for r in self.db.execute("SELECT id, path, size, mtime, hash, lang FROM files")}
+            current = set(paths)
+            gone = [p for p in existing if p not in current]
+        else:
+            existing = {}
+            for i in range(0, len(paths), 500):
+                chunk = paths[i:i + 500]
+                for r in self.db.execute(f"SELECT id, path, size, mtime, hash, lang FROM files WHERE path IN "
+                                         f"({','.join('?' * len(chunk))})", chunk):
+                    existing[r["path"]] = r
+            gone = [p for p in paths if p in existing and not (self.root / p).exists()]
+        deleted = [existing[p]["id"] for p in gone]
         for fid in deleted:
             self._delete_file_rows(fid, also_file=True)
+        gone_set = set(gone)
 
-        added, changed, manifests_touched = 0, [], bool(deleted and any(is_manifest(p) for p in existing if p not in current))
+        added, changed = 0, []
+        manifests_touched = any(is_manifest(p) for p in gone)
         packages_changed = False
+        to_parse = []  # (path, old, stat, lang, text, hash)
         for i, p in enumerate(paths):
-            if progress and i % 500 == 0:
+            if p in gone_set:
+                continue
+            if progress and i % 2000 == 0:
                 progress(i, len(paths))
             full = self.root / p
             try:
@@ -151,48 +219,87 @@ class Store:
             if old is not None and old["hash"] == h:
                 self.db.execute("UPDATE files SET mtime=?, size=? WHERE id=?", (st.st_mtime, st.st_size, old["id"]))
                 continue
-            facts = extract(text, lang)
-            if old is not None:
-                fid = old["id"]
-                self._delete_file_rows(fid, also_file=False)
-                prev_pkg = self.db.execute("SELECT package FROM files WHERE id=?", (fid,)).fetchone()[0]
-                packages_changed |= (prev_pkg or "") != (facts.package or "")
-                self.db.execute("UPDATE files SET lang=?, size=?, mtime=?, hash=?, lines=?, tokens=?, is_test=?, package=? WHERE id=?",
-                                (lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)),
-                                 facts.package, fid))
-            else:
-                cur = self.db.execute(
-                    "INSERT INTO files(path, lang, size, mtime, hash, lines, tokens, is_test, package) VALUES(?,?,?,?,?,?,?,?,?)",
-                    (p, lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)), facts.package))
-                fid = cur.lastrowid
-                added += 1
-                packages_changed |= bool(facts.package)
-            self._store_facts(fid, p, facts)
-            changed.append(fid)
+            to_parse.append((p, old, st, lang, text, h))
+            if len(to_parse) >= PARSE_BATCH:  # parse and store as we go, so memory stays bounded
+                a, pc = self._store_batch(to_parse, changed)
+                added += a
+                packages_changed |= pc
+                to_parse = []
+        a, pc = self._store_batch(to_parse, changed)
+        added += a
+        packages_changed |= pc
 
         structure_changed = bool(added or deleted or packages_changed)
-        if structure_changed or changed:
-            self._resolve_imports(None if structure_changed else changed)
+        pending = self.meta("needs_full_resolve") == "1"
+        if lazy:
+            # Never do whole-repo work inside a query: resolve just the changed files now, and leave the global
+            # re-resolve and re-rank to the next full `index` (the caller starts one in the background).
+            if changed:
+                self._resolve_imports(changed)
+            if structure_changed:
+                self.set_meta("needs_full_resolve", 1)
+        elif structure_changed or pending:
+            self._resolve_imports(None)
+            self.set_meta("needs_full_resolve", 0)
+        elif changed:
+            self._resolve_imports(changed)
         if manifests_touched or self.meta("deps_done") is None:
             self._index_deps()
             self.set_meta("deps_done", 1)
 
         dirty = bool(changed or deleted or added)
         last_rank = float(self.meta("last_rank", 0))
-        need_ranks = force_ranks or (dirty and (not lazy or structure_changed or time.time() - last_rank > RANK_MAX_AGE)) \
-            or last_rank == 0
+        need_ranks = force_ranks or last_rank == 0 or (not lazy and (dirty or pending)) \
+            or (lazy and dirty and not structure_changed and time.time() - last_rank > RANK_MAX_AGE
+                and len(changed) < 50 and self._file_count() < 3000)
         if need_ranks:
             self._compute_ranks()
             self.set_meta("last_rank", time.time())
         elif dirty:
             self.set_meta("ranks_stale", 1)
         self.set_meta("last_refresh", time.time())
-        head = git(["rev-parse", "--short", "HEAD"], self.root)
+        head = git(["rev-parse", "HEAD"], self.root)
         if head:
-            self.set_meta("git_head", head.strip())
+            self.set_meta("git_head", head.strip()[:8])
+            if full_scan or lazy:
+                self.set_meta("indexed_head", head.strip())
+        if full_scan:
+            st = git(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"], self.root)
+            self.set_meta("dirty_paths", json.dumps(sorted(e[3:] for e in (st or "").split("\0") if len(e) > 3)))
         self.set_meta("version", VERSION)
-        return {"files": len(paths), "added": added, "updated": len(changed), "deleted": len(deleted),
-                "ranked": need_ranks, "seconds": round(time.time() - t0, 2)}
+        return {"files": len(paths) if full_scan else self._file_count(), "checked": len(paths), "added": added,
+                "updated": len(changed), "deleted": len(deleted), "ranked": need_ranks,
+                "background_needed": lazy and (structure_changed or self.meta("needs_full_resolve") == "1"),
+                "seconds": round(time.time() - t0, 2)}
+
+    def _store_batch(self, batch, changed):
+        """Parse a batch (in parallel when large) and write it. Returns (files added, packages changed)."""
+        added, packages_changed = 0, False
+        for p, old, st, lang, text, h, facts in _parse_batches(batch):
+            if old is not None:
+                fid = old["id"]
+                self._delete_file_rows(fid, also_file=False)
+                prev_pkg = self.db.execute("SELECT package FROM files WHERE id=?", (fid,)).fetchone()[0]
+                packages_changed |= (prev_pkg or "") != (facts.package or "")
+                self.db.execute("UPDATE files SET lang=?, size=?, mtime=?, hash=?, lines=?, tokens=?, is_test=?, package=?, "
+                                "generated=? WHERE id=?",
+                                (lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)),
+                                 facts.package, int(is_generated(p, text)), fid))
+            else:
+                cur = self.db.execute(
+                    "INSERT INTO files(path, lang, size, mtime, hash, lines, tokens, is_test, package, generated) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (p, lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)),
+                     facts.package, int(is_generated(p, text))))
+                fid = cur.lastrowid
+                added += 1
+                packages_changed |= bool(facts.package)
+            self._store_facts(fid, p, facts)
+            changed.append(fid)
+        return added, packages_changed
+
+    def _file_count(self) -> int:
+        return self.db.execute("SELECT COUNT(*) FROM files").fetchone()[0]
 
     def _delete_file_rows(self, fid: int, also_file: bool):
         sym_ids = [r[0] for r in self.db.execute("SELECT id FROM symbols WHERE file_id=?", (fid,))]
@@ -315,9 +422,13 @@ class Store:
             used = {r[0] for r in db.execute("SELECT name FROM idents WHERE file_id=?", (fid,))}
             hits: dict = {}
             for ns in scope:
-                for name, files in by_ns.get(ns, {}).items():
-                    if name in used:
-                        for t in files:
+                table = by_ns.get(ns)
+                if not table:
+                    continue
+                small, big = (used, table) if len(used) < len(table) else (table.keys(), used)
+                for name in small:  # iterate the smaller side: names used vs types in the namespace
+                    if name in big:
+                        for t in table[name]:
                             if t != fid:
                                 hits.setdefault((ns, t), None)
             db.executemany("DELETE FROM imports WHERE file_id=? AND raw=?", [(fid, ns) for ns in usings])
@@ -352,6 +463,8 @@ class Store:
                 mul *= 10
             if name.startswith("_"):
                 mul *= 0.1
+            if len(dfiles) > MAX_DEFS_FOR_EDGES:
+                continue  # defined in many files (Create, Dispose, Item…): almost no signal, quadratic cost
             if len(dfiles) > 5:
                 mul *= 0.1
             w = mul * math.sqrt(count)
@@ -368,8 +481,10 @@ class Store:
         rank = pagerank(code_files, edges)
 
         self.db.execute("DELETE FROM edges")
+        # Persist only each file's strongest edges: queries need the important neighbours, not the long tail.
         self.db.executemany("INSERT INTO edges VALUES(?,?,?,?)",
-                            [(s, d, w, "ref") for s, ds in edges.items() for d, w in ds.items()])
+                            [(s, d, w, "ref") for s, ds in edges.items()
+                             for d, w in sorted(ds.items(), key=lambda kv: -kv[1])[:MAX_EDGES_PER_FILE]])
         self.db.executemany("UPDATE files SET rank=? WHERE id=?", [(v, k) for k, v in rank.items()])
 
         out_w = {s: sum(ds.values()) for s, ds in edges.items()}
@@ -395,3 +510,44 @@ def open_store(root: Path, db_path: Path) -> Store:
 
 def db_exists(db_path: Path) -> bool:
     return db_path.exists() and os.path.getsize(db_path) > 0
+
+
+PARALLEL_MIN = 300  # files: below this, parsing in-process is faster than starting workers
+
+
+PARSE_BATCH = 1000  # parse and store this many files at a time to bound memory on large repos
+
+
+def _parse_batches(to_parse, progress=None):
+    """Yield (path, old, stat, lang, text, hash, facts), parsing in bounded batches."""
+    for i in range(0, len(to_parse), PARSE_BATCH):
+        batch = to_parse[i:i + PARSE_BATCH]
+        if progress:
+            progress(i, len(to_parse))
+        for item, facts in zip(batch, _parse_all([(x[4], x[3]) for x in batch])):
+            yield (*item, facts)
+        for j in range(i, min(i + PARSE_BATCH, len(to_parse))):
+            to_parse[j] = None  # release file text as soon as the batch is stored
+
+
+def _parse_one(job):
+    text, lang = job
+    return extract(text, lang)
+
+
+def _parse_all(jobs, progress=None):
+    """Parse files, in parallel worker processes for large batches (CODEMAP_WORKERS=1 disables)."""
+    workers = int(os.environ.get("CODEMAP_WORKERS", "0") or 0) or (os.cpu_count() or 1)
+    if len(jobs) < PARALLEL_MIN or workers <= 1:
+        return [_parse_one(j) for j in jobs]
+    try:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            out = []
+            for i, facts in enumerate(pool.map(_parse_one, jobs, chunksize=32)):
+                out.append(facts)
+                if progress and i % 2000 == 0:
+                    progress(i, len(jobs))
+            return out
+    except (OSError, RuntimeError, ImportError):
+        return [_parse_one(j) for j in jobs]  # restricted environments: fall back to one process

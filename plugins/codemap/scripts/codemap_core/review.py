@@ -321,7 +321,9 @@ def analyze(store, base: str | None = None, head: str = WORKTREE) -> dict:
         row = db.execute("SELECT id, rank, is_test, tokens FROM files WHERE path=?", (d.path,)).fetchone()
         info = {"path": d.path, "old_path": d.old_path if d.old_path != d.path else None, "status": d.status,
                 "lang": lang, "added": d.added, "deleted": d.deleted, "binary": d.binary,
-                "is_test": is_test_path(d.path), "generated": bool(GENERATED.search(d.path)),
+                "is_test": is_test_path(d.path),
+                "generated": bool(GENERATED.search(d.path)) or bool(row and db.execute(
+                    "SELECT generated FROM files WHERE id=?", (row["id"],)).fetchone()[0]),
                 "rank_pct": round(pct(row["rank"]), 2) if row else None, "symbols": [], "dependents": [],
                 "tests": [], "tokens": row["tokens"] if row else None,
                 "hunks": [{"old_start": h.old_start, "old_len": h.old_len, "new_start": h.new_start, "new_len": h.new_len,

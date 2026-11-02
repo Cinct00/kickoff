@@ -15,6 +15,8 @@ from .util import est_tokens, fmt_tokens
 
 PACKAGE_SCOPED = {"go", "java", "kotlin", "scala", "csharp", "swift"}
 MAP_KINDS_EXCLUDE = ("var", "field", "h3", "h4", "h5", "h6")
+MAP_CANDIDATE_FILES = 300
+FOCUS_MAX_NODES = 3000
 ENTRY_RE = re.compile(r"(^|/)(main|__main__|cli|app|server|index|manage|program|wsgi|asgi)\.(py|js|ts|go|rs|cs|java|kt|rb|php)$", re.I)
 
 
@@ -140,7 +142,7 @@ class Q:
         if entries:
             lines.append("entry points: " + ", ".join(entries))
         central = db.execute("SELECT path FROM files WHERE lang IS NOT NULL AND lang != 'markdown' AND is_test=0 "
-                             "ORDER BY rank DESC LIMIT 10").fetchall()
+                             "AND generated=0 ORDER BY rank DESC LIMIT 10").fetchall()
         if central:
             lines.append("central files: " + ", ".join(r[0] for r in central))
         ext = db.execute("SELECT external, COUNT(DISTINCT file_id) c FROM imports WHERE external IS NOT NULL "
@@ -199,18 +201,40 @@ class Q:
                     focus_names.add(s["name"])
         file_rank = {r[0]: r[1] for r in db.execute("SELECT id, rank FROM files WHERE lang IS NOT NULL")}
         if focus_files:
+            # Personalised PageRank on the focus neighbourhood only (2 hops, strongest edges first): on a
+            # 35k-file repo the whole graph takes seconds, the neighbourhood milliseconds.
             edges = defaultdict(dict)
-            for s, d, w in db.execute("SELECT src, dst, weight FROM edges"):
-                edges[s][d] = w
-                edges[d].setdefault(s, w * 0.5)  # let focus flow to both dependencies and dependents
+            nodes, frontier = set(focus_files), set(focus_files)
+            for _hop in range(2):
+                if not frontier or len(nodes) >= FOCUS_MAX_NODES:
+                    break
+                ids = ",".join(map(str, frontier))
+                found = db.execute(f"SELECT src, dst, weight FROM edges WHERE src IN ({ids}) "
+                                   f"UNION ALL SELECT src, dst, weight FROM edges WHERE dst IN ({ids}) "
+                                   f"ORDER BY weight DESC LIMIT {FOCUS_MAX_NODES * 4}").fetchall()
+                nxt = set()
+                for s, d, w in found:
+                    edges[s][d] = w
+                    edges[d].setdefault(s, w * 0.5)  # let focus flow to both dependencies and dependents
+                    for n in (s, d):
+                        if n not in nodes and len(nodes) + len(nxt) < FOCUS_MAX_NODES:
+                            nxt.add(n)
+                nodes |= nxt
+                frontier = nxt
+            sub = {s: {d: w for d, w in ds.items() if d in nodes} for s, ds in edges.items() if s in nodes}
             pers = {f: 1.0 for f in focus_files}
-            file_rank = pagerank(list(file_rank), edges, pers)
+            local = pagerank(sorted(nodes), sub, pers)
+            file_rank = {f: local.get(f, 0.0) for f in nodes}
         kinds = ",".join(f"'{k}'" for k in MAP_KINDS_EXCLUDE)
+        # Only the highest-ranked files can make it into a token-budgeted map; don't score the whole repo.
+        hidden = {r[0] for r in db.execute("SELECT id FROM files WHERE generated=1 OR is_test=1")}
+        top_files = [f for f in sorted(file_rank, key=lambda f: -file_rank[f]) if f not in hidden][:MAP_CANDIDATE_FILES]
+        cand = ",".join(str(f) for f in set(top_files) | focus_files) or "0"
         rows = db.execute(
             f"SELECT s.id, s.file_id, s.name, s.kind, s.line, s.signature, s.parent_id, s.rank, f.path, f.tokens, "
             f"p.kind AS pkind, p.line AS pline, p.signature AS psig "
             f"FROM symbols s JOIN files f ON f.id=s.file_id LEFT JOIN symbols p ON p.id=s.parent_id "
-            f"WHERE s.kind NOT IN ({kinds}) AND f.is_test=0 "
+            f"WHERE s.file_id IN ({cand}) AND s.kind NOT IN ({kinds}) AND f.is_test=0 "
             f"AND (p.kind IS NULL OR p.kind NOT IN ('function','method'))").fetchall()
         max_by_file = defaultdict(float)
         for r in rows:
@@ -248,7 +272,8 @@ class Q:
                 for r in syms:
                     depth = 1 + min(self._depth(r, cache), 3)
                     # Keep the enclosing class line so a method never appears without its type.
-                    if r["parent_id"] and r["parent_id"] not in chosen_ids and r["parent_id"] not in shown_parents and r["psig"]:
+                    if r["parent_id"] and r["parent_id"] not in chosen_ids and r["parent_id"] not in shown_parents and r["psig"] \
+                            and r["pkind"] != "namespace":
                         shown_parents.add(r["parent_id"])
                         out.append("  " * (depth - 1) + f"{r['pline']}: {r['psig']}")
                     sig = r["signature"]
