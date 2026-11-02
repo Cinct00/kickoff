@@ -1,0 +1,18 @@
+{
+  "name": "doc-coauthor",
+  "version": "2.0.0",
+  "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
+  "author": {
+    "name": "gimarais"
+  },
+  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/doc-coauthor",
+  "repository": "https://github.com/gimarais/ai-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "rfc",
+    "prd",
+    "writing",
+    "review"
+  ]
+}

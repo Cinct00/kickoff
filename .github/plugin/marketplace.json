@@ -1,0 +1,121 @@
+{
+  "name": "ai-toolkit",
+  "owner": {
+    "name": "gimarais"
+  },
+  "metadata": {
+    "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kickoff",
+      "source": "./plugins/kickoff",
+      "description": "The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "routing",
+        "orchestration",
+        "kickoff",
+        "harvest",
+        "gap-analysis",
+        "self-improving"
+      ]
+    },
+    {
+      "name": "engineering-craft",
+      "source": "./plugins/engineering-craft",
+      "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "engineering",
+        "debugging",
+        "testing",
+        "code-review",
+        "architecture",
+        "refactoring"
+      ]
+    },
+    {
+      "name": "thinking-tools",
+      "source": "./plugins/thinking-tools",
+      "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "reasoning",
+        "decision-making",
+        "research",
+        "systems-thinking"
+      ]
+    },
+    {
+      "name": "communication-and-leadership",
+      "source": "./plugins/communication-and-leadership",
+      "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "writing",
+        "communication",
+        "leadership",
+        "meetings",
+        "negotiation"
+      ]
+    },
+    {
+      "name": "life-and-career",
+      "source": "./plugins/life-and-career",
+      "description": "Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "career",
+        "habits",
+        "learning",
+        "finance",
+        "health"
+      ]
+    },
+    {
+      "name": "doc-coauthor",
+      "source": "./plugins/doc-coauthor",
+      "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
+      "version": "2.0.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "documentation",
+        "rfc",
+        "prd",
+        "writing",
+        "review"
+      ]
+    }
+  ]
+}

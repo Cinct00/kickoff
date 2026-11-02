@@ -1,0 +1,46 @@
+name: catalog-refresh
+
+# Keeps the catalog kickoff searches in step with the upstream marketplaces,
+# so new Anthropic / GitHub / partner plugins become discoverable without anyone
+# remembering to rescan. Opens a PR when anything changed.
+#
+# Needs: Settings → Actions → General → "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Rescan upstream marketplaces
+        run: python3 scripts/toolkit.py catalog
+      - name: Validate
+        run: python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate
+      - name: Open PR if the catalog changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The date in the header changes every run; only open a PR for real changes.
+          if git diff --quiet -I '^# generated' -I '"generated"' -I '^Generated ' -- catalog plugins/kickoff/skills/kickoff/references; then
+            echo "catalog unchanged"; exit 0
+          fi
+          branch="catalog-refresh/$(date -u +%Y-%m-%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add catalog plugins/kickoff/skills/kickoff/references
+          git commit -m "catalog: refresh upstream marketplaces"
+          git push -u origin "$branch"
+          gh pr create --title "Catalog refresh $(date -u +%Y-%m-%d)" \
+            --body "Automated rescan of the upstream marketplaces listed in \`toolkit.json\`. Review new plugins in \`catalog/CATALOG.md\` and consider adding useful ones to \`upstream.profile\` or a kickoff route."

@@ -1,0 +1,28 @@
+{
+  "description": "ai-toolkit kickoff hooks (Claude Code format). Copilot uses copilot-hooks.json.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session_start.py\" --format claude",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/harvest_check.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

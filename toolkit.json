@@ -1,0 +1,117 @@
+{
+  "name": "ai-toolkit",
+  "version": "2.0.0",
+  "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
+  "owner": {
+    "name": "gimarais"
+  },
+  "repository": "gimarais/ai-toolkit",
+  "license": "MIT",
+
+  "plugins": {
+    "kickoff": {
+      "description": "The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.",
+      "category": "productivity",
+      "keywords": ["routing", "orchestration", "kickoff", "harvest", "gap-analysis", "self-improving"]
+    },
+    "engineering-craft": {
+      "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
+      "category": "development",
+      "keywords": ["engineering", "debugging", "testing", "code-review", "architecture", "refactoring"]
+    },
+    "thinking-tools": {
+      "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
+      "category": "productivity",
+      "keywords": ["reasoning", "decision-making", "research", "systems-thinking"]
+    },
+    "communication-and-leadership": {
+      "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
+      "category": "productivity",
+      "keywords": ["writing", "communication", "leadership", "meetings", "negotiation"]
+    },
+    "life-and-career": {
+      "description": "Skills for career moves, self-management, focus, habits, learning, health, training, starting a business and personal finance.",
+      "category": "productivity",
+      "keywords": ["career", "habits", "learning", "finance", "health"]
+    },
+    "doc-coauthor": {
+      "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
+      "category": "productivity",
+      "keywords": ["documentation", "rfc", "prd", "writing", "review"]
+    }
+  },
+
+  "bundles": {
+    "core": ["kickoff"],
+    "dev": ["kickoff", "engineering-craft", "thinking-tools", "doc-coauthor"],
+    "full": ["kickoff", "engineering-craft", "thinking-tools", "communication-and-leadership", "life-and-career", "doc-coauthor"]
+  },
+
+  "upstream": {
+    "marketplaces": [
+      { "name": "claude-plugins-official", "repo": "anthropics/claude-plugins-official", "publisher": "Anthropic", "trust": "official" },
+      { "name": "knowledge-work-plugins", "repo": "anthropics/knowledge-work-plugins", "publisher": "Anthropic", "trust": "official" },
+      { "name": "anthropic-agent-skills", "repo": "anthropics/skills", "publisher": "Anthropic", "trust": "official" },
+      { "name": "claude-for-financial-services", "repo": "anthropics/financial-services-plugins", "publisher": "Anthropic", "trust": "official" },
+      { "name": "claude-for-legal", "repo": "anthropics/claude-for-legal", "publisher": "Anthropic", "trust": "official" },
+      { "name": "copilot-plugins", "repo": "github/copilot-plugins", "publisher": "GitHub", "trust": "official" },
+      { "name": "awesome-copilot", "repo": "github/awesome-copilot", "publisher": "GitHub community", "trust": "community" }
+    ],
+
+    "profile": {
+      "$comment": "The plugins you run day to day. `toolkit.py install` installs these; kickoff treats them as available. Add or remove freely.",
+      "engineering": [
+        "feature-dev@claude-plugins-official",
+        "pr-review-toolkit@claude-plugins-official",
+        "code-review@claude-plugins-official",
+        "code-simplifier@claude-plugins-official",
+        "code-modernization@claude-plugins-official",
+        "security-guidance@claude-plugins-official",
+        "claude-security@claude-plugins-official",
+        "ralph-loop@claude-plugins-official",
+        "engineering@knowledge-work-plugins"
+      ],
+      "toolkit-growth": [
+        "skill-creator@claude-plugins-official",
+        "hookify@claude-plugins-official",
+        "claude-code-setup@claude-plugins-official",
+        "claude-md-management@claude-plugins-official"
+      ],
+      "frontend-and-design": [
+        "frontend-design@claude-plugins-official",
+        "modern-web-guidance@claude-plugins-official",
+        "playground@claude-plugins-official",
+        "design@knowledge-work-plugins"
+      ],
+      "data-and-documents": [
+        "data@knowledge-work-plugins",
+        "pdf-viewer@knowledge-work-plugins",
+        "document-skills@anthropic-agent-skills",
+        "example-skills@anthropic-agent-skills"
+      ],
+      "work-and-domain": [
+        "productivity@knowledge-work-plugins",
+        "cowork-plugin-management@knowledge-work-plugins",
+        "market-researcher@claude-for-financial-services",
+        "ai-governance-legal@claude-for-legal",
+        "learn-with-coursera@claude-plugins-official"
+      ]
+    }
+  },
+
+  "app_builtins": {
+    "$comment": "Skills that ship with the Claude apps (claude.ai / desktop / mobile) and are not redistributable or not portable. Kickoff routes to them only when running in the Claude app.",
+    "skills": {
+      "deep-research": "Parallel-subagent research that ends in a cited report.",
+      "docs": "Creates living shared documents in Claude Docs.",
+      "google-workspace": "Reads and writes Google Docs, Sheets and Slides.",
+      "import-memory": "Imports memory from another assistant.",
+      "learn": "Explains one concept now, interactively.",
+      "morning": "Morning briefing.",
+      "built-in-browser": "Drives the app's built-in browser.",
+      "chrome-browser": "Drives Chrome through the Claude extension.",
+      "computer-use": "Operates the desktop.",
+      "tutor": "Builds a persistent tutor artifact (vendored in life-and-career, but needs Claude app Artifacts)."
+    }
+  }
+}
