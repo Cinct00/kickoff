@@ -2,6 +2,7 @@
 """Token benchmark: codemap queries vs the usual grep-and-read workflow.
 
     python3 tests/bench_codemap.py path/to/repo:SymbolName [more:Symbols ...]
+    python3 tests/bench_codemap.py --review path/to/repo:BASE..HEAD [...]
 
 For each task it measures the tokens an agent would put into its context:
 
@@ -54,10 +55,34 @@ def baseline_symbol(repo: Path, name: str, def_file: str) -> int:
     return cost
 
 
+def review_bench(specs: list) -> int:
+    """`--review repo:BASE..HEAD …`: AI-review pack vs full patch + changed files."""
+    import json as _json
+    print("| Repo | Range | Files | Baseline (patch + changed files) | Review pack (budget 8k) | Saved | Analysis time |")
+    print("|---|---|---:|---:|---:|---:|---:|")
+    for spec in specs:
+        path, _, rng = spec.rpartition(":")
+        repo = Path(path).resolve()
+        base, _, head = rng.partition("..")
+        cm(repo, "index --quiet")
+        t0 = time.time()
+        a = _json.loads(cm(repo, f"review --base {base} --head {head or 'HEAD'} --format json"))
+        secs = round(time.time() - t0, 1)
+        pack = cm(repo, f"review --base {base} --head {head or 'HEAD'} --format context --budget 8000")
+        patch = subprocess.run(["git", "diff", base, head or "HEAD"], cwd=repo, capture_output=True, text=True).stdout
+        files = sum(est_tokens(read(repo, f["path"])) for f in a["files"] if f["status"] != "D")
+        base_t = est_tokens(patch) + files
+        print(f"| {repo.name} | `{rng}` | {len(a['files'])} | {base_t:,} | {est_tokens(pack):,} | "
+              f"{100 * (1 - est_tokens(pack) / max(base_t, 1)):.0f}% | {secs}s |")
+    return 0
+
+
 def main(argv: list) -> int:
     if not argv:
         print(__doc__)
         return 1
+    if argv[0] == "--review":
+        return review_bench(argv[1:])
     tasks: dict = {}
     for spec in argv:
         path, _, sym = spec.rpartition(":")

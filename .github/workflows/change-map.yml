@@ -1,0 +1,20 @@
+name: change-map
+
+# Dogfood: the toolkit's own PRs get the change map. Other repos use the template from
+# `toolkit.py adopt <repo> --review-workflow` (see docs/change-review.md).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  change-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/change-map

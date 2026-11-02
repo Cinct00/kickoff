@@ -38,7 +38,7 @@ The best results come from pairing one of each. When two have the same name (e.g
 | Find code, who calls what, what a change affects | — | `codemap` (`find`, `def`, `outline`, `show`, `refs`, `callers`, `impact`) before grep or opening files |
 | Bug, failing test, flaky behaviour | debugging-systematically | `engineering` debug; after two failed fixes, restart from Step 1 of the skill |
 | Writing tests / test plan | testing-strategy | `engineering` testing-strategy for the plan document |
-| Review before merge | reviewing-code | `pr-review-toolkit` review-pr locally; `code-review` to post on a GitHub PR |
+| Review before merge | reviewing-code | `change-review` first (codemap change map: risk-ranked order, callers outside the diff, test gaps, visual report), then `pr-review-toolkit` review-pr locally or `code-review` to post on a GitHub PR |
 | Security check | reviewing-code | `claude-security` agent (full scan), `code-modernization` modernize-harden `<dir>`; `security-guidance` hooks while editing |
 | Legacy cleanup / refactor | refactoring-and-legacy-code | `engineering` tech-debt to rank; `code-simplifier` agent on recent changes |
 | C# → Rust or .NET version migration | refactoring-and-legacy-code, architecting-solutions | `code-modernization`: modernize-assess → modernize-map → modernize-brief `<dir> rust` → modernize-transform `<dir> <module> rust` (cross-stack) or modernize-uplift (same stack) |

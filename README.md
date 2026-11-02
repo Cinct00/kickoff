@@ -76,7 +76,7 @@ This writes `extraKnownMarketplaces` + `enabledPlugins` into the project's `.cla
 | Plugin | Skills | Agents | Hooks | What it is for |
 |---|---|---|---|---|
 | [`kickoff`](plugins/kickoff) | 3 | 1 | yes | The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows. |
-| [`codemap`](plugins/codemap) | 1 | 1 | yes | Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read. |
+| [`codemap`](plugins/codemap) | 2 | 1 | yes | Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server. |
 | [`engineering-craft`](plugins/engineering-craft) | 11 | 0 | — | Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication. |
 | [`thinking-tools`](plugins/thinking-tools) | 10 | 0 | — | Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research. |
 | [`communication-and-leadership`](plugins/communication-and-leadership) | 7 | 0 | — | Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team. |
@@ -116,6 +116,18 @@ codemap impact src/models/user.py     # dependents by distance + tests to run
 
 Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer tokens** to locate and understand a symbol than grep-and-read, **91–97% fewer** to orient in a new repo. It's also an MCP server with a single tool, so Claude Code and Copilot call it directly. Python, TS/JS, Go, Java, Kotlin, Scala, C#, Rust, C/C++, PHP, Ruby, Swift and Markdown; stdlib only. Design, benchmark and the rejected alternatives (Docker in-memory DBs, graph DBs, LSP, embeddings) are in [docs/codemap.md](docs/codemap.md).
 
+### Change review: see what a PR really changed
+
+`codemap review` turns a PR, branch or local diff into a **structural change map**:
+- Symbol-level changes (`~` signature, `-` removed, `→` renamed or moved, `*` modified, `+` added).
+- **Callers outside the diff** that a signature change or removal will break.
+- A **risk-ranked review order**.
+- Affected and missing tests, and dependency changes.
+
+It renders as a PR comment with a Mermaid dependency view, an interactive HTML report, or a budgeted pack for AI reviewers (92–96% fewer tokens than patch + files on real multi-file changes). `toolkit.py adopt <repo> --review-workflow` adds it to every pull request. See [docs/change-review.md](docs/change-review.md).
+
+![Change map report](docs/img/change-map-report.png)
+
 ### The catalog
 
 [`catalog/CATALOG.md`](catalog/CATALOG.md) lists every plugin in the tracked marketplaces (Anthropic official, knowledge-work, agent skills, financial services, legal, GitHub `copilot-plugins` and `awesome-copilot`), with their skills, agents, commands, hooks and MCP servers. The kickoff skill ships a grep-friendly copy ([`catalog.tsv`](plugins/kickoff/skills/kickoff/references/catalog.tsv)) so it can find an existing plugin before building anything. Refresh with `python3 scripts/toolkit.py catalog`.
@@ -131,6 +143,7 @@ Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer
 | `harvest` | kickoff | Turns reusable work from the current session into new or improved skills, agents, hooks and kickoff routes, written in a portable format th… |
 | `kickoff` | kickoff | Routes a task to the right skills, agents and plugin commands on whatever platform you are running on (Claude Code, Claude app, GitHub Copi… |
 | `toolkit-adopt` | kickoff | Brings the AI toolkit into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work ther… |
+| `change-review` | codemap | Review a pull request, branch or local diff from its structural change map instead of a raw diff: symbol-level changes, a risk-ranked revie… |
 | `codemap` | codemap | Navigate a codebase through its indexed map instead of grepping and reading whole files: overview, ranked repo map, symbol search, definiti… |
 | `architecting-solutions` | engineering-craft | How to design a solution before building it — generating options, weighing trade-offs, choosing where to spend design effort, and writing d… |
 | `debugging-systematically` | engineering-craft | A hypothesis-driven method for diagnosing and fixing bugs — reproduction, bisection, instrumentation, and verifying the real cause instead… |
@@ -193,7 +206,7 @@ Measured on six real repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer
 | `toolkit.py doctor [--repo PATH] [--fix]` | Broken or stale user-level installs, new toolkit items not yet installed, uncommitted harvests, and **repo-vendored copies that shadow your user-level skills** (Copilot lets project skills override personal ones). `--fix` repairs the safe cases. Runs automatically (quietly) once a day at session start. |
 | `toolkit.py audit` | Always-on token cost per bundle, oversized descriptions, overlapping skills, routes and profile plugins that vanished upstream, skills untouched for six months. |
 | `toolkit.py catalog` | Rescans upstream marketplaces; a weekly workflow opens a PR when something new appears. |
-| `python3 -m unittest discover -s tests` | 28 tests: codemap extraction/resolution/queries/MCP across languages, install, adopt, doctor, hooks. |
+| `python3 -m unittest discover -s tests` | codemap extraction/resolution/queries/MCP across languages, change review (incl. HTML escaping), install, adopt, doctor, hooks, the PR action. |
 
 See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot user-level migration, [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
 

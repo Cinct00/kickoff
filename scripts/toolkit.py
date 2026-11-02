@@ -1135,6 +1135,18 @@ def cmd_adopt(args) -> int:
                     dest.write_text(content, encoding="utf-8")
                     info(f"  wrote {dest.relative_to(proj)}")
 
+    if args.review_workflow:
+        wf = proj / ".github" / "workflows" / "change-map.yml"
+        body = REVIEW_WORKFLOW.replace("__REPO__", cfg["repository"]).replace("__REF__", args.review_ref)
+        if wf.exists() and wf.read_text(encoding="utf-8") != body and not args.force:
+            warn(f"{wf} exists and differs; pass --force to overwrite")
+        elif args.dry_run:
+            info(f"  [dry-run] write {wf}")
+        else:
+            wf.parent.mkdir(parents=True, exist_ok=True)
+            wf.write_text(body, encoding="utf-8")
+            info(f"  wrote {wf.relative_to(proj)} (PR change map: sticky comment, job summary, HTML report, AI-review pack)")
+
     block = _project_block(cfg, plugins, args.mode == "vendor")
     _upsert_block(proj / "AGENTS.md", block, args.dry_run)
     claude_md = proj / "CLAUDE.md"
@@ -1166,6 +1178,34 @@ def cmd_adopt(args) -> int:
         lock_path.write_text(dump_json(lock), encoding="utf-8")
     info("adopt complete. Review the diff, then commit it in that repository.")
     return 0
+
+
+REVIEW_WORKFLOW = """name: change-map
+
+# Structural, risk-ranked change map on every pull request (ai-toolkit codemap review).
+# Posts a sticky PR comment with a Mermaid dependency view, writes the job summary,
+# and uploads an interactive HTML report plus an AI-review pack (review-pack.txt).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  change-map:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the base commit must be available
+      # Pin to a commit SHA for supply-chain safety, e.g. __REPO__/.github/actions/change-map@<sha>
+      - uses: __REPO__/.github/actions/change-map@__REF__
+        id: map
+      # Optional: hand the review pack to an AI reviewer step, e.g. include
+      # ${{ steps.map.outputs.review-pack }} in its prompt.
+"""
 
 
 GAPS_TEMPLATE = """# Toolkit gaps
@@ -1613,6 +1653,10 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--upstream", action="append", help="also enable plugin@marketplace from the profile (plugins mode)")
     a.add_argument("--github-agents", action="store_true", help="vendor mode: also write .github/agents/*.agent.md")
     a.add_argument("--hooks", action="store_true", help="vendor mode: also install Copilot hooks into .github/hooks/")
+    a.add_argument("--review-workflow", action="store_true",
+                   help="add .github/workflows/change-map.yml: change map on every PR (comment, summary, HTML report)")
+    a.add_argument("--review-ref", default="main", help="toolkit ref for the change-map action (pin a SHA in production)")
+    a.add_argument("--force", action="store_true", help="overwrite an existing, different change-map workflow")
     a.add_argument("--dry-run", action="store_true")
     a.set_defaults(func=cmd_adopt)
 

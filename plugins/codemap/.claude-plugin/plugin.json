@@ -1,7 +1,7 @@
 {
   "name": "codemap",
-  "version": "2.1.0",
-  "description": "Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read.",
+  "version": "2.2.0",
+  "description": "Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server.",
   "author": {
     "name": "gimarais"
   },
@@ -11,9 +11,10 @@
   "keywords": [
     "repo-map",
     "code-navigation",
+    "code-review",
+    "pull-request",
     "mcp",
     "token-efficiency",
-    "dependency-graph",
-    "sqlite"
+    "dependency-graph"
   ]
 }

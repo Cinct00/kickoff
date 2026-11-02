@@ -1,6 +1,6 @@
 {
   "name": "ai-toolkit",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
   "owner": {
     "name": "gimarais"
@@ -15,9 +15,9 @@
       "keywords": ["routing", "orchestration", "kickoff", "harvest", "gap-analysis", "self-improving"]
     },
     "codemap": {
-      "description": "Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read.",
+      "description": "Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server.",
       "category": "development",
-      "keywords": ["repo-map", "code-navigation", "mcp", "token-efficiency", "dependency-graph", "sqlite"]
+      "keywords": ["repo-map", "code-navigation", "code-review", "pull-request", "mcp", "token-efficiency", "dependency-graph"]
     },
     "engineering-craft": {
       "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",

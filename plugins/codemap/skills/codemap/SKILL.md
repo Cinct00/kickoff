@@ -31,6 +31,7 @@ The index lives in your user cache, not the repo. The first query builds it (sec
 | What breaks if I change X? | `impact <path or Symbol>` lists dependents by distance and the tests to run | guessing |
 | Type relationships | `hierarchy <Type>` | grepping `extends`/`implements` |
 | Third-party packages | `packages`, `packages <name>` (declared vs actually imported) | reading manifests |
+| What does this PR / branch change? | `review` (structural change map; see the `change-review` skill) | reading the raw diff |
 | Anything else | `schema`, then `sql "SELECT …"` (read-only) | |
 
 ## Rules

@@ -27,6 +27,7 @@ Any other Agent Skills client: copy or link `skills/*` into `~/.agents/skills/` 
 
 | Skill | Description |
 |---|---|
+| [`change-review`](skills/change-review/SKILL.md) | Review a pull request, branch or local diff from its structural change map instead of a raw diff: symbol-level changes, a risk-ranked review order, callers outside the diff that a change may break, affected and missing… |
 | [`codemap`](skills/codemap/SKILL.md) | Navigate a codebase through its indexed map instead of grepping and reading whole files: overview, ranked repo map, symbol search, definitions, outlines, exact symbol source, references, callers, dependencies, change im… |
 
 | Agent | Description |

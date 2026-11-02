@@ -99,6 +99,25 @@ class ToolkitTest(unittest.TestCase):
         hook = json.loads((repo / ".github" / "hooks" / "ai-toolkit-codemap.json").read_text())
         self.assertEqual(hook["hooks"]["sessionStart"][0]["env"]["PLUGIN_ROOT"], ".github/ai-toolkit/plugins/codemap")
 
+    def test_adopt_review_workflow(self):
+        repo = self.tmp / "repo-review"
+        repo.mkdir()
+        self.tk("adopt", str(repo), "--bundle", "core", "--review-workflow", "--review-ref", "abc123")
+        wf = (repo / ".github" / "workflows" / "change-map.yml").read_text()
+        self.assertIn("gimarais/ai-toolkit/.github/actions/change-map@abc123", wf)
+        self.assertIn("fetch-depth: 0", wf)
+        self.assertIn("pull-requests: write", wf)
+        self.assertNotIn("pull_request_target", wf)
+
+    def test_change_map_action_is_wired(self):
+        import re
+        action = (ROOT / ".github" / "actions" / "change-map" / "action.yml").read_text()
+        self.assertIn("using: composite", action)
+        self.assertTrue((ROOT / ".github" / "actions" / "change-map" / "../../../plugins/codemap/scripts/codemap.py").resolve().is_file())
+        # No untrusted expression may be interpolated straight into a shell script.
+        for block in re.findall(r"run: \|\n((?:        .*\n|\n)+)", action):
+            self.assertNotIn("${{", block)
+
     def test_hooks_emit_valid_json(self):
         for plugin in ("kickoff", "codemap"):
             root = ROOT / "plugins" / plugin

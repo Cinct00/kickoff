@@ -15,6 +15,7 @@ A plugin marketplace and skills library that must work identically in Claude Cod
 - `catalog/`: **generated** by `toolkit.py catalog` (index.json, CATALOG.md) plus the hand-kept `gaps.md` ledger. The kickoff skill's `references/catalog.tsv` is generated too.
 - `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+): build, validate, catalog, install, adopt, promote, doctor, audit, sync.
 - `plugins/codemap/scripts/`: the codemap engine (`codemap_core/`), also stdlib-only.
+- `.github/actions/change-map/`: the reusable PR change-map action (used by other repos via `adopt --review-workflow`).
 - `tests/`: unit tests (`python3 -m unittest discover -s tests`) and the codemap token benchmark.
 
 ## Working rules

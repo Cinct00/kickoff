@@ -29,6 +29,9 @@ COMMANDS_HELP = """commands (cheapest first — reach for these before grep or r
   hierarchy TYPE               base classes and subclasses
   packages [NAME]              declared dependencies and where they are imported
   cycles                       import cycles
+  review [--base REF] [--head REF] [--format text|context|md|html|json] [--out FILE]
+                               structural change map of a diff/PR: symbol changes, risk-ranked review order,
+                               callers outside the diff, affected/missing tests, dependency changes
   sql "SELECT …" / schema      raw read-only SQL over the index
   index [--full]               build/update the index (queries also update it lazily)
   status / savings             index freshness; tokens saved so far
@@ -73,11 +76,18 @@ def build_parser() -> argparse.ArgumentParser:
     p = add("packages", "pkgs"); p.add_argument("name", nargs="?"); p.add_argument("--limit", type=int, default=40)
     p = add("cycles"); p.add_argument("--limit", type=int, default=10)
     p = add("sql"); p.add_argument("query"); p.add_argument("--limit", type=int, default=100)
+    p = add("review", "changes")
+    p.add_argument("--base", help="base ref (default: merge-base with origin's default branch)")
+    p.add_argument("--head", default="WORKTREE", help="head ref (default: the working tree, incl. uncommitted changes)")
+    p.add_argument("--format", "-f", choices=["text", "context", "md", "html", "json"], default="text")
+    p.add_argument("--out", "-o", help="write to this file instead of stdout")
+    p.add_argument("--budget", type=int, default=6000, help="token budget for --format context")
+    p.add_argument("--max-files", type=int, default=40)
     add("mcp")
     return ap
 
 
-ALIASES = {"ov": "overview", "ls": "files", "search": "find", "define": "def", "ol": "outline", "cat": "show",
+ALIASES = {"changes": "review", "ov": "overview", "ls": "files", "search": "find", "define": "def", "ol": "outline", "cat": "show",
            "references": "refs", "types": "hierarchy", "pkgs": "packages"}
 NO_LOG = {"index", "status", "savings", "schema", "sql", "mcp"}
 
@@ -114,6 +124,8 @@ def dispatch(args, out=sys.stdout, err=sys.stderr) -> int:
             if first:
                 print("codemap: building index for this repo (first run)…", file=err, flush=True)
             store.refresh(lazy=not first)
+        if cmd == "review":
+            return _review(store, args, out, err)
         q = Q(store)
         kw = {k: v for k, v in vars(args).items() if k not in ("cmd", "repo", "db", "no_refresh")}
         if cmd == "def":
@@ -135,6 +147,35 @@ def dispatch(args, out=sys.stdout, err=sys.stderr) -> int:
         return 2
     finally:
         store.db.close()
+
+
+def _review(store, args, out, err) -> int:
+    import json as _json
+    from . import review_render as R
+    from .review import ReviewError, analyze, estimate_baseline_tokens
+    try:
+        a = analyze(store, args.base, args.head)
+    except ReviewError as e:
+        print(f"codemap: {e}", file=err)
+        return 2
+    if args.format == "json":
+        text = _json.dumps(a, indent=1, ensure_ascii=False)
+    elif args.format == "md":
+        text = R.markdown(a, max_files=min(args.max_files, 25))
+    elif args.format == "html":
+        text = R.html(a)
+    elif args.format == "context":
+        text = R.context(a, budget=args.budget)
+    else:
+        text = R.text(a, max_files=args.max_files)
+    if args.out:
+        Path(args.out).write_text(text, encoding="utf-8")
+        print(f"wrote {args.out} ({len(a['files'])} files, risk {a['summary']['level']})", file=out)
+    else:
+        print(text, file=out)
+    if args.format in ("text", "context"):
+        store.log_usage(f"review-{args.format}", est_tokens(text), estimate_baseline_tokens(store.root, a) - est_tokens(text))
+    return 0
 
 
 def run_line(line: str, out, err) -> int:

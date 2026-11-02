@@ -30,12 +30,17 @@ def _req_name(spec: str) -> tuple[str, str]:
 
 
 def parse_manifest(root: Path, path: str) -> list:
-    """Return [(ecosystem, name, version, scope)]."""
-    base = posixpath.basename(path)
+    """Return [(ecosystem, name, version, scope)] for a manifest on disk."""
     try:
         text = (root / path).read_text(encoding="utf-8", errors="replace")
     except OSError:
         return []
+    return parse_manifest_text(path, text)
+
+
+def parse_manifest_text(path: str, text: str) -> list:
+    """Return [(ecosystem, name, version, scope)] for manifest content (e.g. from `git show`)."""
+    base = posixpath.basename(path)
     out = []
     try:
         if base == "package.json":
