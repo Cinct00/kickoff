@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/img/kickoff-logo.svg" alt="Kickoff" width="560">
+  <img src="docs/img/kickoff-logo.svg" alt="Kickoff" width="640">
 </p>
 
 <p align="center">
