@@ -107,6 +107,7 @@ HEAD = {
         ''',
     "requirements.txt": "requests==2.31.0\npyyaml==6.0\n",
     "web/util.ts": 'export function fmt(x: string): string {\n  return x.trim() + "</script><script>alert(1)</script>";\n}\n',
+    "docs/notes.md": "<!-- generated: keep -->\n# Notes & <tips>\n\u2028line\n",
 }
 
 
@@ -202,8 +203,12 @@ class ReviewTest(unittest.TestCase):
         self.cm(f"review --base main --format html --out {out}")
         html = out.read_text()
         self.assertNotIn("<script>alert(1)</script>", html)
-        self.assertIn("<\\/script>", html)
         self.assertEqual(html.count("</script>"), 2, "only the data block and the app script may close")
+        block = html.split('<script type="application/json" id="data">', 1)[1].split("</script>", 1)[0]
+        self.assertNotIn("<", block)
+        data = json.loads(block)  # must stay valid JSON even with HTML comments in the diff
+        self.assertIn("docs/notes.md", {f["path"] for f in data["files"]})
+        self.assertIn("</script><script>alert(1)</script>", json.dumps(data, ensure_ascii=False))
 
     def test_context_pack_respects_budget(self):
         for budget in (300, 1500):

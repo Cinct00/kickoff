@@ -261,7 +261,10 @@ def markdown(a: dict, max_files: int = 25, html_hint: str | None = None) -> str:
 # --------------------------------------------------------------------------- html
 
 def html(a: dict) -> str:
-    data = json.dumps(a, ensure_ascii=False).replace("</", "<\\/").replace("<!--", "<\\!--")
+    # Escape <, > and & as JSON unicode escapes: the data can then never close the <script> block or open an
+    # HTML comment inside it, and it stays valid JSON. ("<\\!--" is not a legal JSON escape and broke the page.)
+    data = (json.dumps(a, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e")
+            .replace("&", "\\u0026").replace("\u2028", "\\u2028").replace("\u2029", "\\u2029"))
     title = f"Change map · {a['repo']}"
     return HTML_TEMPLATE.replace("__TITLE__", re.sub(r"[<>&\"]", "", title)).replace("__DATA__", data)
 
@@ -315,6 +318,9 @@ pre.diff span{display:block;padding:0 12px;white-space:pre}.dl-add{background:va
 </main>
 <script type="application/json" id="data">__DATA__</script>
 <script>
+window.addEventListener('error',function(e){var m=document.querySelector('main'),p=document.createElement('p');p.className='warn';
+  p.textContent='This change map failed to render: '+(e.message||e)+'. Open the Markdown or JSON report instead, and please report this.';
+  if(m)m.insertBefore(p,m.firstChild);});
 (function(){
 const A = JSON.parse(document.getElementById('data').textContent);
 const $ = (id) => document.getElementById(id);
