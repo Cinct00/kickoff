@@ -7,6 +7,8 @@ import re
 import sys
 from pathlib import Path
 
+from .util import read_text, safe_path
+
 JS_EXTS = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".d.ts")
 NODE_BUILTINS = set("""assert async_hooks buffer child_process cluster console constants crypto dgram diagnostics_channel dns
 domain events fs http http2 https inspector module net os path perf_hooks process punycode querystring readline repl
@@ -61,10 +63,8 @@ class Resolver:
 
     # ------------------------------------------------------------------ configs
     def _read(self, rel: str) -> str:
-        try:
-            return (self.root / rel).read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            return ""
+        fp = safe_path(self.root, rel)
+        return (read_text(fp) or "") if fp else ""
 
     def _go_modules(self) -> list:
         mods = []

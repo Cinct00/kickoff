@@ -713,6 +713,11 @@ class Ledger:
             self.data = {}
         self.entries = {e["path"]: e for e in self.data.get("entries", [])}
 
+    def owns(self, path: Path, source: Path) -> bool:
+        """True if a previous install wrote `path` from `source` (so it may be replaced)."""
+        e = self.entries.get(str(path))
+        return bool(e) and e.get("source") == str(source) and e.get("kind") in ("link", "copy")
+
     def add(self, kind: str, path: Path, source: Path | None, target: str, **extra) -> None:
         self.entries[str(path)] = {"kind": kind, "path": str(path), "source": str(source) if source else None,
                                    "target": target, **extra}
@@ -771,11 +776,12 @@ def _install_copilot_user(cfg: dict, bundle: str, ledger: Ledger, copy: bool, dr
     for pdir, kind, src in _bundle_items(cfg, bundle):
         if kind == "skill":
             dest = home / "skills" / src.name
-            _link_or_copy(src, dest, copy, dry_run)
+            managed = _link_or_copy(src, dest, copy, dry_run)
         else:
             dest = home / "agents" / src.name
-            _link_or_copy_file(src, dest, copy, dry_run)
-        ledger.add("copy" if copy or os.name == "nt" else "link", dest, src, "copilot-user")
+            managed = _link_or_copy_file(src, dest, copy, dry_run, owned=ledger.owns(dest, src))
+        if managed:
+            ledger.add("copy" if copy or os.name == "nt" else "link", dest, src, "copilot-user")
     hooks: dict = {}
     servers: dict = {}
     for pname in cfg["bundles"][bundle]:
@@ -816,8 +822,10 @@ def _install_claude_user(cfg: dict, bundle: str, ledger: Ledger, copy: bool, dry
     info(f"\n== claude user level ({home})")
     for pdir, kind, src in _bundle_items(cfg, bundle):
         dest = home / ("skills" if kind == "skill" else "agents") / (src.name if kind == "skill" else src.name.replace(".agent.md", ".md"))
-        (_link_or_copy if kind == "skill" else _link_or_copy_file)(src, dest, copy, dry_run)
-        ledger.add("copy" if copy or os.name == "nt" else "link", dest, src, "claude-user")
+        managed = (_link_or_copy(src, dest, copy, dry_run) if kind == "skill"
+                   else _link_or_copy_file(src, dest, copy, dry_run, owned=ledger.owns(dest, src)))
+        if managed:
+            ledger.add("copy" if copy or os.name == "nt" else "link", dest, src, "claude-user")
     settings = home / "settings.json"
     try:
         data = json.loads(settings.read_text(encoding="utf-8")) if settings.exists() else {}
@@ -827,7 +835,8 @@ def _install_claude_user(cfg: dict, bundle: str, ledger: Ledger, copy: bool, dry
     if data is not None:
         hooks = data.setdefault("hooks", {})
         for event in list(hooks):  # drop entries a previous install added, then re-add
-            hooks[event] = [g for g in hooks[event] if str(PLUGINS_DIR) not in json.dumps(g)]
+            ours = json.dumps(str(PLUGINS_DIR))[1:-1]  # JSON-escaped, so Windows backslashes match
+            hooks[event] = [g for g in hooks[event] if ours not in json.dumps(g)]
             if not hooks[event]:
                 del hooks[event]
         for pname in cfg["bundles"][bundle]:
@@ -931,8 +940,7 @@ def cmd_install(args) -> int:
         info(f"\n== skills directories: {', '.join(str(d) for d in dirs)}")
         for d in dirs:
             for _pdir, kind, src in _bundle_items(cfg, args.bundle):
-                if kind == "skill":
-                    _link_or_copy(src, d / src.name, args.copy, args.dry_run)
+                if kind == "skill" and _link_or_copy(src, d / src.name, args.copy, args.dry_run):
                     ledger.add("copy" if args.copy or os.name == "nt" else "link", d / src.name, src, "skills")
 
     if not args.no_shim:
@@ -957,19 +965,20 @@ def cmd_install(args) -> int:
     return 0
 
 
-def _link_or_copy(src: Path, dest: Path, copy: bool, dry_run: bool) -> None:
+def _link_or_copy(src: Path, dest: Path, copy: bool, dry_run: bool) -> bool:
+    """Link or copy a skill directory. Returns False when dest belongs to the user and was left alone."""
     if dest.is_symlink() and dest.resolve() == src.resolve():
-        return
+        return True
+    if dest.exists() and not dest.is_symlink() and not (dest / ".ai-toolkit").exists():
+        warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
+        return False
     if dry_run:
         info(f"  [dry-run] {'copy' if copy else 'link'} {dest} -> {src}")
-        return
+        return True
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.is_symlink():
         dest.unlink()
     elif dest.exists():
-        if not (dest / ".ai-toolkit").exists():
-            warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
-            return
         shutil.rmtree(dest)
     if copy or os.name == "nt":
         shutil.copytree(src, dest)
@@ -977,29 +986,29 @@ def _link_or_copy(src: Path, dest: Path, copy: bool, dry_run: bool) -> None:
     else:
         dest.symlink_to(src, target_is_directory=True)
     info(f"  {'copied' if copy else 'linked'} {dest.name}")
+    return True
 
 
-def _link_or_copy_file(src: Path, dest: Path, copy: bool, dry_run: bool) -> None:
+def _link_or_copy_file(src: Path, dest: Path, copy: bool, dry_run: bool, owned: bool = False) -> bool:
+    """Link or copy one agent file. `owned`: the install ledger says a previous install wrote dest from src.
+    Returns False when dest belongs to the user and was left alone."""
     if dest.is_symlink() and dest.resolve() == src.resolve():
-        return
+        return True
+    if dest.exists() and not dest.is_symlink() and not owned and not _same_file(dest, src):
+        warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
+        return False
     if dry_run:
         info(f"  [dry-run] {'copy' if copy else 'link'} {dest} -> {src}")
-        return
+        return True
     dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.is_symlink():
-        dest.unlink()
-    elif dest.exists():
-        if MANAGED_MARK not in dest.read_text(encoding="utf-8", errors="replace") and not _same_file(dest, src):
-            warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
-            return
+    if dest.is_symlink() or dest.exists():
+        dest.unlink()  # a stale link or a copy this toolkit owns
     if copy or os.name == "nt":
         shutil.copy2(src, dest)
     else:
         dest.symlink_to(src)
     info(f"  {'copied' if copy else 'linked'} {dest.name}")
-
-
-MANAGED_MARK = "ai-toolkit"
+    return True
 
 
 def _same_file(a: Path, b: Path) -> bool:
@@ -1083,6 +1092,12 @@ def cmd_adopt(args) -> int:
             die(f"unknown toolkit plugin '{p}' (choose from: {', '.join(cfg['plugins'])})")
     upstream = [r for r in (args.upstream or [])]
     info(f"adopting into {proj} ({args.mode}): {', '.join(plugins)}" + (f" + {', '.join(upstream)}" if upstream else ""))
+    lock_path = proj / ".github" / "ai-toolkit" / "lock.json"
+    try:
+        previous = json.loads(lock_path.read_text(encoding="utf-8")).get("vendored") or {}
+    except (OSError, json.JSONDecodeError, AttributeError):
+        previous = {}
+    vendor = Vendor(proj, previous, args.force, args.dry_run)
 
     if args.mode == "plugins":
         src = {"source": "github", "repo": cfg["repository"]}
@@ -1104,17 +1119,17 @@ def cmd_adopt(args) -> int:
             pdir = PLUGINS_DIR / pname
             for sdir in sorted((pdir / "skills").glob("*")):
                 if (sdir / "SKILL.md").is_file():
-                    _vendor_tree(sdir, proj / ".claude" / "skills" / sdir.name, args.dry_run)
+                    vendor.tree(sdir, proj / ".claude" / "skills" / sdir.name)
             for af in sorted((pdir / "agents").glob("*.agent.md")):
-                _vendor_file(af, proj / ".claude" / "agents" / af.name.replace(".agent.md", ".md"), args.dry_run)
+                vendor.file(af, proj / ".claude" / "agents" / af.name.replace(".agent.md", ".md"))
                 if args.github_agents:
-                    _vendor_file(af, proj / ".github" / "agents" / af.name, args.dry_run)
+                    vendor.file(af, proj / ".github" / "agents" / af.name)
             vend_root = f".github/ai-toolkit/plugins/{pname}"
             runtime = [d for d in ("scripts", "hooks") if (pdir / d).is_dir()]
             if (pdir / "scripts").is_dir() or (args.hooks and (pdir / "hooks").is_dir()):
                 # Hooks and MCP servers need the plugin's runtime files inside the repo.
                 for d in runtime:
-                    _vendor_tree(pdir / d, proj / vend_root / d, args.dry_run)
+                    vendor.tree(pdir / d, proj / vend_root / d)
             mcp_src = pdir / ".mcp.json"
             if mcp_src.is_file():
                 # Project MCP config: Claude Code reads .mcp.json; Copilot CLI reads .mcp.json / .github/mcp.json.
@@ -1172,12 +1187,17 @@ def cmd_adopt(args) -> int:
 
     lock = {"toolkit": cfg["repository"], "version": cfg["version"], "commit": _git_head(), "mode": args.mode,
             "plugins": plugins, "upstream": upstream, "adopted": _dt.date.today().isoformat()}
-    lock_path = proj / ".github" / "ai-toolkit" / "lock.json"
+    if args.mode == "vendor":
+        # Keep the recorded hash of anything skipped, so a later run still recognises it as customised.
+        lock["vendored"] = {**{k: v for k, v in previous.items() if k in vendor.skipped}, **vendor.hashes}
     if args.dry_run:
         info(f"  [dry-run] write {lock_path}")
     else:
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         lock_path.write_text(dump_json(lock), encoding="utf-8")
+    if vendor.skipped:
+        info(f"adopt complete, but {len(vendor.skipped)} locally customised path(s) were left as they are (see warnings).")
+        return 1
     info("adopt complete. Review the diff, then commit it in that repository.")
     return 0
 
@@ -1227,23 +1247,52 @@ def _git_head() -> str | None:
         return None
 
 
-def _vendor_tree(src: Path, dest: Path, dry_run: bool) -> None:
-    if dry_run:
-        info(f"  [dry-run] copy {src.relative_to(ROOT)} -> {dest}")
-        return
-    if dest.exists():
-        shutil.rmtree(dest)
-    shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__"))
-    info(f"  vendored {dest}")
+class Vendor:
+    """Copies toolkit files into a repo, but never overwrites a copy someone edited after the last adopt.
 
+    lock.json records the hash of every vendored path; a destination whose current hash matches neither that
+    record nor the new source is a local customisation and is skipped unless --force.
+    """
 
-def _vendor_file(src: Path, dest: Path, dry_run: bool) -> None:
-    if dry_run:
-        info(f"  [dry-run] copy {src.relative_to(ROOT)} -> {dest}")
-        return
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, dest)
-    info(f"  vendored {dest}")
+    def __init__(self, proj: Path, previous: dict, force: bool, dry_run: bool):
+        self.proj, self.previous, self.force, self.dry_run = proj, previous, force, dry_run
+        self.hashes: dict = {}
+        self.skipped: list = []
+
+    def _ok_to_write(self, src: Path, dest: Path) -> bool:
+        rel = dest.relative_to(self.proj).as_posix()
+        if not dest.exists() or self.force:
+            return True
+        current = _tree_hash(dest)
+        if current in (_tree_hash(src), self.previous.get(rel)):
+            return True
+        self.skipped.append(rel)
+        warn(f"{rel} has local changes since the last adopt; leaving it (pass --force to overwrite, "
+             f"or `toolkit.py promote` to keep the change in the toolkit)")
+        return False
+
+    def tree(self, src: Path, dest: Path) -> None:
+        if not self._ok_to_write(src, dest):
+            return
+        self.hashes[dest.relative_to(self.proj).as_posix()] = _tree_hash(src)
+        if self.dry_run:
+            info(f"  [dry-run] copy {src.relative_to(ROOT)} -> {dest}")
+            return
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__"))
+        info(f"  vendored {dest}")
+
+    def file(self, src: Path, dest: Path) -> None:
+        if not self._ok_to_write(src, dest):
+            return
+        self.hashes[dest.relative_to(self.proj).as_posix()] = _tree_hash(src)
+        if self.dry_run:
+            info(f"  [dry-run] copy {src.relative_to(ROOT)} -> {dest}")
+            return
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        info(f"  vendored {dest}")
 
 
 # --------------------------------------------------------------------------- promote
@@ -1270,10 +1319,15 @@ def cmd_promote(args) -> int:
         die(f"a skill named '{name}' already exists at {clash[0].relative_to(ROOT)}; improve it instead or pass --force")
     if dest.exists() and not args.force:
         die(f"{dest.relative_to(ROOT)} exists; pass --force to overwrite")
-    if src.is_dir():
-        _vendor_tree(src, dest, args.dry_run)
+    if args.dry_run:
+        info(f"  [dry-run] copy {src} -> {dest}")
+    elif src.is_dir():
+        if dest.exists():
+            shutil.rmtree(dest)  # --force was given (checked above)
+        shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__"))
     else:
-        _vendor_file(src, dest, args.dry_run)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
     if not args.dry_run:
         cmd_build(argparse.Namespace(check=False))
         info("promoted. Run `python3 scripts/toolkit.py validate`, then commit and push so other devices get it.")
@@ -1327,10 +1381,16 @@ def doctor_findings(cfg: dict, repo: Path | None, quick: bool = False) -> list:
         path = Path(path_s)
         src = Path(e["source"]) if e.get("source") else None
         if e["kind"] in ("link", "copy") and src is not None:
-            if not src.exists():
+            owned = _toolkit_owned(path, e["kind"])
+            if not path.exists() and not path.is_symlink():
+                found.append(("warn", f"{path} is missing; re-run `toolkit.py install`", None))
+            elif not owned:
+                found.append(("warn", f"{path} was replaced by something the toolkit did not write; leaving it "
+                              "(remove it yourself and re-run install to restore the toolkit version)", None))
+            elif not src.exists():
                 found.append(("warn", f"{path} points at a removed toolkit item ({src.name}); remove it",
                               lambda path=path: (path.unlink() if path.is_symlink() or path.is_file() else shutil.rmtree(path, ignore_errors=True))))
-            elif e["kind"] == "link" and (not path.is_symlink() or path.resolve() != src.resolve()):
+            elif e["kind"] == "link" and path.resolve() != src.resolve():
                 found.append(("warn", f"{path} is no longer linked to the toolkit; relink",
                               lambda path=path, src=src: _relink(path, src)))
             elif e["kind"] == "copy" and _tree_hash(path) != _tree_hash(src):
@@ -1413,6 +1473,17 @@ def doctor_findings(cfg: dict, repo: Path | None, quick: bool = False) -> list:
             if stale:
                 found.append(("warn", f"{sf.relative_to(repo)} enables unknown toolkit plugins: {', '.join(stale)}", None))
     return found
+
+
+def _toolkit_owned(path: Path, kind: str) -> bool:
+    """Whether doctor may replace or delete `path`: a symlink, a marked copied directory, or a copied file."""
+    if path.is_symlink():
+        return True
+    if kind == "link":
+        return False  # the toolkit wrote a link here; a real file or directory now means the user replaced it
+    if path.is_dir():
+        return (path / ".ai-toolkit").exists()
+    return path.is_file()
 
 
 def _relink(path: Path, src: Path) -> None:
@@ -1578,14 +1649,21 @@ def cmd_audit(args) -> int:
 
 def cmd_sync(args) -> int:
     cfg = load_config()
-    if (ROOT / ".git").exists():
-        run(["git", "pull", "--ff-only"], args.dry_run, cwd=ROOT)
+    failed = []
+    if (ROOT / ".git").exists() and run(["git", "pull", "--ff-only"], args.dry_run, cwd=ROOT) != 0:
+        warn("git pull failed (uncommitted or diverged changes?); fix the checkout, then sync again")
+        return 1  # updating plugins from a stale checkout would report success for old content
     for cli in ("claude", "copilot"):
         if shutil.which(cli) or args.dry_run:
             info(f"\n== {cli}")
-            run([cli, "plugin", "marketplace", "update", LOCAL_MARKETPLACE], args.dry_run)
+            if run([cli, "plugin", "marketplace", "update", LOCAL_MARKETPLACE], args.dry_run) != 0:
+                failed.append(f"{cli} marketplace update")
             for p in cfg["plugins"]:
-                run([cli, "plugin", "update", f"{p}@{LOCAL_MARKETPLACE}"], args.dry_run)
+                if run([cli, "plugin", "update", f"{p}@{LOCAL_MARKETPLACE}"], args.dry_run) != 0:
+                    failed.append(f"{cli} {p}")
+    if failed:
+        warn(f"sync finished with {len(failed)} failure(s): {', '.join(failed)}")
+        return 1
     return 0
 
 
@@ -1658,7 +1736,7 @@ def main(argv: list[str] | None = None) -> int:
     a.add_argument("--review-workflow", action="store_true",
                    help="add .github/workflows/change-map.yml: change map on every PR (comment, summary, HTML report)")
     a.add_argument("--review-ref", default="main", help="toolkit ref for the change-map action (pin a SHA in production)")
-    a.add_argument("--force", action="store_true", help="overwrite an existing, different change-map workflow")
+    a.add_argument("--force", action="store_true", help="overwrite an existing, different change-map workflow and locally customised vendored files")
     a.add_argument("--dry-run", action="store_true")
     a.set_defaults(func=cmd_adopt)
 

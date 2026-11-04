@@ -14,7 +14,7 @@ from .extract import extract
 from .graph import pagerank
 from .manifests import is_manifest, parse_manifest
 from .resolve import Resolver
-from .util import CODE_LANGS, _glob_match, _skip, content_hash, included_ignored, is_generated, load_config, est_tokens, git, is_test_path, lang_of, list_files, read_text, split_words
+from .util import CODE_LANGS, _glob_match, _skip, content_hash, safe_path, included_ignored, is_generated, load_config, est_tokens, git, is_test_path, lang_of, list_files, read_text, split_words
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
@@ -191,7 +191,9 @@ class Store:
                 continue
             if progress and i % 2000 == 0:
                 progress(i, len(paths))
-            full = self.root / p
+            full = safe_path(self.root, p)  # skips symlinks leaving the repo, devices, FIFOs
+            if full is None:
+                continue
             try:
                 st = full.stat()
             except OSError:
@@ -363,7 +365,8 @@ class Store:
         self.db.executemany("INSERT INTO imports(file_id, raw, names, level, line, target_id, external) VALUES(?,?,?,?,?,?,?)", extra)
         cs = [r["id"] for r in rows if r["lang"] == "csharp"]
         if cs:
-            self._csharp_scope_imports(cs if only_files is None else [f for f in only_files if f in set(cs)])
+            cs_set = set(cs)
+            self._csharp_scope_imports(cs if only_files is None else [f for f in only_files if f in cs_set])
 
     def _csharp_scope_imports(self, file_ids):
         """C# names resolve through `using` namespaces plus the file's own namespace and its parents.
@@ -397,9 +400,9 @@ class Store:
         for path in paths.values():
             base = path.rsplit("/", 1)[-1]
             if path.endswith(".csproj") or base == "Directory.Build.props":
-                try:
-                    text = (self.root / path).read_text(encoding="utf-8", errors="replace")
-                except OSError:
+                fp = safe_path(self.root, path)
+                text = read_text(fp) if fp else None
+                if text is None:
                     continue
                 found = set(re.findall(r'<Using\s+Include="([\w.]+)"(?![^>]*Static="true")', text))
                 if found:

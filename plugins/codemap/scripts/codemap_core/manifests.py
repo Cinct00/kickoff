@@ -31,9 +31,10 @@ def _req_name(spec: str) -> tuple[str, str]:
 
 def parse_manifest(root: Path, path: str) -> list:
     """Return [(ecosystem, name, version, scope)] for a manifest on disk."""
-    try:
-        text = (root / path).read_text(encoding="utf-8", errors="replace")
-    except OSError:
+    from .util import read_text, safe_path
+    fp = safe_path(root, path)
+    text = read_text(fp) if fp else None
+    if text is None:
         return []
     return parse_manifest_text(path, text)
 

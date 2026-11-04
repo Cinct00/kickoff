@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import shlex
 import sys
@@ -178,8 +179,16 @@ def _review(store, args, out, err) -> int:
     return 0
 
 
-def run_line(line: str, out, err) -> int:
-    """Run a command line (as used by the MCP tool)."""
+MCP_FORBIDDEN = (("repo", "--repo"), ("db", "--db"), ("out", "--out"))
+
+
+def run_line(line: str, out, err, restricted: bool = False) -> int:
+    """Run a command line (as used by the MCP tool).
+
+    restricted=True (the MCP server): the caller is an agent that may be acting on injected instructions, so the
+    command may only read the server's own repository. --repo/--db (other directories, other index files) and
+    review --out (writing files) are refused. Checked on the parsed arguments, so abbreviations like --rep fail too.
+    """
     try:
         argv = shlex.split(line)
     except ValueError as e:
@@ -191,10 +200,21 @@ def run_line(line: str, out, err) -> int:
         print("codemap: 'mcp' is not available from inside the MCP tool", file=err)
         return 2
     try:
-        args = build_parser().parse_args(argv)
-    except SystemExit:
+        # argparse prints help, --version and usage errors itself; keep them off the real stdout, which is the
+        # MCP server's JSON-RPC stream.
+        with contextlib.redirect_stdout(err), contextlib.redirect_stderr(err):
+            args = build_parser().parse_args(argv)
+    except SystemExit as e:
+        if e.code in (0, None):  # --help / --version
+            return 0
         print("codemap: invalid arguments. " + COMMANDS_HELP, file=err)
         return 2
+    if restricted:
+        used = [flag for attr, flag in MCP_FORBIDDEN if getattr(args, attr, None)]
+        if used:
+            print(f"codemap: {', '.join(used)} not available from the MCP tool: it only reads the current repository "
+                  "and never writes files. Run the codemap CLI yourself for that.", file=err)
+            return 2
     return dispatch(args, out, err)
 
 

@@ -154,6 +154,8 @@ By default codemap indexes exactly what git would show you: tracked files plus u
 
 Global options: `--repo PATH`, `--db PATH`, `--no-refresh`. Environment: `CODEMAP_CACHE` (index directory), `CODEMAP_DB`, `CODEMAP_REFRESH=0`, `CODEMAP_HOOK=0`, `CODEMAP_MAX_FILE_BYTES`.
 
+Safety: repositories are untrusted. codemap never reads a symlink that leads outside the repository, a device or FIFO, or a file over `CODEMAP_MAX_FILE_BYTES` (default 1 MB). The MCP tool is read-only and bound to its own repository (`CODEMAP_REPO` or the working directory): it refuses `--repo`, `--db` and `review --out`, so an agent acting on injected instructions cannot point it at other directories or make it write files. Use the CLI for those.
+
 ## How agents reach it
 
 | Route | Where it comes from |

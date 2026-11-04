@@ -345,8 +345,12 @@ class CodemapTest(unittest.TestCase):
         tools = handle({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]
         self.assertEqual([t["name"] for t in tools], ["codemap"])
         self.assertLess(len(json.dumps(tools)), 1200, "tool schema should stay small")
-        res = handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
-                      "params": {"name": "codemap", "arguments": {"cmd": f"--repo {self.repo} def UserService"}}})
+        os.environ["CODEMAP_REPO"] = str(self.repo)  # the server's own repository (--repo is refused over MCP)
+        try:
+            res = handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
+                          "params": {"name": "codemap", "arguments": {"cmd": "def UserService"}}})
+        finally:
+            os.environ.pop("CODEMAP_REPO", None)
         self.assertFalse(res["result"]["isError"])
         self.assertIn("class UserService", res["result"]["content"][0]["text"])
         self.assertIsNone(handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))

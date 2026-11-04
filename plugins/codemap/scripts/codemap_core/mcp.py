@@ -18,8 +18,10 @@ TOOL = {
         "Query the code map of the current repository instead of grepping or reading whole files. "
         "cmd examples: 'overview', 'map --budget 1500 --focus src/api.py', 'find user session', 'def UserService', "
         "'outline src/auth.py', 'show UserService.login', 'refs get_user', 'callers save', 'deps src/db.py', "
-        "'impact src/models/user.py', 'packages', 'sql \"SELECT …\"'. Run 'help' for all commands."
+        "'impact src/models/user.py', 'packages', 'sql \"SELECT …\"'. Run 'help' for all commands. "
+        "Read-only and limited to this repository: --repo, --db and --out are refused."
     ),
+    "annotations": {"readOnlyHint": True, "openWorldHint": False},
     "inputSchema": {
         "type": "object",
         "properties": {"cmd": {"type": "string", "description": "codemap command line, e.g. \"refs UserService\""}},
@@ -36,7 +38,7 @@ def _call(cmd: str) -> tuple[str, bool]:
         return COMMANDS_HELP, False
     out, err = io.StringIO(), io.StringIO()
     try:
-        rc = run_line(cmd, out, err)
+        rc = run_line(cmd, out, err, restricted=True)
     except Exception as e:  # never crash the server
         return f"codemap error: {type(e).__name__}: {e}", True
     text = out.getvalue().rstrip()

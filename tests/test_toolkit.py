@@ -131,5 +131,84 @@ class ToolkitTest(unittest.TestCase):
             self.assertIn("additionalContext", json.loads(out))
 
 
+class InstallSafetyTest(unittest.TestCase):
+    """install / doctor / adopt must never delete or overwrite files the user owns."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix="toolkit-safety-"))
+        self.home = self.tmp / "home"
+        (self.home / ".copilot").mkdir(parents=True)
+        self.env = {**os.environ, "HOME": str(self.home), "XDG_CONFIG_HOME": str(self.home / ".config"),
+                    "CLAUDE_CONFIG_DIR": str(self.home / ".claude"), "COPILOT_HOME": str(self.home / ".copilot"),
+                    "AI_TOOLKIT_BIN": str(self.home / "bin"), "CODEMAP_CACHE": str(self.tmp / "cache")}
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def tk(self, *args, rc=0):
+        proc = subprocess.run([sys.executable, str(TOOLKIT), *args], capture_output=True, text=True, env=self.env, timeout=300)
+        if rc is not None:
+            self.assertEqual(proc.returncode, rc, f"toolkit {' '.join(args)}:\n{proc.stdout}\n{proc.stderr}")
+        return proc
+
+    def ledger(self):
+        return json.loads((self.home / ".config" / "ai-toolkit" / "installed.json").read_text())
+
+    def test_user_files_with_toolkit_names_are_left_alone_and_not_recorded(self):
+        cop = self.home / ".copilot"
+        (cop / "skills" / "kickoff").mkdir(parents=True)
+        (cop / "skills" / "kickoff" / "SKILL.md").write_text("my own kickoff\n")
+        (cop / "agents").mkdir()
+        (cop / "agents" / "code-navigator.agent.md").write_text("my own agent\n")
+        for _ in range(2):  # the second run used to crash on existing files in link mode
+            out = self.tk("install", "--target", "copilot-user", "--bundle", "core", "--no-upstream", "--no-shim")
+            self.assertIn("not managed by ai-toolkit", out.stderr + out.stdout)
+        paths = {e["path"] for e in self.ledger()["entries"]}
+        self.assertNotIn(str(cop / "skills" / "kickoff"), paths)
+        self.assertNotIn(str(cop / "agents" / "code-navigator.agent.md"), paths)
+        self.tk("doctor", "--quick", "--fix", rc=None)  # exits 1 while it reports warnings
+        self.assertEqual((cop / "skills" / "kickoff" / "SKILL.md").read_text(), "my own kickoff\n")
+        self.assertEqual((cop / "agents" / "code-navigator.agent.md").read_text(), "my own agent\n")
+
+    def test_doctor_fix_ignores_stale_ledger_entries_for_user_files(self):
+        user_dir = self.home / ".copilot" / "skills" / "harvest"
+        user_dir.mkdir(parents=True)
+        (user_dir / "SKILL.md").write_text("mine\n")
+        ledger = self.home / ".config" / "ai-toolkit" / "installed.json"
+        ledger.parent.mkdir(parents=True)
+        src = ROOT / "plugins" / "kickoff" / "skills" / "harvest"
+        ledger.write_text(json.dumps({"targets": ["copilot-user"], "bundle": "core", "entries": [
+            {"kind": "link", "path": str(user_dir), "source": str(src), "target": "copilot-user"},
+            {"kind": "copy", "path": str(user_dir), "source": str(src.parent / "gone-skill"), "target": "copilot-user"}]}))
+        out = self.tk("doctor", "--quick", "--fix", rc=None)
+        self.assertIn("did not write", out.stdout + out.stderr)
+        self.assertEqual((user_dir / "SKILL.md").read_text(), "mine\n")
+
+    def test_copy_mode_refreshes_owned_agent_copies(self):
+        self.tk("install", "--target", "copilot-user", "--bundle", "core", "--no-upstream", "--no-shim", "--copy")
+        agent = self.home / ".copilot" / "agents" / "code-navigator.agent.md"
+        src = ROOT / "plugins" / "codemap" / "agents" / "code-navigator.agent.md"
+        agent.write_text("stale copy from an older toolkit version\n")
+        self.tk("install", "--target", "copilot-user", "--bundle", "core", "--no-upstream", "--no-shim", "--copy")
+        self.assertEqual(agent.read_text(), src.read_text())
+
+    def test_vendor_adopt_keeps_local_customisations(self):
+        repo = self.tmp / "proj"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        self.tk("adopt", str(repo), "--mode", "vendor", "--plugin", "kickoff")
+        skill = repo / ".claude" / "skills" / "harvest" / "SKILL.md"
+        untouched = repo / ".claude" / "skills" / "kickoff" / "SKILL.md"
+        skill.write_text("customised for this repo\n")
+        out = self.tk("adopt", str(repo), "--mode", "vendor", "--plugin", "kickoff", rc=1)
+        self.assertIn("local changes", out.stdout + out.stderr)
+        self.assertEqual(skill.read_text(), "customised for this repo\n")
+        self.assertTrue(untouched.is_file())
+        self.tk("adopt", str(repo), "--mode", "vendor", "--plugin", "kickoff", rc=1)  # still recognised next time
+        self.assertEqual(skill.read_text(), "customised for this repo\n")
+        self.tk("adopt", str(repo), "--mode", "vendor", "--plugin", "kickoff", "--force")
+        self.assertEqual(skill.read_text(), (ROOT / "plugins" / "kickoff" / "skills" / "harvest" / "SKILL.md").read_text())
+
+
 if __name__ == "__main__":
     unittest.main()

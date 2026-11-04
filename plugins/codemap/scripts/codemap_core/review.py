@@ -13,12 +13,13 @@ import os
 import posixpath
 import re
 import subprocess
+from pathlib import Path
 from dataclasses import dataclass, field
 
 from .extract import extract
 from .manifests import is_manifest, parse_manifest_text
 from .queries import PACKAGE_SCOPED, Q
-from .util import est_tokens, is_test_path, lang_of
+from .util import MAX_FILE_BYTES, est_tokens, is_test_path, lang_of, read_text, safe_path
 
 WORKTREE = "WORKTREE"
 MAX_HUNK_LINES_PER_FILE = 400
@@ -75,13 +76,14 @@ def _git(root, *args, check=True) -> str:
     return proc.stdout
 
 
-def resolve_base(root, base: str | None) -> tuple[str, str]:
-    """Return (sha, label). Default: merge-base of HEAD with the default branch."""
+def resolve_base(root, base: str | None, head: str = "HEAD") -> tuple[str, str]:
+    """Return (sha, label): the merge-base of `head` with `base` (default: the default branch)."""
+    head = "HEAD" if head == WORKTREE else head
     if base:
         sha = _git(root, "rev-parse", "--verify", base + "^{commit}", check=False).strip()
         if not sha:
             raise ReviewError(f"unknown base ref '{base}' (fetch it first: git fetch origin {base})")
-        mb = _git(root, "merge-base", sha, "HEAD", check=False).strip()
+        mb = _git(root, "merge-base", sha, head, check=False).strip()
         return (mb or sha), base
     cands = []
     if os.environ.get("CODEMAP_REVIEW_BASE"):
@@ -98,7 +100,7 @@ def resolve_base(root, base: str | None) -> tuple[str, str]:
             continue
         sha = _git(root, "rev-parse", "--verify", "-q", c + "^{commit}", check=False).strip()
         if sha:
-            mb = _git(root, "merge-base", sha, "HEAD", check=False).strip()
+            mb = _git(root, "merge-base", sha, head, check=False).strip()
             if mb:
                 return mb, c
     sha = _git(root, "rev-parse", "--verify", "-q", "HEAD~1", check=False).strip()
@@ -187,8 +189,11 @@ def collect_diff(root, base_sha: str, head: str) -> list:
         for p in _git(root, "ls-files", "--others", "--exclude-standard", "-z").split("\0"):
             if not p or p in seen:
                 continue
+            fp = safe_path(Path(root), p)
             try:
-                text = (root / p).read_text(encoding="utf-8")
+                if fp is None or fp.stat().st_size > MAX_FILE_BYTES:
+                    raise OSError("not a regular in-repo file, or too large")
+                text = fp.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
                 files.append(FileDiff(path=p, old_path=p, status="A", binary=True))
                 continue
@@ -202,10 +207,8 @@ def collect_diff(root, base_sha: str, head: str) -> list:
 
 def file_text(root, ref: str, path: str) -> str:
     if ref == WORKTREE:
-        try:
-            return (root / path).read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            return ""
+        fp = safe_path(Path(root), path)
+        return (read_text(fp) or "") if fp else ""
     return _git(root, "show", f"{ref}:{path}", check=False)
 
 
@@ -300,11 +303,11 @@ def symbol_changes(path, lang, old_text, new_text, fd: FileDiff) -> list:
 
 def analyze(store, base: str | None = None, head: str = WORKTREE) -> dict:
     root = store.root
-    base_sha, base_label = resolve_base(root, base)
     if head != WORKTREE:
         h = _git(root, "rev-parse", "--verify", head + "^{commit}", check=False).strip()
         if not h:
             raise ReviewError(f"unknown head ref '{head}'")
+    base_sha, base_label = resolve_base(root, base, head)
     diffs = collect_diff(root, base_sha, head)
     q = Q(store)
     db = store.db
@@ -372,6 +375,10 @@ def analyze(store, base: str | None = None, head: str = WORKTREE) -> dict:
                 tests += [p for (p,) in db.execute("SELECT path FROM files WHERE is_test=1 AND lang IS NOT NULL")
                           if stem in posixpath.basename(p).lower() and p not in tests]
             info["tests"] = sorted(set(tests))
+        elif d.status == "D" and lang and lang != "markdown" and not info["is_test"]:
+            # Deleted files are gone from the index; their importers are left with unresolved imports.
+            info["dependents"] = sorted(p for p, t in _paths(db, _importers_of_missing(db, d.path))
+                                        if not t and p not in changed_paths)
         all_moves.extend((info, c) for c in info["symbols"] if c["change"] in ("added", "removed"))
         files.append(info)
 
@@ -455,12 +462,45 @@ def analyze(store, base: str | None = None, head: str = WORKTREE) -> dict:
     }
 
 
+_INDEX_STEMS = {"__init__", "index", "mod", "lib", "main"}
+_SOURCE_EXT = re.compile(r"\.(py|pyi|js|jsx|ts|tsx|mjs|cjs|rb|php|rs|go|kt|java|scala|swift|cs)$")
+
+
+def _importers_of_missing(db, path: str) -> set:
+    """Files whose (now unresolved) imports name a module that was deleted or moved away from `path`."""
+    stem = _SOURCE_EXT.sub("", posixpath.basename(path))
+    parent = posixpath.basename(posixpath.dirname(path))
+    if stem in _INDEX_STEMS:
+        stem, parent = parent, posixpath.basename(posixpath.dirname(posixpath.dirname(path)))
+    if not stem:
+        return set()
+    out = set()
+    for fid, raw, names in db.execute("SELECT file_id, raw, names FROM imports WHERE (target_id IS NULL OR target_id NOT IN "
+                                      "(SELECT id FROM files)) AND (raw LIKE ? OR names LIKE ?)", (f"%{stem}%", f"%{stem}%")):
+        toks = [t for t in re.split(r"[./:\\]+", _SOURCE_EXT.sub("", (raw or "").strip("'\"").rstrip("/"))) if t]
+        imported = {n.strip() for n in re.split(r"[,\s]+", names or "") if n.strip()}
+        if (toks and toks[-1] == stem) or (stem in imported and toks and toks[-1] == parent):
+            out.add(fid)
+    return out
+
+
+def _paths(db, ids) -> list:
+    ids = list(ids)
+    if not ids:
+        return []
+    return [(r[0], r[1]) for r in db.execute(f"SELECT path, is_test FROM files WHERE id IN ({','.join(map(str, ids))})")]
+
+
 def _outside_callers(store, f, name, changed_paths) -> list:
     db = store.db
     row = db.execute("SELECT id, lang FROM files WHERE path=?", (f["path"],)).fetchone()
     importers = set()
     if row:
         importers = {r[0] for r in db.execute("SELECT DISTINCT file_id FROM imports WHERE target_id=?", (row[0],))}
+    if f["status"] == "D" or row is None:
+        importers |= _importers_of_missing(db, f["path"])
+    if f["status"] == "R" and f.get("old_path"):
+        importers |= _importers_of_missing(db, f["old_path"])  # importers still pointing at the old location
     d = posixpath.dirname(f["path"])
     out = []
     for fid, path, lines, lang, is_test in db.execute(

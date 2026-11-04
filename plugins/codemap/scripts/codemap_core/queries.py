@@ -11,7 +11,7 @@ from collections import Counter, defaultdict
 
 from .graph import pagerank, strongly_connected
 from .manifests import PY_IMPORT_ALIASES, norm_pkg
-from .util import est_tokens, fmt_tokens
+from .util import est_tokens, fmt_tokens, read_text, safe_path
 
 PACKAGE_SCOPED = {"go", "java", "kotlin", "scala", "csharp", "swift"}
 MAP_KINDS_EXCLUDE = ("var", "field", "h3", "h4", "h5", "h6")
@@ -488,10 +488,11 @@ class Q:
             # Include decorators / doc comment directly above.
         start = max(1, start - context)
         end = end + context
-        try:
-            lines = (self.s.root / f["path"]).read_text(encoding="utf-8", errors="replace").split("\n")
-        except OSError as e:
-            raise QueryError(f"cannot read {f['path']}: {e}")
+        fp = safe_path(self.s.root, f["path"])
+        text = read_text(fp) if fp else None
+        if text is None:
+            raise QueryError(f"cannot read {f['path']} (missing, too large, binary, or a symlink leading outside the repository)")
+        lines = text.split("\n")
         if not m:
             while start > 1 and re.match(r"^\s*(@|#\[|\[[A-Z])", lines[start - 2]):
                 start -= 1

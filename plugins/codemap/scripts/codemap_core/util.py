@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -220,10 +221,36 @@ def list_files(root: Path) -> list[str]:
     return sorted(result)
 
 
-def read_text(path: Path) -> str | None:
+def safe_path(root: Path, rel: str) -> Path | None:
+    """root/rel if it is a regular file that stays inside root, else None.
+
+    Repositories are untrusted: a committed symlink such as `config.py -> ~/.ssh/id_rsa` must not pull host
+    files into the index or into an agent's context, and `x.js -> /dev/zero` must not be read at all.
+    """
+    if not rel or rel.startswith(("/", "\\")) or ".." in rel.replace("\\", "/").split("/"):
+        return None
+    p = root / rel
     try:
-        data = path.read_bytes()
+        if p.is_symlink():
+            p.resolve().relative_to(root.resolve())
+        if not stat.S_ISREG(p.stat().st_mode):
+            return None
+    except (OSError, ValueError, RuntimeError):
+        return None
+    return p
+
+
+def read_text(path: Path) -> str | None:
+    """Text of a regular file up to MAX_FILE_BYTES; None for binaries, oversized or unreadable files."""
+    try:
+        st = path.stat()
+        if not stat.S_ISREG(st.st_mode) or st.st_size > MAX_FILE_BYTES:
+            return None
+        with path.open("rb") as fh:
+            data = fh.read(MAX_FILE_BYTES + 1)
     except OSError:
+        return None
+    if len(data) > MAX_FILE_BYTES:
         return None
     if b"\0" in data[:8000]:
         return None

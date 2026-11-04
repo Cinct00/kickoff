@@ -234,9 +234,64 @@ class ReviewTest(unittest.TestCase):
 
     def test_mcp_route(self):
         from codemap_core.mcp import handle
-        r = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
-                    "params": {"name": "codemap", "arguments": {"cmd": f"--repo {self.repo} review --base main"}}})
+        os.environ["CODEMAP_REPO"] = str(self.repo)  # the MCP server's own repository
+        try:
+            r = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                        "params": {"name": "codemap", "arguments": {"cmd": "review --base main"}}})
+        finally:
+            os.environ.pop("CODEMAP_REPO", None)
         self.assertIn("review order", r["result"]["content"][0]["text"])
+
+
+class ReviewRefsAndDeletionsTest(unittest.TestCase):
+    """--head REF on another branch, and callers left behind by a deleted module."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp(prefix="codemap-review2-"))
+        cls.repo = cls.tmp / "repo"
+        cls.repo.mkdir()
+        os.environ["CODEMAP_CACHE"] = str(cls.tmp / "cache")
+        write(cls.repo, {"pkg/__init__.py": "", "pkg/util.py": "def slugify(s):\n    return s.lower()\n",
+                         "pkg/cli.py": "from pkg.util import slugify\n\n\ndef run(x):\n    return slugify(x)\n",
+                         "app.py": "X = 1\n"})
+        git(cls.repo, "init", "-q", "-b", "main")
+        git(cls.repo, "add", "-A")
+        git(cls.repo, "commit", "-q", "-m", "base")
+        git(cls.repo, "checkout", "-q", "-b", "feature")
+        (cls.repo / "pkg" / "util.py").unlink()
+        git(cls.repo, "commit", "-q", "-am", "drop util")
+        git(cls.repo, "checkout", "-q", "main")
+        write(cls.repo, {"app.py": "X = 2\n"})  # main moves on independently
+        git(cls.repo, "commit", "-q", "-am", "main change")
+        git(cls.repo, "checkout", "-q", "feature")
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def review(self, line):
+        out, err = io.StringIO(), io.StringIO()
+        self.assertEqual(run_line(f"--repo {self.repo} {line}", out, err), 0, err.getvalue())
+        return json.loads(out.getvalue())
+
+    def test_deleted_module_reports_callers_outside_the_change(self):
+        a = self.review("review --base main --head HEAD --format json")
+        self.assertEqual({f["path"] for f in a["files"]}, {"pkg/util.py"}, "main's own change must not leak in")
+        util = a["files"][0]
+        self.assertEqual(util["status"], "D")
+        self.assertIn("pkg/cli.py", util["dependents"])
+        callers = [c for c in util["symbols"] if c["qualname"] == "slugify"][0].get("callers_outside", [])
+        self.assertTrue(any(c.startswith("pkg/cli.py") for c in callers), callers)
+        self.assertTrue(any("slugify" in x["message"] for x in a["attention"]))
+
+    def test_head_ref_uses_its_own_merge_base(self):
+        git(self.repo, "checkout", "-q", "main")
+        try:
+            a = self.review("review --base main --head feature --format json")
+        finally:
+            git(self.repo, "checkout", "-q", "feature")
+        self.assertEqual({f["path"] for f in a["files"]}, {"pkg/util.py"})
 
 
 class ReviewHelpersTest(unittest.TestCase):
