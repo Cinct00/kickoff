@@ -3,8 +3,8 @@
   "marketplaces": [
     {
       "name": "ai-toolkit",
-      "repo": "gimarais/ai-toolkit",
-      "publisher": "gimarais",
+      "repo": "Cinct00/ai-toolkit",
+      "publisher": "Cinct00",
       "trust": "own",
       "plugins": [
         {

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Set up ai-toolkit on this device (macOS / Linux / WSL / Git Bash).
 #
-#   curl -fsSL https://raw.githubusercontent.com/gimarais/ai-toolkit/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Cinct00/ai-toolkit/main/install.sh | bash
 #   ./install.sh --dry-run            # any toolkit.py install options pass through
 #
 # Clones (or updates) the toolkit into $AI_TOOLKIT_HOME (default ~/.ai-toolkit),
 # then runs `toolkit.py install`.
 set -euo pipefail
 
-REPO="${AI_TOOLKIT_REPO:-https://github.com/gimarais/ai-toolkit.git}"
+REPO="${AI_TOOLKIT_REPO:-https://github.com/Cinct00/ai-toolkit.git}"
 HOME_DIR="${AI_TOOLKIT_HOME:-$HOME/.ai-toolkit}"
 
 command -v git >/dev/null 2>&1 || { echo "error: git is required" >&2; exit 1; }

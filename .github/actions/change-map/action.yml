@@ -3,7 +3,7 @@ description: >
   Structural, risk-ranked change map for a pull request: symbol-level changes, callers outside the diff that a
   change may break, affected and missing tests, dependency changes. Posts a sticky PR comment with a Mermaid
   dependency view, writes the job summary, and uploads an interactive HTML report plus an AI-review pack.
-author: gimarais
+author: Cinct00
 branding:
   icon: map
   color: blue

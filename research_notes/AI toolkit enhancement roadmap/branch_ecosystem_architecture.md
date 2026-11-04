@@ -1,8 +1,8 @@
-# Branch ecosystem architecture: the plugin marketplace and the dynamic agent/skill layer (gimarais/ai-toolkit, unmerged branches)
+# Branch ecosystem architecture: the plugin marketplace and the dynamic agent/skill layer (Cinct00/ai-toolkit, unmerged branches)
 
 Scope: the marketplace, plugins, skills, agents, hooks and `toolkit.py` layer on the four stacked, unmerged branches. Codemap and change-review internals are covered by another researcher and appear here only where they touch the ecosystem. The primary state is the tip `origin/claude/csharp-rust-precision` (HEAD 1310ad7). It was read from a detached read-only worktree at `/tmp/claude-0/-home-user-ai-toolkit/b5675dc7-f18b-544b-bc17-7168c8b9107e/scratchpad/tip`.
 
-Citation convention. `TIP` = `https://github.com/gimarais/ai-toolkit/blob/claude/csharp-rust-precision`. Line anchors refer to the tip unless a different branch is named. Commit-message citations use `https://github.com/gimarais/ai-toolkit/commit/<sha>`.
+Citation convention. `TIP` = `https://github.com/Cinct00/ai-toolkit/blob/claude/csharp-rust-precision`. Line anchors refer to the tip unless a different branch is named. Commit-message citations use `https://github.com/Cinct00/ai-toolkit/commit/<sha>`.
 
 Branch lineage. The history is linear. `main` (92296f4) → sleepy-cerf-pluea6 (86211a2) → codemap-ecosystem (f95a508) → change-review (3891956) → csharp-rust-precision. The tip branch adds five commits on top: 94226ea, ed9a9bf, 0ef875a, 3e980fb, 1310ad7. All commits are dated 2026-11-02, between 07:09 and 10:06 UTC. `main` is an ancestor of all of them (checked with `git merge-base --is-ancestor`).
 
@@ -162,7 +162,7 @@ The repo is a self-hosted plugin marketplace. One hand-edited manifest, `toolkit
 | change-review | 1,696 | `adopt --review-workflow`, `--review-ref`, `--force` |
 | csharp-rust-precision | (unchanged) | `toolkit.py` is not in the diff from change-review |
 
-Sources: commit messages [86211a2](https://github.com/gimarais/ai-toolkit/commit/86211a2be5ed913803f4bbf633cd19642af48fdf), [f95a508](https://github.com/gimarais/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c), [3891956](https://github.com/gimarais/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618).
+Sources: commit messages [86211a2](https://github.com/Cinct00/ai-toolkit/commit/86211a2be5ed913803f4bbf633cd19642af48fdf), [f95a508](https://github.com/Cinct00/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c), [3891956](https://github.com/Cinct00/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618).
 
 **The "self-growing" loop** is mostly skill prose:
 
@@ -271,7 +271,7 @@ Character counts were measured on the tip; tokens are estimated as chars/4. "fil
   - managing-yourself, navigating-your-career, personal-finance-principles, prioritization-and-focus
   - starting-a-business, trading-and-markets, tutor, understanding-finance
 
-  The commit says this dropped the full bundle's always-on cost "from ~5,260 to ~4,070 tokens". A grep finds no remaining `life-and-career` string on the tip. Source: [commit 94226ea](https://github.com/gimarais/ai-toolkit/commit/94226ea)
+  The commit says this dropped the full bundle's always-on cost "from ~5,260 to ~4,070 tokens". A grep finds no remaining `life-and-career` string on the tip. Source: [commit 94226ea](https://github.com/Cinct00/ai-toolkit/commit/94226ea)
 - **Skill counts per branch** (SKILL.md files under `plugins/`): sleepy-cerf 44, codemap-ecosystem 45 (+codemap), change-review 46 (+change-review), tip 34. Source: `git ls-tree` per branch
 - **Frontmatter style.** All 34 skills and 5 agents use only the keys `name` and `description`. Descriptions follow "what it does, then a 'Use when/for…' clause with trigger phrases". Example: reviewing-code reads "How to review code effectively — understanding intent first… Use this when reviewing a PR or diff, when asked 'can you look at my code?'…". Source: [reviewing-code SKILL.md L1-4](TIP/plugins/engineering-craft/skills/reviewing-code/SKILL.md#L1-L4); [making-decisions SKILL.md L3](TIP/plugins/thinking-tools/skills/making-decisions/SKILL.md#L3)
 - **Cross-links.** Skills link to each other with `[[name]]` (138 occurrences across `plugins/`). Kickoff says to load a linked skill "only if that part of the work is actually happening". Source: grep count; [kickoff SKILL.md L20](TIP/plugins/kickoff/skills/kickoff/SKILL.md#L20)
@@ -322,7 +322,7 @@ The benchmarks measure codemap and review-pack token savings against grep-and-re
   - review pack: 3,091,679 → 107,966 (96.5%, median 92.5%) over 18 ranges
   - earlier claim of 59-63% savings on small PRs
 
-  Source: [commit 0ef875a](https://github.com/gimarais/ai-toolkit/commit/0ef875a); [commit 3891956](https://github.com/gimarais/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618)
+  Source: [commit 0ef875a](https://github.com/Cinct00/ai-toolkit/commit/0ef875a); [commit 3891956](https://github.com/Cinct00/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618)
 - **Benchmark scripts:** `tests/bench_codemap.py` (131 lines) and `tests/eval_extraction.py` (240 lines, a tree-sitter oracle). Neither is collected as a unit test (0 `def test` in either). Source: `grep -c "def test" tests/*.py`
 
 ### Inferences
@@ -381,7 +381,7 @@ The tip has 55 unit tests. Only 9 are about the ecosystem layer (`tests/test_too
 
   Only `ubuntu-latest`, Python "3.12". Source: [validate.yml L1-39](TIP/.github/workflows/validate.yml#L1-L39)
 - **Other workflows:** `catalog-refresh.yml` (weekly scheduled; `contents: write`, `pull-requests: write`) and `change-map.yml` (dogfoods the local action on PRs). Source: [catalog-refresh.yml](TIP/.github/workflows/catalog-refresh.yml); [change-map.yml](TIP/.github/workflows/change-map.yml)
-- **CI history per branch.** sleepy-cerf had workflows but **no `tests/` directory**. Tests (28) and the CI test step arrived in codemap-ecosystem; change-review added `test_review.py` and the action; the tip added the freshness and C#/Rust tests. Source: `git ls-tree` per branch; [commit f95a508](https://github.com/gimarais/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c)
+- **CI history per branch.** sleepy-cerf had workflows but **no `tests/` directory**. Tests (28) and the CI test step arrived in codemap-ecosystem; change-review added `test_review.py` and the action; the tip added the freshness and C#/Rust tests. Source: `git ls-tree` per branch; [commit f95a508](https://github.com/Cinct00/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c)
 - **Claimed runtime support:** "Stdlib Python only… Python 3.9+, including Windows". CI tests neither 3.9 nor Windows, and Windows uses a different copy-not-symlink path. Source: [docs/architecture.md L65](TIP/docs/architecture.md#L65); [toolkit.py L974-978](TIP/scripts/toolkit.py#L974-L978)
 
 ### Inferences
@@ -414,7 +414,7 @@ The code is careful in places: hooks fail open; the action avoids `${{ }}` in sh
 - `doctor --fix` and `adopt --mode vendor` delete directories
 
 ### Cited Findings
-- **Remote installers.** `curl -fsSL https://raw.githubusercontent.com/gimarais/ai-toolkit/main/install.sh | bash` and `irm …/install.ps1 | iex`. They clone `main` (or `$AI_TOOLKIT_REPO`) with no tag or checksum, `git pull --ff-only` if already present, then `exec … toolkit.py install "$@"`. Source: [install.sh L4, L11, L22-28](TIP/install.sh#L4); [install.ps1 L3, L10, L19-25](TIP/install.ps1#L3)
+- **Remote installers.** `curl -fsSL https://raw.githubusercontent.com/Cinct00/ai-toolkit/main/install.sh | bash` and `irm …/install.ps1 | iex`. They clone `main` (or `$AI_TOOLKIT_REPO`) with no tag or checksum, `git pull --ff-only` if already present, then `exec … toolkit.py install "$@"`. Source: [install.sh L4, L11, L22-28](TIP/install.sh#L4); [install.ps1 L3, L10, L19-25](TIP/install.ps1#L3)
 - **Unpinned upstream supply chain:**
   - `install` defaults to installing every profile plugin: `run([cli, "plugin", "install", ref])` for each of the 26 refs ([toolkit.py L915-922](TIP/scripts/toolkit.py#L915-L922); opt-out is `--no-upstream`, [L1638](TIP/scripts/toolkit.py#L1638)).
   - Marketplaces are `{repo}` entries with no ref or SHA ([toolkit.json L51-59](TIP/toolkit.json#L51-L59)).
@@ -582,4 +582,4 @@ The four branches form a **linear stack with `main` as ancestor**, so the tip co
 - Once merged, the `catalog-refresh` and `change-map` workflows become live on `main`. Before that, decide on SHA pinning and the `contents: write` scope.
 
 ### Gaps
-- PR status: an authenticated `gh api repos/gimarais/ai-toolkit/pulls?state=all` returned no rows, and GraphQL was blocked. It is unconfirmed whether that means "no PRs" or a filtered or permission-limited response.
+- PR status: an authenticated `gh api repos/Cinct00/ai-toolkit/pulls?state=all` returned no rows, and GraphQL was blocked. It is unconfirmed whether that means "no PRs" or a filtered or permission-limited response.

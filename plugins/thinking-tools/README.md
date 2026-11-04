@@ -10,14 +10,14 @@ Part of [ai-toolkit](../../README.md).
 Claude Code:
 
 ```
-/plugin marketplace add gimarais/ai-toolkit
+/plugin marketplace add Cinct00/ai-toolkit
 /plugin install thinking-tools@ai-toolkit
 ```
 
 GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add gimarais/ai-toolkit
+copilot plugin marketplace add Cinct00/ai-toolkit
 copilot plugin install thinking-tools@ai-toolkit
 ```
 

@@ -38,7 +38,7 @@ Marketplace names → repos: `claude-plugins-official` = `anthropics/claude-plug
 `knowledge-work-plugins` = `anthropics/knowledge-work-plugins`, `anthropic-agent-skills` = `anthropics/skills`,
 `claude-for-financial-services` = `anthropics/financial-services-plugins`, `claude-for-legal` = `anthropics/claude-for-legal`,
 `copilot-plugins` = `github/copilot-plugins`, `awesome-copilot` = `github/awesome-copilot` (built into Copilot CLI),
-`ai-toolkit` = `gimarais/ai-toolkit` (this toolkit).
+`ai-toolkit` = `Cinct00/ai-toolkit` (this toolkit).
 
 ## Where new artefacts go
 

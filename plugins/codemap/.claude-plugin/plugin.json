@@ -3,10 +3,10 @@
   "version": "2.3.0",
   "description": "Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server.",
   "author": {
-    "name": "gimarais"
+    "name": "Cinct00"
   },
-  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/codemap",
-  "repository": "https://github.com/gimarais/ai-toolkit",
+  "homepage": "https://github.com/Cinct00/ai-toolkit/tree/main/plugins/codemap",
+  "repository": "https://github.com/Cinct00/ai-toolkit",
   "license": "MIT",
   "keywords": [
     "repo-map",

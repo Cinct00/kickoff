@@ -104,7 +104,7 @@ class ToolkitTest(unittest.TestCase):
         repo.mkdir()
         self.tk("adopt", str(repo), "--bundle", "core", "--review-workflow", "--review-ref", "abc123")
         wf = (repo / ".github" / "workflows" / "change-map.yml").read_text()
-        self.assertIn("gimarais/ai-toolkit/.github/actions/change-map@abc123", wf)
+        self.assertIn("Cinct00/ai-toolkit/.github/actions/change-map@abc123", wf)
         self.assertIn("fetch-depth: 0", wf)
         self.assertIn("pull-requests: write", wf)
         self.assertNotIn("pull_request_target", wf)

@@ -1,7 +1,7 @@
 {
   "name": "ai-toolkit",
   "owner": {
-    "name": "gimarais"
+    "name": "Cinct00"
   },
   "metadata": {
     "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
@@ -14,7 +14,7 @@
       "description": "The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "productivity",
@@ -33,7 +33,7 @@
       "description": "Token-efficient repository map and change review: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers and impact queries, plus structural PR change maps (risk order, broken callers, test gaps, Mermaid/HTML views, AI-review packs). CLI + single-tool MCP server.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "development",
@@ -53,7 +53,7 @@
       "description": "Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "development",
@@ -72,7 +72,7 @@
       "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "development",
@@ -91,7 +91,7 @@
       "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "productivity",
@@ -108,7 +108,7 @@
       "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "productivity",
@@ -126,7 +126,7 @@
       "description": "Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and proposals.",
       "version": "2.3.0",
       "author": {
-        "name": "gimarais"
+        "name": "Cinct00"
       },
       "license": "MIT",
       "category": "productivity",

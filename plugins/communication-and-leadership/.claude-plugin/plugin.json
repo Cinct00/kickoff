@@ -3,10 +3,10 @@
   "version": "2.3.0",
   "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
   "author": {
-    "name": "gimarais"
+    "name": "Cinct00"
   },
-  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/communication-and-leadership",
-  "repository": "https://github.com/gimarais/ai-toolkit",
+  "homepage": "https://github.com/Cinct00/ai-toolkit/tree/main/plugins/communication-and-leadership",
+  "repository": "https://github.com/Cinct00/ai-toolkit",
   "license": "MIT",
   "keywords": [
     "writing",

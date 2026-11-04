@@ -3,9 +3,9 @@
   "version": "2.3.0",
   "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
   "owner": {
-    "name": "gimarais"
+    "name": "Cinct00"
   },
-  "repository": "gimarais/ai-toolkit",
+  "repository": "Cinct00/ai-toolkit",
   "license": "MIT",
 
   "plugins": {

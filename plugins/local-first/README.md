@@ -67,14 +67,14 @@ Project level: `<repo>/.ai-toolkit/local-first.json` may set `mode`, `ignore_too
 Claude Code:
 
 ```
-/plugin marketplace add gimarais/ai-toolkit
+/plugin marketplace add Cinct00/ai-toolkit
 /plugin install local-first@ai-toolkit
 ```
 
 GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add gimarais/ai-toolkit
+copilot plugin marketplace add Cinct00/ai-toolkit
 copilot plugin install local-first@ai-toolkit
 ```
 

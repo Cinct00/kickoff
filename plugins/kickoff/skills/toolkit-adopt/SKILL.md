@@ -56,7 +56,7 @@ Add `--mode vendor` when the repo must work without plugin support (VS Code with
    ```json
    {
      "extraKnownMarketplaces": {
-       "ai-toolkit": { "source": { "source": "github", "repo": "gimarais/ai-toolkit" } },
+       "ai-toolkit": { "source": { "source": "github", "repo": "Cinct00/ai-toolkit" } },
        "claude-plugins-official": { "source": { "source": "github", "repo": "anthropics/claude-plugins-official" } }
      },
      "enabledPlugins": {

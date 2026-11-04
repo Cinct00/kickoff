@@ -18,7 +18,7 @@ doctor / audit / catalog refresh keep installs current, duplicates out and the a
 ### On a new device
 
 ```bash
-git clone https://github.com/gimarais/ai-toolkit ~/.ai-toolkit
+git clone https://github.com/Cinct00/ai-toolkit ~/.ai-toolkit
 ```
 
 ```bash
@@ -46,12 +46,12 @@ Keep a device current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync`, and 
 ### Just the marketplace
 
 ```
-/plugin marketplace add gimarais/ai-toolkit          # Claude Code
+/plugin marketplace add Cinct00/ai-toolkit          # Claude Code
 /plugin install kickoff@ai-toolkit
 ```
 
 ```bash
-copilot plugin marketplace add gimarais/ai-toolkit
+copilot plugin marketplace add Cinct00/ai-toolkit
 ```
 
 ```bash

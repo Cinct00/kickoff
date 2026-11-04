@@ -8,7 +8,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 
 ## ai-toolkit
 
-`gimarais/ai-toolkit` · gimarais · trust: own
+`Cinct00/ai-toolkit` · Cinct00 · trust: own
 
 | Plugin | Status | Skills | Agents | Commands | Hooks | MCP | Description |
 |---|---|---|---|---|---|---|---|
