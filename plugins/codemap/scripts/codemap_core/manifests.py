@@ -45,9 +45,10 @@ def parse_manifest_text(path: str, text: str) -> list:
     try:
         if base == "package.json":
             data = json.loads(text)
-            for scope in ("dependencies", "devDependencies", "peerDependencies", "optionalDependencies"):
+            for scope, label in (("dependencies", "prod"), ("devDependencies", "dev"), ("peerDependencies", "peer"),
+                                 ("optionalDependencies", "optional")):
                 for n, v in (data.get(scope) or {}).items():
-                    out.append(("npm", n, str(v), scope.replace("Dependencies", "") or "prod"))
+                    out.append(("npm", n, str(v), label))
         elif base.startswith("requirements") and base.endswith(".txt"):
             for line in text.splitlines():
                 line = line.strip()

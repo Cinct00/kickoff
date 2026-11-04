@@ -22,10 +22,18 @@ from .util import est_tokens, is_test_path, lang_of
 
 WORKTREE = "WORKTREE"
 MAX_HUNK_LINES_PER_FILE = 400
+# Sensitive words must start a path word (after / _ - . or a camelCase boundary), so "coauthor" or
+# "tokenizer_test" do not count as auth or tokens; "oauth", "encrypt" and friends are listed explicitly.
 SENSITIVE = re.compile(
-    r"(auth|login|session|token|secret|password|passwd|credential|crypt|permission|acl|rbac|oauth|jwt|payment|billing|"
-    r"invoice|migration|schema|\.github/workflows/|dockerfile|docker-compose|terraform|\.tf$|helm|k8s|kubernetes|"
-    r"security|sanitiz|escape|csrf|cors|firewall|iam)", re.I)
+    r"(?:(?<![a-z0-9])(auth|login|session|tokens?(?![a-z])|secret|password|passwd|credential|crypt|encrypt|decrypt|"
+    r"permission|acl|rbac|oauth|jwt|payment|billing|invoice|migration|schema|dockerfile|docker-compose|terraform|helm|"
+    r"k8s|kubernetes|security|sanitiz|escape|csrf|cors|firewall|iam(?![a-z]))|\.github/workflows/|\.tf$)", re.I)
+
+
+def is_sensitive(path: str) -> bool:
+    return bool(SENSITIVE.search(re.sub(r"(?<=[a-z0-9])(?=[A-Z])", "_", path)))
+
+
 GENERATED = re.compile(r"(\.lock$|-lock\.json$|\.lock\.json$|\.min\.(js|css)$|\.snap$|/vendor/|/dist/|/generated/|"
                        r"\.g\.cs$|_pb2\.py$|\.pb\.go$|\.designer\.cs$|go\.sum$|pnpm-lock\.yaml$|yarn\.lock$)", re.I)
 
@@ -129,13 +137,14 @@ def parse_patch(text: str) -> list:
             if line.startswith("Binary files") or line.startswith("GIT binary patch"):
                 cur.binary = True
                 continue
+            # git ends these headers with a tab when the path contains a space: strip it.
             if line.startswith("--- "):
-                if line[4:] != "/dev/null":
-                    cur.old_path = line[6:] if line.startswith("--- a/") else line[4:]
+                if line[4:].rstrip("\t") != "/dev/null":
+                    cur.old_path = (line[6:] if line.startswith("--- a/") else line[4:]).rstrip("\t")
                 continue
             if line.startswith("+++ "):
-                if line[4:] != "/dev/null":
-                    cur.path = line[6:] if line.startswith("+++ b/") else line[4:]
+                if line[4:].rstrip("\t") != "/dev/null":
+                    cur.path = (line[6:] if line.startswith("+++ b/") else line[4:]).rstrip("\t")
                 continue
         m = re.match(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)", line)
         if m:
@@ -502,12 +511,12 @@ def _risk(f, untested) -> tuple:
         reasons.append("no tests reference it")
     elif f.get("tests_changed"):
         score -= 5
-    if SENSITIVE.search(f["path"]):
+    if is_sensitive(f["path"]):
         score += 12
         reasons.append("sensitive area (auth, data, infra or CI)")
     if f["is_test"]:
         score = min(score, 25)
-    if f["lang"] == "markdown" or f["lang"] is None and not SENSITIVE.search(f["path"]):
+    if f["lang"] == "markdown" or f["lang"] is None and not is_sensitive(f["path"]):
         score = min(score, 15)
     score = max(0, min(100, score))
     return score, _level(score), reasons

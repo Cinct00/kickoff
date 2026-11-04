@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "plugins" / "codemap" / "scripts"))
 
 from codemap_core.cli import run_line  # noqa: E402
+from codemap_core.review import is_sensitive, parse_patch  # noqa: E402
 from codemap_core.util import est_tokens  # noqa: E402
 
 BASE = {
@@ -236,6 +237,23 @@ class ReviewTest(unittest.TestCase):
         r = handle({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
                     "params": {"name": "codemap", "arguments": {"cmd": f"--repo {self.repo} review --base main"}}})
         self.assertIn("review order", r["result"]["content"][0]["text"])
+
+
+class ReviewHelpersTest(unittest.TestCase):
+    def test_paths_with_spaces_lose_the_trailing_tab(self):
+        patch = ("diff --git a/notes/my file.md b/notes/my file.md\nnew file mode 100644\n--- /dev/null\n"
+                 "+++ b/notes/my file.md\t\n@@ -0,0 +1 @@\n+hello\n")
+        (f,) = parse_patch(patch)
+        self.assertEqual(f.path, "notes/my file.md")
+        self.assertEqual((f.status, f.added), ("A", 1))
+
+    def test_sensitive_paths_match_whole_words_only(self):
+        for p in ("src/auth/login.py", "api/oauth_client.ts", "app/UserAuthService.cs", ".github/workflows/ci.yml",
+                  "infra/main.tf", "db/migrations/001.sql", "lib/encrypt.go", "src/session.py", "pkg/tokens.py"):
+            self.assertTrue(is_sensitive(p), p)
+        for p in ("plugins/doc-coauthor/plugin.json", "src/coauthors.py",
+                  "lib/tokenizer.py", "docs/diamond.md", "src/viewer.py"):
+            self.assertFalse(is_sensitive(p), p)
 
 
 if __name__ == "__main__":
