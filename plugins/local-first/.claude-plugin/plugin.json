@@ -1,0 +1,19 @@
+{
+  "name": "local-first",
+  "version": "2.3.0",
+  "description": "Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.",
+  "author": {
+    "name": "gimarais"
+  },
+  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/local-first",
+  "repository": "https://github.com/gimarais/ai-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "local-first",
+    "hooks",
+    "mcp",
+    "token-efficiency",
+    "offline",
+    "documentation"
+  ]
+}

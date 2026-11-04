@@ -10,6 +10,7 @@ What works where, and how to set each client up.
 | Kickoff routing | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (judgment skills + catalog; fewer procedure tools) |
 | Agents (`toolkit-scout`, `doc-*`) | ✅ | ⚠️ follows the agent prompt in-session | ✅ | ✅ | ✅ vendored to `.github/agents/` | ⚠️ follows the agent prompt in-session |
 | SessionStart hook | ✅ | — | ✅ when the runtime exposes `PLUGIN_ROOT`, else a silent no-op; ✅ vendored | ✅ vendored to `.github/hooks/` | not verified | — |
+| Local-first `PreToolUse` redirect | ✅ | — | ✅ (Copilot output format not yet run live) | ✅ vendored to `.github/hooks/` | not verified | ⚠️ instruction line only (`install --global-instructions`) |
 | Harvest `Stop` reminder | ✅ | — | — | — | — | — |
 | codemap (CLI + MCP) | ✅ plugin MCP + `codemap` command | — (no local shell) | ✅ plugin MCP, or `~/.copilot/mcp-config.json` | ✅ plugin via repo settings, or vendored `.mcp.json` | ✅ MCP from `~/.copilot/mcp-config.json` or project `.mcp.json` (verify on first use) | ✅ `codemap` command |
 | User-level install (`~/.copilot/…`, `~/.claude/…`) | ✅ `claude-user` target (plugins preferred) | — | ✅ `copilot-user` target | — (uses repo settings) | ✅ reads `~/.copilot/skills` and agents | `~/.agents/skills` |

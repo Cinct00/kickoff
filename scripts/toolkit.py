@@ -1013,6 +1013,8 @@ def _global_instruction_block() -> str:
     return (f"{ADOPT_BEGIN}\n## AI toolkit\n\n"
             "For any substantial task, load the `kickoff` skill first: it routes the task to the right skills, "
             "agents and plugin commands, checks for gaps, and finishes with a harvest step that grows the toolkit.\n"
+            "Look locally before remotely: read local clones, installed dependencies and local docs before querying "
+            "remote MCP servers or the web for code or documentation.\n"
             f"Toolkit home: `{ROOT}` (catalog: `plugins/kickoff/skills/kickoff/references/catalog.tsv`).\n{ADOPT_END}\n")
 
 

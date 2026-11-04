@@ -19,6 +19,11 @@
       "category": "development",
       "keywords": ["repo-map", "code-navigation", "code-review", "pull-request", "mcp", "token-efficiency", "dependency-graph"]
     },
+    "local-first": {
+      "description": "Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.",
+      "category": "development",
+      "keywords": ["local-first", "hooks", "mcp", "token-efficiency", "offline", "documentation"]
+    },
     "engineering-craft": {
       "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
       "category": "development",
@@ -42,9 +47,9 @@
   },
 
   "bundles": {
-    "core": ["kickoff", "codemap"],
-    "dev": ["kickoff", "codemap", "engineering-craft", "thinking-tools", "doc-coauthor"],
-    "full": ["kickoff", "codemap", "engineering-craft", "thinking-tools", "communication-and-leadership", "doc-coauthor"]
+    "core": ["kickoff", "codemap", "local-first"],
+    "dev": ["kickoff", "codemap", "local-first", "engineering-craft", "thinking-tools", "doc-coauthor"],
+    "full": ["kickoff", "codemap", "local-first", "engineering-craft", "thinking-tools", "communication-and-leadership", "doc-coauthor"]
   },
 
   "upstream": {

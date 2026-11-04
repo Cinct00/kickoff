@@ -48,6 +48,25 @@
       ]
     },
     {
+      "name": "local-first",
+      "source": "./plugins/local-first",
+      "description": "Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.",
+      "version": "2.3.0",
+      "author": {
+        "name": "gimarais"
+      },
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "local-first",
+        "hooks",
+        "mcp",
+        "token-efficiency",
+        "offline",
+        "documentation"
+      ]
+    },
+    {
       "name": "engineering-craft",
       "source": "./plugins/engineering-craft",
       "description": "Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.",
