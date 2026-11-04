@@ -11,14 +11,14 @@ Claude Code:
 
 ```
 /plugin marketplace add Cinct00/ai-toolkit
-/plugin install communication-and-leadership@ai-toolkit
+/plugin install communication-and-leadership@kickoff
 ```
 
 GitHub Copilot CLI:
 
 ```bash
 copilot plugin marketplace add Cinct00/ai-toolkit
-copilot plugin install communication-and-leadership@ai-toolkit
+copilot plugin install communication-and-leadership@kickoff
 ```
 
 Any other Agent Skills client: copy or link `skills/*` into `~/.agents/skills/` (or run `python3 scripts/toolkit.py install --target skills` from the toolkit).

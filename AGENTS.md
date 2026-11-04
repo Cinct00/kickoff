@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for any AI agent (Claude, Copilot, Codex, Cursor, Gemini…) working **on this repository**, the ai-toolkit itself.
+Instructions for any AI agent (Claude, Copilot, Codex, Cursor, Gemini…) working **on this repository**: Kickoff (repo `ai-toolkit`), the toolkit itself.
 
 ## What this repo is
 

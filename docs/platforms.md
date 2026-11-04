@@ -23,7 +23,7 @@ What works where, and how to set each client up.
 ## Setting up each client
 
 ### Claude Code
-`python3 scripts/toolkit.py install --target claude` (or `/plugin marketplace add Cinct00/ai-toolkit`, then `/plugin install kickoff@ai-toolkit`). Skills appear as `kickoff:kickoff`, `engineering-craft:reviewing-code`, etc.
+`python3 scripts/toolkit.py install --target claude` (or `/plugin marketplace add Cinct00/ai-toolkit`, then `/plugin install kickoff@kickoff`). Skills appear as `kickoff:kickoff`, `engineering-craft:reviewing-code`, etc.
 
 ### Claude app (claude.ai, desktop, mobile)
 The app syncs skills from your account, not from git. Upload changed skills from `plugins/*/skills/` through the app's skill settings or the `propose_skills` flow at the end of a harvest. The app's own built-ins (`deep-research`, `docs`, `tutor`…) are listed in `toolkit.json` → `app_builtins`; kickoff only routes to them there.
@@ -36,7 +36,7 @@ copilot plugin marketplace add Cinct00/ai-toolkit
 ```
 
 ```bash
-copilot plugin install kickoff@ai-toolkit
+copilot plugin install kickoff@kickoff
 ```
 
 Copilot reads the same marketplace format, so the upstream Anthropic marketplaces work too (`copilot plugin marketplace add anthropics/claude-plugins-official`). Plugin slash commands written for Claude Code are not loaded; kickoff falls back to the plugin's agents or the command file.

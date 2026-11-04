@@ -1,10 +1,10 @@
 {
-  "name": "ai-toolkit",
+  "name": "kickoff",
   "owner": {
     "name": "Cinct00"
   },
   "metadata": {
-    "description": "A self-growing, cross-LLM toolkit: kickoff routing, judgment skills, agents and hooks, plus a curated profile of Anthropic, GitHub and partner plugins. Works in Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
+    "description": "Kickoff: the self-growing, token-frugal agent toolkit. Kickoff routing, judgment skills, agents, hooks, a code map and local-first lookups, plus a curated profile of Anthropic, GitHub and partner plugins. One install for Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client.",
     "version": "2.3.0"
   },
   "plugins": [

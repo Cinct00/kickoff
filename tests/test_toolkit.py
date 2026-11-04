@@ -78,7 +78,7 @@ class ToolkitTest(unittest.TestCase):
         self.tk("adopt", str(repo), "--bundle", "core", "--upstream", "feature-dev@claude-plugins-official")
         for f in (".claude/settings.json", ".github/copilot/settings.json"):
             data = json.loads((repo / f).read_text())
-            self.assertTrue(data["enabledPlugins"]["codemap@ai-toolkit"])
+            self.assertTrue(data["enabledPlugins"]["codemap@kickoff"])
             self.assertIn("claude-plugins-official", data["extraKnownMarketplaces"])
         self.assertIn("@AGENTS.md", (repo / "CLAUDE.md").read_text())
 

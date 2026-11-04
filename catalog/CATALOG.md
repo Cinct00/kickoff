@@ -6,7 +6,7 @@ Status: **own** = in this repo · **active** = in your profile (`toolkit.json` �
 
 Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`catalog.tsv`](../plugins/kickoff/skills/kickoff/references/catalog.tsv).
 
-## ai-toolkit
+## kickoff
 
 `Cinct00/ai-toolkit` · Cinct00 · trust: own
 

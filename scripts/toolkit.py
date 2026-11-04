@@ -35,7 +35,7 @@ PLUGINS_DIR = ROOT / "plugins"
 CATALOG_DIR = ROOT / "catalog"
 KICKOFF_REFS = PLUGINS_DIR / "kickoff" / "skills" / "kickoff" / "references"
 CATALOG_TSV = KICKOFF_REFS / "catalog.tsv"
-LOCAL_MARKETPLACE = "ai-toolkit"
+LOCAL_MARKETPLACE = "kickoff"  # = toolkit.json "name"; plugins install as <plugin>@kickoff
 
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 GEN_BEGIN = "<!-- BEGIN GENERATED:{} -->"
