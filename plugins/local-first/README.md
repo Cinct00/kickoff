@@ -2,7 +2,7 @@
 
 Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 ## What it does
 

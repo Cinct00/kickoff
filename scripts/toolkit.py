@@ -376,7 +376,7 @@ def build_plugin_readme(cfg: dict, pdir: Path) -> str:
             return replace_block(text, "install", body)
         return text  # hand-written README without markers: leave it alone
     return (f"# {pdir.name}\n\n{cfg['plugins'][pdir.name]['description']}\n\n"
-            f"Part of [{cfg['name']}](../../README.md).\n\n"
+            f"Part of [Kickoff](../../README.md).\n\n"
             f"{GEN_BEGIN.format('install')}\n{body.rstrip()}\n{GEN_END.format('install')}\n")
 
 

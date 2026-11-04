@@ -2,7 +2,7 @@
 
 Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 <!-- BEGIN GENERATED:install -->
 ## Install

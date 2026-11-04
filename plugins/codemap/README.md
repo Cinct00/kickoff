@@ -2,7 +2,7 @@
 
 Token-efficient repository map: a SQLite index of symbols, imports, references and packages with a ranked repo map, search, outlines, exact symbol source, refs/callers, dependency and change-impact queries. CLI + single-tool MCP server; ~96% fewer tokens than grep-and-read.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 <!-- BEGIN GENERATED:install -->
 ## Install

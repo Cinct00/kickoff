@@ -2,7 +2,7 @@
 
 Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 <!-- BEGIN GENERATED:install -->
 ## Install

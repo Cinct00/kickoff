@@ -2,7 +2,7 @@
 
 The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 <!-- BEGIN GENERATED:install -->
 ## Install

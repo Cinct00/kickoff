@@ -2,7 +2,7 @@
 
 Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring, incidents and technical communication.
 
-Part of [ai-toolkit](../../README.md).
+Part of [Kickoff](../../README.md).
 
 <!-- BEGIN GENERATED:install -->
 ## Install
