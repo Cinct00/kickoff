@@ -30,9 +30,9 @@
 
 And it **learns**. Every task ends with a *harvest*: the procedures, fixes and lessons from that session flow straight back into the toolkit as new skills, agents, hooks and routes. Your setup gets smarter every time you use it.
 
-| 96% | 91–97% | 99.9% | 0 |
-|:---:|:---:|:---:|:---:|
-| fewer tokens to find and understand code | fewer tokens to orient in a new repo | C#/Rust parser recall vs tree-sitter | tokens spent by guard-rails until they matter |
+| 96% | 91–97% | 0 |
+|:---:|:---:|:---:|
+| fewer tokens to find and understand code | fewer tokens to orient in a new repo | tokens spent by guard-rails until they matter |
 
 ```
 task ──▶ kickoff ──▶ route: judgment skill + procedure tool ──▶ do the work ──▶ harvest
