@@ -41,7 +41,7 @@ Improvements beat duplicates. Before creating anything:
 
 ## 4. Where to write
 
-Find the toolkit checkout: `$AI_TOOLKIT_HOME`, else the path in `~/.config/ai-toolkit/home`, else `~/.ai-toolkit`. If the current repository *is* the toolkit (it has `toolkit.json` and `plugins/kickoff/`), use it.
+Find the toolkit checkout: `$KICKOFF_HOME`, else the path in `~/.config/kickoff/home`, else `~/.kickoff`. If the current repository *is* the toolkit (it has `toolkit.json` and `plugins/kickoff/`), use it.
 
 - **Cross-project artefact and the toolkit is available** → write it into the toolkit, in the plugin it belongs to:
   - skill: `plugins/<plugin>/skills/<name>/SKILL.md`
@@ -73,7 +73,7 @@ Growth without pruning makes every request more expensive: each installed skill'
 
 ## 7. Record gaps
 
-If a gap was found and *not* closed this run, append one row to the gaps ledger: the toolkit's `catalog/gaps.md`, or the project's `.github/ai-toolkit/gaps.md` if that exists. Format: `| YYYY-MM-DD | task | gap | open |`. When a later harvest closes it, change `open` to what closed it.
+If a gap was found and *not* closed this run, append one row to the gaps ledger: the toolkit's `catalog/gaps.md`, or the project's `.github/kickoff/gaps.md` if that exists. Format: `| YYYY-MM-DD | task | gap | open |`. When a later harvest closes it, change `open` to what closed it.
 
 ## 8. Report in one block
 

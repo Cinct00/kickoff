@@ -18,14 +18,14 @@ This isolation is intentional: the review stage simulates a reader who has never
 Claude Code:
 
 ```
-/plugin marketplace add Cinct00/ai-toolkit
+/plugin marketplace add Cinct00/kickoff
 /plugin install doc-coauthor@kickoff
 ```
 
 GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add Cinct00/ai-toolkit
+copilot plugin marketplace add Cinct00/kickoff
 copilot plugin install doc-coauthor@kickoff
 ```
 

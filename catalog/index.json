@@ -3,7 +3,7 @@
   "marketplaces": [
     {
       "name": "kickoff",
-      "repo": "Cinct00/ai-toolkit",
+      "repo": "Cinct00/kickoff",
       "publisher": "Cinct00",
       "trust": "own",
       "plugins": [
@@ -23,7 +23,7 @@
             },
             {
               "name": "toolkit-adopt",
-              "description": "Brings the AI toolkit into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my…"
+              "description": "Brings Kickoff into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my…"
             }
           ],
           "agents": [

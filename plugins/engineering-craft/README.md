@@ -10,14 +10,14 @@ Part of [Kickoff](../../README.md).
 Claude Code:
 
 ```
-/plugin marketplace add Cinct00/ai-toolkit
+/plugin marketplace add Cinct00/kickoff
 /plugin install engineering-craft@kickoff
 ```
 
 GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add Cinct00/ai-toolkit
+copilot plugin marketplace add Cinct00/kickoff
 copilot plugin install engineering-craft@kickoff
 ```
 

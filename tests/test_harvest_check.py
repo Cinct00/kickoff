@@ -25,7 +25,7 @@ class HarvestCheckTest(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp(prefix="harvest-check-"))
         (self.tmp / "t").mkdir()
         self.env = {**os.environ, "TMPDIR": str(self.tmp / "t")}
-        self.env.pop("AI_TOOLKIT_HARVEST_CHECK", None)
+        self.env.pop("KICKOFF_HARVEST_CHECK", None)
         self.session = uuid.uuid4().hex
 
     def tearDown(self):
@@ -66,7 +66,7 @@ class HarvestCheckTest(unittest.TestCase):
     def test_stop_hook_active_disable_switch_and_bad_input_fail_open(self):
         lines = [entry("assistant", "Route: a → b")]
         self.assertEqual(self.run_hook(lines, extra={"stop_hook_active": True}), "")
-        self.assertEqual(self.run_hook(lines, env={"AI_TOOLKIT_HARVEST_CHECK": "0"}), "")
+        self.assertEqual(self.run_hook(lines, env={"KICKOFF_HARVEST_CHECK": "0"}), "")
         self.assertEqual(self.run_hook(lines, raw="not json"), "")
         self.assertEqual(self.run_hook(lines, raw=json.dumps({"transcript_path": str(self.tmp / "missing.jsonl")})), "")
         self.assertEqual(self.run_hook(["{broken", entry("assistant", "hello")]), "")

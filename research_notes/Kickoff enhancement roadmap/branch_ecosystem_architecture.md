@@ -1,8 +1,8 @@
-# Branch ecosystem architecture: the plugin marketplace and the dynamic agent/skill layer (Cinct00/ai-toolkit, unmerged branches)
+# Branch ecosystem architecture: the plugin marketplace and the dynamic agent/skill layer (Cinct00/kickoff, unmerged branches)
 
 Scope: the marketplace, plugins, skills, agents, hooks and `toolkit.py` layer on the four stacked, unmerged branches. Codemap and change-review internals are covered by another researcher and appear here only where they touch the ecosystem. The primary state is the tip `origin/claude/csharp-rust-precision` (HEAD 1310ad7). It was read from a detached read-only worktree at a temporary worktree of the tip.
 
-Citation convention. `TIP` = `https://github.com/Cinct00/ai-toolkit/blob/claude/csharp-rust-precision`. Line anchors refer to the tip unless a different branch is named. Commit-message citations use `https://github.com/Cinct00/ai-toolkit/commit/<sha>`.
+Citation convention. `TIP` = `https://github.com/Cinct00/kickoff/blob/claude/csharp-rust-precision`. Line anchors refer to the tip unless a different branch is named. Commit-message citations use `https://github.com/Cinct00/kickoff/commit/<sha>`.
 
 Branch lineage. The history is linear. `main` (92296f4) → sleepy-cerf-pluea6 (86211a2) → codemap-ecosystem (f95a508) → change-review (3891956) → csharp-rust-precision. The tip branch adds five commits on top: 94226ea, ed9a9bf, 0ef875a, 3e980fb, 1310ad7. All commits are dated 2026-11-02, between 07:09 and 10:06 UTC. `main` is an ancestor of all of them (checked with `git merge-base --is-ancestor`).
 
@@ -123,15 +123,15 @@ The repo is a self-hosted plugin marketplace. One hand-edited manifest, `toolkit
   - `auto` = skills + claude (if the CLI exists) + copilot-user (if `~/.copilot` exists).
   - Runs `claude|copilot plugin marketplace add` and `plugin install` for the toolkit plugins **and every upstream profile plugin by default**.
   - Symlinks (or copies, always on Windows) skills and agents into `~/.copilot/{skills,agents}`, `~/.claude/{skills,agents}` and `~/.agents/skills`.
-  - Merges hooks into `~/.copilot/hooks/ai-toolkit.json` or `~/.claude/settings.json`, and MCP into `~/.copilot/mcp-config.json` or `claude mcp add --scope user`.
+  - Merges hooks into `~/.copilot/hooks/kickoff.json` or `~/.claude/settings.json`, and MCP into `~/.copilot/mcp-config.json` or `claude mcp add --scope user`.
   - Writes a `codemap` shim into `~/.local/bin`.
-  - Records everything in the ledger `~/.config/ai-toolkit/installed.json` and the toolkit-home marker `~/.config/ai-toolkit/home`.
+  - Records everything in the ledger `~/.config/kickoff/installed.json` and the toolkit-home marker `~/.config/kickoff/home`.
   - Source: [L689-957](TIP/scripts/toolkit.py#L689-L957)
 - **`adopt <project>`**
   - `--mode plugins` (default) merges marketplace and enabledPlugins settings into the two settings files.
-  - `--mode vendor` copies skills into `.claude/skills`, agents into `.claude/agents` (optionally `.github/agents`), plugin `scripts/` and `hooks/` into `.github/ai-toolkit/plugins/<p>/`, writes a project `.mcp.json`, and with `--hooks` writes `.github/hooks/ai-toolkit-<p>.json`.
+  - `--mode vendor` copies skills into `.claude/skills`, agents into `.claude/agents` (optionally `.github/agents`), plugin `scripts/` and `hooks/` into `.github/kickoff/plugins/<p>/`, writes a project `.mcp.json`, and with `--hooks` writes `.github/hooks/kickoff-<p>.json`.
   - `--review-workflow [--review-ref]` writes `.github/workflows/change-map.yml`.
-  - Always upserts an `AGENTS.md` block, creates or patches `CLAUDE.md` to import `@AGENTS.md`, creates `.github/ai-toolkit/gaps.md`, and writes `.github/ai-toolkit/lock.json` (toolkit version, commit, mode, plugins).
+  - Always upserts an `AGENTS.md` block, creates or patches `CLAUDE.md` to import `@AGENTS.md`, creates `.github/kickoff/gaps.md`, and writes `.github/kickoff/lock.json` (toolkit version, commit, mode, plugins).
   - Source: [L1073-1180](TIP/scripts/toolkit.py#L1073-L1180)
 - **`promote <path> --plugin <p>`**
   - Copies a project-local skill directory or agent `.md` into `plugins/<p>/`.
@@ -151,7 +151,7 @@ The repo is a self-hosted plugin marketplace. One hand-edited manifest, `toolkit
   - Checks that every profile ref is still in the catalog.
   - Lists skills untouched in git for 180+ days.
   - Source: [L1487-1574](TIP/scripts/toolkit.py#L1487-L1574)
-- **`sync`**: runs `git pull --ff-only` in the toolkit, then `plugin marketplace update ai-toolkit` and `plugin update <p>@ai-toolkit` for each CLI. **`status`**: prints counts of installs and content. Source: [L1577-1610](TIP/scripts/toolkit.py#L1577-L1610)
+- **`sync`**: runs `git pull --ff-only` in the toolkit, then `plugin marketplace update kickoff` and `plugin update <p>@kickoff` for each CLI. **`status`**: prints counts of installs and content. Source: [L1577-1610](TIP/scripts/toolkit.py#L1577-L1610)
 
 **Subcommands added per branch** (from `git show origin/claude/<b>:scripts/toolkit.py`):
 
@@ -162,7 +162,7 @@ The repo is a self-hosted plugin marketplace. One hand-edited manifest, `toolkit
 | change-review | 1,696 | `adopt --review-workflow`, `--review-ref`, `--force` |
 | csharp-rust-precision | (unchanged) | `toolkit.py` is not in the diff from change-review |
 
-Sources: commit messages [86211a2](https://github.com/Cinct00/ai-toolkit/commit/86211a2be5ed913803f4bbf633cd19642af48fdf), [f95a508](https://github.com/Cinct00/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c), [3891956](https://github.com/Cinct00/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618).
+Sources: commit messages [86211a2](https://github.com/Cinct00/kickoff/commit/86211a2be5ed913803f4bbf633cd19642af48fdf), [f95a508](https://github.com/Cinct00/kickoff/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c), [3891956](https://github.com/Cinct00/kickoff/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618).
 
 **The "self-growing" loop** is mostly skill prose:
 
@@ -181,7 +181,7 @@ Sources: commit messages [86211a2](https://github.com/Cinct00/ai-toolkit/commit/
 
 **Mechanical enforcement:**
 
-- **Claude `Stop` hook `harvest_check.py`.** It scans the transcript JSONL for a `Route: … →` line with no later `Harvest` block, then returns `{"decision":"block"}` once per route (state kept in `$TMPDIR/ai-toolkit-harvest-check`). It fails open and can be disabled with `AI_TOOLKIT_HARVEST_CHECK=0`. There is no Copilot equivalent. Source: [harvest_check.py L1-81](TIP/plugins/kickoff/hooks/harvest_check.py#L1-L81); [docs/platforms.md L13](TIP/docs/platforms.md#L13)
+- **Claude `Stop` hook `harvest_check.py`.** It scans the transcript JSONL for a `Route: … →` line with no later `Harvest` block, then returns `{"decision":"block"}` once per route (state kept in `$TMPDIR/kickoff-harvest-check`). It fails open and can be disabled with `KICKOFF_HARVEST_CHECK=0`. There is no Copilot equivalent. Source: [harvest_check.py L1-81](TIP/plugins/kickoff/hooks/harvest_check.py#L1-L81); [docs/platforms.md L13](TIP/docs/platforms.md#L13)
 - **Kickoff `SessionStart` hook.** It injects about 80 tokens of "load kickoff first" context and an open-gap count. At most once per 24 h it runs `toolkit.py doctor --quick --summary` (5 s timeout). Source: [kickoff/hooks/session_start.py L38-72](TIP/plugins/kickoff/hooks/session_start.py#L38-L72)
 - **Weekly CI `catalog-refresh.yml`** (Mondays 06:17 UTC) re-runs `catalog`, `build`, `validate` and `audit`, and opens a PR if the catalog changed. Source: [catalog-refresh.yml L9-48](TIP/.github/workflows/catalog-refresh.yml#L9-L48)
 
@@ -271,7 +271,7 @@ Character counts were measured on the tip; tokens are estimated as chars/4. "fil
   - managing-yourself, navigating-your-career, personal-finance-principles, prioritization-and-focus
   - starting-a-business, trading-and-markets, tutor, understanding-finance
 
-  The commit says this dropped the full bundle's always-on cost "from ~5,260 to ~4,070 tokens". A grep finds no remaining `life-and-career` string on the tip. Source: [commit 94226ea](https://github.com/Cinct00/ai-toolkit/commit/94226ea)
+  The commit says this dropped the full bundle's always-on cost "from ~5,260 to ~4,070 tokens". A grep finds no remaining `life-and-career` string on the tip. Source: [commit 94226ea](https://github.com/Cinct00/kickoff/commit/94226ea)
 - **Skill counts per branch** (SKILL.md files under `plugins/`): sleepy-cerf 44, codemap-ecosystem 45 (+codemap), change-review 46 (+change-review), tip 34. Source: `git ls-tree` per branch
 - **Frontmatter style.** All 34 skills and 5 agents use only the keys `name` and `description`. Descriptions follow "what it does, then a 'Use when/for…' clause with trigger phrases". Example: reviewing-code reads "How to review code effectively — understanding intent first… Use this when reviewing a PR or diff, when asked 'can you look at my code?'…". Source: [reviewing-code SKILL.md L1-4](TIP/plugins/engineering-craft/skills/reviewing-code/SKILL.md#L1-L4); [making-decisions SKILL.md L3](TIP/plugins/thinking-tools/skills/making-decisions/SKILL.md#L3)
 - **Cross-links.** Skills link to each other with `[[name]]` (138 occurrences across `plugins/`). Kickoff says to load a linked skill "only if that part of the work is actually happening". Source: grep count; [kickoff SKILL.md L20](TIP/plugins/kickoff/skills/kickoff/SKILL.md#L20)
@@ -322,7 +322,7 @@ The benchmarks measure codemap and review-pack token savings against grep-and-re
   - review pack: 3,091,679 → 107,966 (96.5%, median 92.5%) over 18 ranges
   - earlier claim of 59-63% savings on small PRs
 
-  Source: [commit 0ef875a](https://github.com/Cinct00/ai-toolkit/commit/0ef875a); [commit 3891956](https://github.com/Cinct00/ai-toolkit/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618)
+  Source: [commit 0ef875a](https://github.com/Cinct00/kickoff/commit/0ef875a); [commit 3891956](https://github.com/Cinct00/kickoff/commit/38919569402bfa9bfbd8dd6b10690e9d1c417618)
 - **Benchmark scripts:** `tests/bench_codemap.py` (131 lines) and `tests/eval_extraction.py` (240 lines, a tree-sitter oracle). Neither is collected as a unit test (0 `def test` in either). Source: `grep -c "def test" tests/*.py`
 
 ### Inferences
@@ -381,7 +381,7 @@ The tip has 55 unit tests. Only 9 are about the ecosystem layer (`tests/test_too
 
   Only `ubuntu-latest`, Python "3.12". Source: [validate.yml L1-39](TIP/.github/workflows/validate.yml#L1-L39)
 - **Other workflows:** `catalog-refresh.yml` (weekly scheduled; `contents: write`, `pull-requests: write`) and `change-map.yml` (dogfoods the local action on PRs). Source: [catalog-refresh.yml](TIP/.github/workflows/catalog-refresh.yml); [change-map.yml](TIP/.github/workflows/change-map.yml)
-- **CI history per branch.** sleepy-cerf had workflows but **no `tests/` directory**. Tests (28) and the CI test step arrived in codemap-ecosystem; change-review added `test_review.py` and the action; the tip added the freshness and C#/Rust tests. Source: `git ls-tree` per branch; [commit f95a508](https://github.com/Cinct00/ai-toolkit/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c)
+- **CI history per branch.** sleepy-cerf had workflows but **no `tests/` directory**. Tests (28) and the CI test step arrived in codemap-ecosystem; change-review added `test_review.py` and the action; the tip added the freshness and C#/Rust tests. Source: `git ls-tree` per branch; [commit f95a508](https://github.com/Cinct00/kickoff/commit/f95a5086538d7107d180da5d3c7e0d9f6028085c)
 - **Claimed runtime support:** "Stdlib Python only… Python 3.9+, including Windows". CI tests neither 3.9 nor Windows, and Windows uses a different copy-not-symlink path. Source: [docs/architecture.md L65](TIP/docs/architecture.md#L65); [toolkit.py L974-978](TIP/scripts/toolkit.py#L974-L978)
 
 ### Inferences
@@ -414,7 +414,7 @@ The code is careful in places: hooks fail open; the action avoids `${{ }}` in sh
 - `doctor --fix` and `adopt --mode vendor` delete directories
 
 ### Cited Findings
-- **Remote installers.** `curl -fsSL https://raw.githubusercontent.com/Cinct00/ai-toolkit/main/install.sh | bash` and `irm …/install.ps1 | iex`. They clone `main` (or `$AI_TOOLKIT_REPO`) with no tag or checksum, `git pull --ff-only` if already present, then `exec … toolkit.py install "$@"`. Source: [install.sh L4, L11, L22-28](TIP/install.sh#L4); [install.ps1 L3, L10, L19-25](TIP/install.ps1#L3)
+- **Remote installers.** `curl -fsSL https://raw.githubusercontent.com/Cinct00/kickoff/main/install.sh | bash` and `irm …/install.ps1 | iex`. They clone `main` (or `$KICKOFF_REPO`) with no tag or checksum, `git pull --ff-only` if already present, then `exec … toolkit.py install "$@"`. Source: [install.sh L4, L11, L22-28](TIP/install.sh#L4); [install.ps1 L3, L10, L19-25](TIP/install.ps1#L3)
 - **Unpinned upstream supply chain:**
   - `install` defaults to installing every profile plugin: `run([cli, "plugin", "install", ref])` for each of the 26 refs ([toolkit.py L915-922](TIP/scripts/toolkit.py#L915-L922); opt-out is `--no-upstream`, [L1638](TIP/scripts/toolkit.py#L1638)).
   - Marketplaces are `{repo}` entries with no ref or SHA ([toolkit.json L51-59](TIP/toolkit.json#L51-L59)).
@@ -446,9 +446,9 @@ The code is careful in places: hooks fail open; the action avoids `${{ }}` in sh
   - `adopt --mode vendor` calls `_vendor_tree`, which runs `shutil.rmtree(dest)` on existing `.claude/skills/<name>` without checking for local edits ([L1228-1235](TIP/scripts/toolkit.py#L1228-L1235)). Re-adopting silently overwrites customised vendored skills, even though `doctor` treats such differences as worth keeping ([L1375-1377](TIP/scripts/toolkit.py#L1375-L1377)).
   - `promote --force` overwrites as well ([L1269-1272](TIP/scripts/toolkit.py#L1269-L1272)).
 - **Code executed by hooks:**
-  - Kickoff SessionStart runs `toolkit.py doctor --quick --summary` from the toolkit home. That home comes from `$AI_TOOLKIT_HOME`, the marker file, or `~/.ai-toolkit` — any directory containing a `toolkit.json` ([kickoff/hooks/session_start.py L13-25, L68](TIP/plugins/kickoff/hooks/session_start.py#L13-L25)).
+  - Kickoff SessionStart runs `toolkit.py doctor --quick --summary` from the toolkit home. That home comes from `$KICKOFF_HOME`, the marker file, or `~/.kickoff` — any directory containing a `toolkit.json` ([kickoff/hooks/session_start.py L13-25, L68](TIP/plugins/kickoff/hooks/session_start.py#L13-L25)).
   - codemap SessionStart spawns a detached `codemap.py index` on the cwd repo ([codemap/hooks/session_start.py L56-65](TIP/plugins/codemap/hooks/session_start.py#L56-L65)).
-  - In vendored repos, the Copilot cloud agent and Claude run repo-committed scripts under `.github/ai-toolkit/plugins/<p>/` via `.github/hooks/ai-toolkit-<p>.json` and `.mcp.json` ([toolkit.py L1110-1136](TIP/scripts/toolkit.py#L1110-L1136)). Anyone who can push to the repo controls that code.
+  - In vendored repos, the Copilot cloud agent and Claude run repo-committed scripts under `.github/kickoff/plugins/<p>/` via `.github/hooks/kickoff-<p>.json` and `.mcp.json` ([toolkit.py L1110-1136](TIP/scripts/toolkit.py#L1110-L1136)). Anyone who can push to the repo controls that code.
 - **Settings mutation.**
   - `_install_claude_user` rewrites `~/.claude/settings.json` hooks. It first drops any hook group whose JSON contains the `plugins/` path, then re-adds them ([L821-841](TIP/scripts/toolkit.py#L821-L841)).
   - `claude mcp remove/add --scope user` runs for each server ([L847-850](TIP/scripts/toolkit.py#L847-L850)).
@@ -582,4 +582,4 @@ The four branches form a **linear stack with `main` as ancestor**, so the tip co
 - Once merged, the `catalog-refresh` and `change-map` workflows become live on `main`. Before that, decide on SHA pinning and the `contents: write` scope.
 
 ### Gaps
-- PR status: an authenticated `gh api repos/Cinct00/ai-toolkit/pulls?state=all` returned no rows, and GraphQL was blocked. It is unconfirmed whether that means "no PRs" or a filtered or permission-limited response.
+- PR status: an authenticated `gh api repos/Cinct00/kickoff/pulls?state=all` returned no rows, and GraphQL was blocked. It is unconfirmed whether that means "no PRs" or a filtered or permission-limited response.

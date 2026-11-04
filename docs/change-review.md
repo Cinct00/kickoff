@@ -38,7 +38,7 @@ Each file in the HTML report shows its symbol changes, the unchanged files that 
 ## On every pull request
 
 ```bash
-python3 ~/.ai-toolkit/scripts/toolkit.py adopt path/to/repo --review-workflow
+python3 ~/.kickoff/scripts/toolkit.py adopt path/to/repo --review-workflow
 ```
 
 This adds `.github/workflows/change-map.yml`, which runs the [`change-map` action](../.github/actions/change-map/action.yml) and produces three things:

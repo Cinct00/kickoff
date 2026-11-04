@@ -1,5 +1,5 @@
 {
-  "description": "ai-toolkit kickoff hooks (Claude Code format). Copilot uses copilot-hooks.json.",
+  "description": "Kickoff hooks (Claude Code format). Copilot uses copilot-hooks.json.",
   "hooks": {
     "SessionStart": [
       {

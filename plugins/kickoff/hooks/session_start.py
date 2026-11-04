@@ -11,22 +11,22 @@ from pathlib import Path
 
 
 def toolkit_home():
-    env = os.environ.get("AI_TOOLKIT_HOME")
+    env = os.environ.get("KICKOFF_HOME")
     if env and Path(env, "toolkit.json").is_file():
         return env
-    marker = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ai-toolkit" / "home"
+    marker = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "home"
     try:
         p = marker.read_text(encoding="utf-8").strip()
         if p and Path(p, "toolkit.json").is_file():
             return p
     except OSError:
         pass
-    default = Path.home() / ".ai-toolkit"
+    default = Path.home() / ".kickoff"
     return str(default) if (default / "toolkit.json").is_file() else None
 
 
 def open_gaps(cwd: Path) -> int:
-    for f in (cwd / ".github" / "ai-toolkit" / "gaps.md", cwd / "catalog" / "gaps.md"):
+    for f in (cwd / ".github" / "kickoff" / "gaps.md", cwd / "catalog" / "gaps.md"):
         try:
             return sum(1 for line in f.read_text(encoding="utf-8").splitlines()
                        if line.startswith("|") and line.rstrip().rstrip("|").strip().endswith("open"))
@@ -59,7 +59,7 @@ def doctor_nudge(home: Path) -> str:
     """At most once a day, run a quick device health check and surface one line if something is off."""
     import subprocess
     import time
-    stamp = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "ai-toolkit" / "last-doctor"
+    stamp = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "last-doctor"
     try:
         if stamp.exists() and time.time() - stamp.stat().st_mtime < 86400:
             return ""

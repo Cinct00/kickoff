@@ -25,12 +25,12 @@ GitHub Copilot (CLI, cloud agent and VS Code) and Claude Code both load skills, 
 | Hooks | `~/.copilot/hooks/*.json` | `~/.claude/settings.json` (or plugins) |
 | MCP | `~/.copilot/mcp-config.json` | `claude mcp add --scope user` (or plugins) |
 
-`toolkit.py install` writes exactly these. On Copilot it uses symlinks, so a `git pull` updates every device instantly. It records every path in `~/.config/ai-toolkit/installed.json` so `doctor` can verify them later.
+`toolkit.py install` writes exactly these. On Copilot it uses symlinks, so a `git pull` updates every device instantly. It records every path in `~/.config/kickoff/installed.json` so `doctor` can verify them later.
 
 **Precedence matters.** A project-level skill with the same name **overrides** your personal one in Copilot, and agents go the other way. So a skill vendored into a repo months ago silently shadows the up-to-date version you installed at user level. It also costs extra listing tokens. To migrate a repo:
 
-1. Install at user level on your device: `python3 ~/.ai-toolkit/scripts/toolkit.py install`.
-2. Check the repo: `python3 ~/.ai-toolkit/scripts/toolkit.py doctor --repo path/to/repo`.
+1. Install at user level on your device: `python3 ~/.kickoff/scripts/toolkit.py install`.
+2. Check the repo: `python3 ~/.kickoff/scripts/toolkit.py doctor --repo path/to/repo`.
    - *duplicates the toolkit skill you already have at user level* → safe to delete; `--fix` does it.
    - *differs from the toolkit version* → stale or customized. Compare; `promote` it if the change is worth keeping, otherwise delete it.
 3. If teammates or the Copilot cloud agent need the toolkit in that repo, use `adopt --mode plugins` (a few lines of settings that auto-install current versions) instead of vendored copies.
@@ -50,7 +50,7 @@ Install the smallest bundle that covers your work on each device (`install --bun
 ## Health checklist (monthly, 5 minutes)
 
 ```bash
-cd ~/.ai-toolkit && git pull
+cd ~/.kickoff && git pull
 ```
 
 ```bash

@@ -1,5 +1,5 @@
 {
-  "description": "ai-toolkit local-first hooks (Claude Code format). Copilot uses copilot-hooks.json.",
+  "description": "Kickoff local-first hooks (Claude Code format). Copilot uses copilot-hooks.json.",
   "hooks": {
     "PreToolUse": [
       {

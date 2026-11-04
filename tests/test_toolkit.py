@@ -22,7 +22,7 @@ class ToolkitTest(unittest.TestCase):
         (cls.home / ".copilot").mkdir(parents=True)
         cls.env = {**os.environ, "HOME": str(cls.home), "XDG_CONFIG_HOME": str(cls.home / ".config"),
                    "CLAUDE_CONFIG_DIR": str(cls.home / ".claude"), "COPILOT_HOME": str(cls.home / ".copilot"),
-                   "AI_TOOLKIT_BIN": str(cls.home / "bin"), "CODEMAP_CACHE": str(cls.tmp / "cache")}
+                   "KICKOFF_BIN": str(cls.home / "bin"), "CODEMAP_CACHE": str(cls.tmp / "cache")}
 
     @classmethod
     def tearDownClass(cls):
@@ -52,11 +52,11 @@ class ToolkitTest(unittest.TestCase):
         self.assertTrue((cop / "agents" / "code-navigator.agent.md").exists())
         mcp = json.loads((cop / "mcp-config.json").read_text())
         self.assertTrue(mcp["mcpServers"]["codemap"]["args"][0].endswith("plugins/codemap/scripts/codemap.py"))
-        hooks = json.loads((cop / "hooks" / "ai-toolkit.json").read_text())
+        hooks = json.loads((cop / "hooks" / "kickoff.json").read_text())
         self.assertEqual(hooks["version"], 1)
         self.assertTrue(all(Path(e["env"]["PLUGIN_ROOT"]).is_dir() for e in hooks["hooks"]["sessionStart"]))
         self.assertTrue((self.home / "bin" / "codemap").exists())
-        ledger = json.loads((self.home / ".config" / "ai-toolkit" / "installed.json").read_text())
+        ledger = json.loads((self.home / ".config" / "kickoff" / "installed.json").read_text())
         self.assertEqual(ledger["bundle"], "dev")
 
         # A repo with vendored copies: identical ones shadow user-level installs; edited ones are kept.
@@ -96,15 +96,15 @@ class ToolkitTest(unittest.TestCase):
                               capture_output=True, text=True, timeout=60, env=self.env)
         replies = [json.loads(l) for l in proc.stdout.splitlines()]
         self.assertIn("def hello()", replies[1]["result"]["content"][0]["text"])
-        hook = json.loads((repo / ".github" / "hooks" / "ai-toolkit-codemap.json").read_text())
-        self.assertEqual(hook["hooks"]["sessionStart"][0]["env"]["PLUGIN_ROOT"], ".github/ai-toolkit/plugins/codemap")
+        hook = json.loads((repo / ".github" / "hooks" / "kickoff-codemap.json").read_text())
+        self.assertEqual(hook["hooks"]["sessionStart"][0]["env"]["PLUGIN_ROOT"], ".github/kickoff/plugins/codemap")
 
     def test_adopt_review_workflow(self):
         repo = self.tmp / "repo-review"
         repo.mkdir()
         self.tk("adopt", str(repo), "--bundle", "core", "--review-workflow", "--review-ref", "abc123")
         wf = (repo / ".github" / "workflows" / "change-map.yml").read_text()
-        self.assertIn("Cinct00/ai-toolkit/.github/actions/change-map@abc123", wf)
+        self.assertIn("Cinct00/kickoff/.github/actions/change-map@abc123", wf)
         self.assertIn("fetch-depth: 0", wf)
         self.assertIn("pull-requests: write", wf)
         self.assertNotIn("pull_request_target", wf)
@@ -140,7 +140,7 @@ class InstallSafetyTest(unittest.TestCase):
         (self.home / ".copilot").mkdir(parents=True)
         self.env = {**os.environ, "HOME": str(self.home), "XDG_CONFIG_HOME": str(self.home / ".config"),
                     "CLAUDE_CONFIG_DIR": str(self.home / ".claude"), "COPILOT_HOME": str(self.home / ".copilot"),
-                    "AI_TOOLKIT_BIN": str(self.home / "bin"), "CODEMAP_CACHE": str(self.tmp / "cache")}
+                    "KICKOFF_BIN": str(self.home / "bin"), "CODEMAP_CACHE": str(self.tmp / "cache")}
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -152,7 +152,7 @@ class InstallSafetyTest(unittest.TestCase):
         return proc
 
     def ledger(self):
-        return json.loads((self.home / ".config" / "ai-toolkit" / "installed.json").read_text())
+        return json.loads((self.home / ".config" / "kickoff" / "installed.json").read_text())
 
     def test_user_files_with_toolkit_names_are_left_alone_and_not_recorded(self):
         cop = self.home / ".copilot"
@@ -162,7 +162,7 @@ class InstallSafetyTest(unittest.TestCase):
         (cop / "agents" / "code-navigator.agent.md").write_text("my own agent\n")
         for _ in range(2):  # the second run used to crash on existing files in link mode
             out = self.tk("install", "--target", "copilot-user", "--bundle", "core", "--no-upstream", "--no-shim")
-            self.assertIn("not managed by ai-toolkit", out.stderr + out.stdout)
+            self.assertIn("not managed by Kickoff", out.stderr + out.stdout)
         paths = {e["path"] for e in self.ledger()["entries"]}
         self.assertNotIn(str(cop / "skills" / "kickoff"), paths)
         self.assertNotIn(str(cop / "agents" / "code-navigator.agent.md"), paths)
@@ -174,7 +174,7 @@ class InstallSafetyTest(unittest.TestCase):
         user_dir = self.home / ".copilot" / "skills" / "harvest"
         user_dir.mkdir(parents=True)
         (user_dir / "SKILL.md").write_text("mine\n")
-        ledger = self.home / ".config" / "ai-toolkit" / "installed.json"
+        ledger = self.home / ".config" / "kickoff" / "installed.json"
         ledger.parent.mkdir(parents=True)
         src = ROOT / "plugins" / "kickoff" / "skills" / "harvest"
         ledger.write_text(json.dumps({"targets": ["copilot-user"], "bundle": "core", "entries": [

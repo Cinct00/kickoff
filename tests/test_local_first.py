@@ -37,8 +37,8 @@ class LocalFirstHookTest(unittest.TestCase):
                                   {"node_modules/leftpad/README.md": "# leftpad\n", "docs/sdk/index.md": "sdk\n"})
         self.env = {**os.environ, "HOME": str(self.home), "XDG_CONFIG_HOME": str(self.home / ".config"),
                     "XDG_CACHE_HOME": str(self.tmp / "cache"), "TMPDIR": str(self.tmp / "t")}
-        self.env.pop("AI_TOOLKIT_LOCAL_FIRST", None)
-        self.env.pop("AI_TOOLKIT_LOCAL_ROOTS", None)
+        self.env.pop("KICKOFF_LOCAL_FIRST", None)
+        self.env.pop("KICKOFF_LOCAL_ROOTS", None)
         (self.tmp / "t").mkdir()
         self.session = uuid.uuid4().hex
 
@@ -71,13 +71,13 @@ class LocalFirstHookTest(unittest.TestCase):
 
     def test_strict_mode_always_denies(self):
         args = {"owner": "acme", "repo": "widgets", "path": "src/app.py"}
-        env = {"AI_TOOLKIT_LOCAL_FIRST": "strict"}
+        env = {"KICKOFF_LOCAL_FIRST": "strict"}
         self.assertDenied(self.run_hook("mcp__github__get_file_contents", args, env=env), "strict")
         self.assertDenied(self.run_hook("mcp__github__get_file_contents", args, env=env))
 
     def test_off_mode_and_unknown_repos_pass(self):
         args = {"owner": "acme", "repo": "widgets", "path": "src/app.py"}
-        self.assertEqual(self.run_hook("mcp__github__get_file_contents", args, env={"AI_TOOLKIT_LOCAL_FIRST": "off"}), "")
+        self.assertEqual(self.run_hook("mcp__github__get_file_contents", args, env={"KICKOFF_LOCAL_FIRST": "off"}), "")
         self.assertEqual(self.run_hook("mcp__github__get_file_contents", {"owner": "x", "repo": "y", "path": "a"}), "")
 
     def test_missing_local_file_lets_remote_through(self):
@@ -116,24 +116,24 @@ class LocalFirstHookTest(unittest.TestCase):
                           str(self.clone))
 
     def test_docs_map_from_user_and_project_config(self):
-        cfg = self.home / ".config" / "ai-toolkit"
+        cfg = self.home / ".config" / "kickoff"
         cfg.mkdir(parents=True)
         (self.home / "docs" / "tf").mkdir(parents=True)
         (cfg / "local-first.json").write_text(json.dumps({"docs": {"terraform": str(self.home / "docs" / "tf")}}))
         self.assertDenied(self.run_hook("WebSearch", {"query": "terraform aws_instance arguments"}), str(self.home / "docs" / "tf"))
-        (self.project / ".ai-toolkit").mkdir()
-        (self.project / ".ai-toolkit" / "local-first.json").write_text(json.dumps(
+        (self.project / ".kickoff").mkdir()
+        (self.project / ".kickoff" / "local-first.json").write_text(json.dumps(
             {"docs": {"our-sdk": "docs/sdk", "evil": "../../home", "abs": "/etc"}}))
         self.assertDenied(self.run_hook("mcp__docs__search_docs", {"query": "our-sdk auth flow"}), "docs/sdk")
         self.assertEqual(self.run_hook("mcp__docs__search_docs", {"query": "evil abs"}), "")
 
     def test_project_config_cannot_add_roots(self):
         other = make_clone(self.tmp / "elsewhere" / "secret", "https://github.com/acme/secret", {"a.txt": "x"})
-        (self.project / ".ai-toolkit").mkdir()
-        (self.project / ".ai-toolkit" / "local-first.json").write_text(json.dumps({"roots": [str(other.parent)]}))
+        (self.project / ".kickoff").mkdir()
+        (self.project / ".kickoff" / "local-first.json").write_text(json.dumps({"roots": [str(other.parent)]}))
         self.assertEqual(self.run_hook("mcp__github__get_file_contents", {"owner": "acme", "repo": "secret", "path": "a.txt"}), "")
         self.assertDenied(self.run_hook("mcp__github__get_file_contents", {"owner": "acme", "repo": "secret", "path": "a.txt"},
-                                        env={"AI_TOOLKIT_LOCAL_ROOTS": str(other.parent)}))
+                                        env={"KICKOFF_LOCAL_ROOTS": str(other.parent)}))
 
     def test_local_tools_skip_and_bad_input_fails_open(self):
         self.assertEqual(self.run_hook("Read", {"file_path": "https://github.com/acme/widgets/blob/main/src/app.py"}), "")

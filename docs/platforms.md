@@ -23,7 +23,7 @@ What works where, and how to set each client up.
 ## Setting up each client
 
 ### Claude Code
-`python3 scripts/toolkit.py install --target claude` (or `/plugin marketplace add Cinct00/ai-toolkit`, then `/plugin install kickoff@kickoff`). Skills appear as `kickoff:kickoff`, `engineering-craft:reviewing-code`, etc.
+`python3 scripts/toolkit.py install --target claude` (or `/plugin marketplace add Cinct00/kickoff`, then `/plugin install kickoff@kickoff`). Skills appear as `kickoff:kickoff`, `engineering-craft:reviewing-code`, etc.
 
 ### Claude app (claude.ai, desktop, mobile)
 The app syncs skills from your account, not from git. Upload changed skills from `plugins/*/skills/` through the app's skill settings or the `propose_skills` flow at the end of a harvest. The app's own built-ins (`deep-research`, `docs`, `tutor`…) are listed in `toolkit.json` → `app_builtins`; kickoff only routes to them there.
@@ -32,7 +32,7 @@ The app syncs skills from your account, not from git. Upload changed skills from
 `python3 scripts/toolkit.py install --target copilot`, or:
 
 ```bash
-copilot plugin marketplace add Cinct00/ai-toolkit
+copilot plugin marketplace add Cinct00/kickoff
 ```
 
 ```bash
@@ -45,7 +45,7 @@ Copilot reads the same marketplace format, so the upstream Anthropic marketplace
 Run `toolkit.py adopt <repo>` (or the `toolkit-adopt` skill) and commit the result. `.github/copilot/settings.json` declares the marketplace and enabled plugins; the cloud agent and Copilot CLI read it, scoped to that repository. Use `--mode vendor --hooks --github-agents` to commit the files themselves instead.
 
 ### GitHub Copilot in VS Code
-Fastest: `toolkit.py install --target skills --skills-dir ~/.copilot/skills` (user-wide), or `adopt --mode vendor` (per repo, committed). VS Code also has agent plugins in preview; add `Cinct00/ai-toolkit` as a plugin marketplace in its agent-plugin settings (check the VS Code docs for the current setting name).
+Fastest: `toolkit.py install --target skills --skills-dir ~/.copilot/skills` (user-wide), or `adopt --mode vendor` (per repo, committed). VS Code also has agent plugins in preview; add `Cinct00/kickoff` as a plugin marketplace in its agent-plugin settings (check the VS Code docs for the current setting name).
 
 ### Codex, Cursor, Gemini CLI and other Agent Skills clients
 `toolkit.py install --target skills` links every toolkit skill into `~/.agents/skills` (add `--skills-dir` for client-specific folders). `AGENTS.md` in adopted repos tells them to start with kickoff.

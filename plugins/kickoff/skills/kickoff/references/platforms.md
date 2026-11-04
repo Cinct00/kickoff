@@ -38,12 +38,12 @@ Marketplace names → repos: `claude-plugins-official` = `anthropics/claude-plug
 `knowledge-work-plugins` = `anthropics/knowledge-work-plugins`, `anthropic-agent-skills` = `anthropics/skills`,
 `claude-for-financial-services` = `anthropics/financial-services-plugins`, `claude-for-legal` = `anthropics/claude-for-legal`,
 `copilot-plugins` = `github/copilot-plugins`, `awesome-copilot` = `github/awesome-copilot` (built into Copilot CLI),
-`ai-toolkit` = `Cinct00/ai-toolkit` (this toolkit).
+`kickoff` = `Cinct00/kickoff` (this toolkit).
 
 ## Where new artefacts go
 
 | Situation | Skills | Agents | Hooks |
 |---|---|---|---|
-| Toolkit checkout available (`$AI_TOOLKIT_HOME`, `~/.config/ai-toolkit/home`, or `~/.ai-toolkit`) and the artefact is cross-project | `plugins/<bundle>/skills/<name>/SKILL.md` | `plugins/<bundle>/agents/<name>.agent.md` | `plugins/<bundle>/hooks/hooks.json` **and** `hooks/copilot-hooks.json` |
+| Toolkit checkout available (`$KICKOFF_HOME`, `~/.config/kickoff/home`, or `~/.kickoff`) and the artefact is cross-project | `plugins/<bundle>/skills/<name>/SKILL.md` | `plugins/<bundle>/agents/<name>.agent.md` | `plugins/<bundle>/hooks/hooks.json` **and** `hooks/copilot-hooks.json` |
 | Project-specific, any client | `.claude/skills/<name>/SKILL.md` (read by Claude Code and Copilot) | `.claude/agents/<name>.md` | `.claude/settings.json` (Claude; Copilot CLI reads it too) or `.github/hooks/<name>.json` (Copilot format) |
 | Claude app, no repo | `propose_skills` | write the file and send it with `SendUserFile` | write the rule file and send it |

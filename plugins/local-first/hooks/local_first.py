@@ -18,8 +18,8 @@ the agent. "strict" denies every time a local copy exists; "off" disables it.
 Calls with no local equivalent pass silently, so the hook adds no tokens.
 
 Config (all optional, JSON), merged in this order:
-  ~/.config/ai-toolkit/local-first.json      user level ($XDG_CONFIG_HOME honoured)
-  <project>/.ai-toolkit/local-first.json      project level (only "mode", "docs"
+  ~/.config/kickoff/local-first.json      user level ($XDG_CONFIG_HOME honoured)
+  <project>/.kickoff/local-first.json      project level (only "mode", "docs"
                                               inside the project, and "ignore_tools")
   {
     "mode": "once" | "strict" | "off",
@@ -28,8 +28,8 @@ Config (all optional, JSON), merged in this order:
              "https://docs.python.org/3/": "~/docs/python-3"},
     "ignore_tools": ["mcp__slack__.*"]
   }
-Environment: AI_TOOLKIT_LOCAL_FIRST=once|strict|off overrides the mode;
-AI_TOOLKIT_LOCAL_ROOTS (os.pathsep-separated) adds roots.
+Environment: KICKOFF_LOCAL_FIRST=once|strict|off overrides the mode;
+KICKOFF_LOCAL_ROOTS (os.pathsep-separated) adds roots.
 
 Usage: local_first.py --format claude|copilot (hook JSON on stdin). Fails open.
 """
@@ -74,11 +74,11 @@ FETCH_CMD_RE = re.compile(r"\b(curl|wget|gh\s+api|http|xh|Invoke-WebRequest|iwr)
 # --------------------------------------------------------------------------- config
 
 def config_home() -> Path:
-    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "ai-toolkit"
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "kickoff"
 
 
 def cache_home() -> Path:
-    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "ai-toolkit"
+    return Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache") / "kickoff"
 
 
 def read_json(path: Path) -> dict:
@@ -106,7 +106,7 @@ def within(path: Path, root: Path) -> bool:
 
 def load_config(project: Path) -> dict:
     user = read_json(config_home() / "local-first.json")
-    proj = read_json(project / ".ai-toolkit" / "local-first.json")
+    proj = read_json(project / ".kickoff" / "local-first.json")
     cfg = {"mode": user.get("mode", "once"), "roots": list(user.get("roots") or []),
            "docs": {}, "ignore_tools": list(user.get("ignore_tools") or [])}
     for key, val in (user.get("docs") or {}).items():
@@ -122,7 +122,7 @@ def load_config(project: Path) -> dict:
             p = project / val
             if within(p, project):
                 cfg["docs"][key] = p
-    env_mode = os.environ.get("AI_TOOLKIT_LOCAL_FIRST", "").strip().lower()
+    env_mode = os.environ.get("KICKOFF_LOCAL_FIRST", "").strip().lower()
     if env_mode in ("once", "strict", "off", "0", "1"):
         cfg["mode"] = {"0": "off", "1": "once"}.get(env_mode, env_mode)
     return cfg
@@ -130,7 +130,7 @@ def load_config(project: Path) -> dict:
 
 def scan_roots(cfg: dict, project: Path) -> list[tuple[Path, int]]:
     roots: list[tuple[Path, int]] = []
-    extra = [r for r in os.environ.get("AI_TOOLKIT_LOCAL_ROOTS", "").split(os.pathsep) if r]
+    extra = [r for r in os.environ.get("KICKOFF_LOCAL_ROOTS", "").split(os.pathsep) if r]
     for r in extra + cfg["roots"] + DEFAULT_ROOTS:
         path, depth = (r.get("path"), int(r.get("depth", 3))) if isinstance(r, dict) else (r, 3)
         if path:
@@ -445,7 +445,7 @@ def resolve(target: dict, index: dict[str, list[str]], cfg: dict, project: Path)
 def already_redirected(session: str, key: str) -> bool:
     """True if this target was redirected before in this session (then let it through)."""
     uid = os.getuid() if hasattr(os, "getuid") else "u"
-    state = Path(tempfile.gettempdir()) / f"ai-toolkit-local-first-{uid}"
+    state = Path(tempfile.gettempdir()) / f"kickoff-local-first-{uid}"
     marker = state / hashlib.sha1(f"{session}|{key}".encode()).hexdigest()[:20]
     if marker.exists():
         return True
@@ -502,7 +502,7 @@ def decide(data: dict) -> str | None:
     lines += [f"- {path}  ({why})" for path, why in hits[:MAX_SUGGESTIONS]]
     if cfg["mode"] == "strict":
         lines.append("Remote lookups with a local equivalent are blocked (strict mode). If the local copy is stale, "
-                     "update it (e.g. `git -C <clone> pull`), or ask the user to set AI_TOOLKIT_LOCAL_FIRST=once.")
+                     "update it (e.g. `git -C <clone> pull`), or ask the user to set KICKOFF_LOCAL_FIRST=once.")
     else:
         lines.append("Read or Grep these (or use codemap on a clone). If they don't answer the question, for example "
                      "because you need a different version than the local copy, repeat the same call and it will be allowed.")

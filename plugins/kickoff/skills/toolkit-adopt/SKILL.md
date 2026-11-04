@@ -1,6 +1,6 @@
 ---
 name: toolkit-adopt
-description: "Brings the AI toolkit into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my skills to this repo', 'make Copilot use kickoff in this project', or opens a repo with no AI configuration."
+description: "Brings Kickoff into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my skills to this repo', 'make Copilot use kickoff in this project', or opens a repo with no AI configuration."
 ---
 
 # Toolkit adopt
@@ -14,7 +14,7 @@ Read before writing. Look for:
 - Instructions: `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md`, `.cursorrules`, `GEMINI.md`.
 - Skills and agents: `.claude/skills/`, `.github/skills/`, `.agents/skills/`, `.claude/agents/`, `.github/agents/`.
 - Hooks and settings: `.claude/settings.json`, `.github/hooks/*.json`, `.github/copilot/settings.json`.
-- An earlier adoption: `.github/ai-toolkit/lock.json`.
+- An earlier adoption: `.github/kickoff/lock.json`.
 - The stack: languages, frameworks, test runner, CI, deploy target, whether there is a UI, data work, docs work.
 
 Note conflicts (an existing skill with the same name as a toolkit one, contradictory instructions) and keep the project's version unless the user says otherwise.
@@ -40,10 +40,10 @@ Search the catalog for the project's stack keywords as well; there is often a st
 
 ## 3. Write the configuration
 
-**If the toolkit checkout is available** (`$AI_TOOLKIT_HOME`, `~/.config/ai-toolkit/home`, or `~/.ai-toolkit`), run its CLI from the target repo root:
+**If the toolkit checkout is available** (`$KICKOFF_HOME`, `~/.config/kickoff/home`, or `~/.kickoff`), run its CLI from the target repo root:
 
 ```bash
-python3 "$AI_TOOLKIT_HOME/scripts/toolkit.py" adopt . --bundle dev \
+python3 "$KICKOFF_HOME/scripts/toolkit.py" adopt . --bundle dev \
   --upstream feature-dev@claude-plugins-official --upstream pr-review-toolkit@claude-plugins-official
 ```
 
@@ -56,7 +56,7 @@ Add `--mode vendor` when the repo must work without plugin support (VS Code with
    ```json
    {
      "extraKnownMarketplaces": {
-       "kickoff": { "source": { "source": "github", "repo": "Cinct00/ai-toolkit" } },
+       "kickoff": { "source": { "source": "github", "repo": "Cinct00/kickoff" } },
        "claude-plugins-official": { "source": { "source": "github", "repo": "anthropics/claude-plugins-official" } }
      },
      "enabledPlugins": {
@@ -67,9 +67,9 @@ Add `--mode vendor` when the repo must work without plugin support (VS Code with
    }
    ```
 
-2. `AGENTS.md`: add a short block, delimited by `<!-- ai-toolkit:begin -->` / `<!-- ai-toolkit:end -->`, telling agents to start substantial tasks with the `kickoff` skill and to put project-specific harvested skills in `.claude/skills/`. Copilot, Codex, Cursor and Gemini read `AGENTS.md`.
+2. `AGENTS.md`: add a short block, delimited by `<!-- kickoff:begin -->` / `<!-- kickoff:end -->`, telling agents to start substantial tasks with the `kickoff` skill and to put project-specific harvested skills in `.claude/skills/`. Copilot, Codex, Cursor and Gemini read `AGENTS.md`.
 3. `CLAUDE.md`: if missing, create it containing `@AGENTS.md`; if present, make sure it imports `AGENTS.md`.
-4. `.github/ai-toolkit/gaps.md`: the gaps ledger (table header `| Date | Task | Gap | Resolution |`).
+4. `.github/kickoff/gaps.md`: the gaps ledger (table header `| Date | Task | Gap | Resolution |`).
 
 ## 4. Fill project-specific gaps
 

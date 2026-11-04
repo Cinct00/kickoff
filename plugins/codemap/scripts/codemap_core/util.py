@@ -102,9 +102,9 @@ def cache_dir() -> Path:
     if os.environ.get("CODEMAP_CACHE"):
         base = Path(os.environ["CODEMAP_CACHE"])
     elif sys.platform == "win32":
-        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "ai-toolkit" / "codemap"
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "kickoff" / "codemap"
     else:
-        base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "ai-toolkit" / "codemap"
+        base = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "kickoff" / "codemap"
     base.mkdir(parents=True, exist_ok=True)
     return base
 

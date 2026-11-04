@@ -24,7 +24,7 @@ class KickoffSessionStartTest(unittest.TestCase):
         for d in (self.home, self.cwd):
             d.mkdir(parents=True)
         self.env = {**os.environ, "HOME": str(self.home), "XDG_CONFIG_HOME": str(self.cfg), "USERPROFILE": str(self.home)}
-        self.env.pop("AI_TOOLKIT_HOME", None)
+        self.env.pop("KICKOFF_HOME", None)
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -56,14 +56,14 @@ class KickoffSessionStartTest(unittest.TestCase):
     def test_toolkit_home_resolution_order(self):
         env_home = self.fake_toolkit(self.tmp / "from-env")
         marker_home = self.fake_toolkit(self.tmp / "from-marker")
-        default_home = self.fake_toolkit(self.home / ".ai-toolkit")
+        default_home = self.fake_toolkit(self.home / ".kickoff")
         self.assertIn(f"Toolkit checkout: {default_home}", self.context())
-        (self.cfg / "ai-toolkit").mkdir(parents=True, exist_ok=True)
-        (self.cfg / "ai-toolkit" / "home").write_text(f"{marker_home}\n")
+        (self.cfg / "kickoff").mkdir(parents=True, exist_ok=True)
+        (self.cfg / "kickoff" / "home").write_text(f"{marker_home}\n")
         self.assertIn(f"Toolkit checkout: {marker_home}", self.context())
-        self.assertIn(f"Toolkit checkout: {env_home}", self.context(env={"AI_TOOLKIT_HOME": str(env_home)}))
+        self.assertIn(f"Toolkit checkout: {env_home}", self.context(env={"KICKOFF_HOME": str(env_home)}))
         # An env var pointing somewhere without toolkit.json is ignored.
-        self.assertIn(f"Toolkit checkout: {marker_home}", self.context(env={"AI_TOOLKIT_HOME": str(self.tmp)}))
+        self.assertIn(f"Toolkit checkout: {marker_home}", self.context(env={"KICKOFF_HOME": str(self.tmp)}))
 
     def test_open_gaps_are_counted(self):
         ledger = self.cwd / "catalog" / "gaps.md"
@@ -72,10 +72,10 @@ class KickoffSessionStartTest(unittest.TestCase):
         self.assertIn("2 open toolkit gap(s)", self.context())
 
     def test_doctor_nudge_runs_at_most_daily(self):
-        self.fake_toolkit(self.home / ".ai-toolkit", doctor_output="toolkit doctor: 1 issue(s)")
+        self.fake_toolkit(self.home / ".kickoff", doctor_output="toolkit doctor: 1 issue(s)")
         self.assertIn("toolkit doctor: 1 issue(s)", self.context())
         self.assertNotIn("toolkit doctor", self.context(), "second run within a day must be silent")
-        stamp = self.cfg / "ai-toolkit" / "last-doctor"
+        stamp = self.cfg / "kickoff" / "last-doctor"
         old = time.time() - 2 * 86400
         os.utime(stamp, (old, old))
         self.assertIn("toolkit doctor: 1 issue(s)", self.context())

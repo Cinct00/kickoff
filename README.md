@@ -8,12 +8,12 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Cinct00/ai-toolkit/actions/workflows/validate.yml"><img alt="CI" src="https://github.com/Cinct00/ai-toolkit/actions/workflows/validate.yml/badge.svg"></a>
+  <a href="https://github.com/Cinct00/kickoff/actions/workflows/validate.yml"><img alt="CI" src="https://github.com/Cinct00/kickoff/actions/workflows/validate.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-3776AB.svg?logo=python&logoColor=white">
   <img alt="Zero dependencies" src="https://img.shields.io/badge/dependencies-zero-brightgreen.svg">
   <a href="docs/platforms.md"><img alt="Works with Claude Code and GitHub Copilot" src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Copilot%20%C2%B7%20Codex%20%C2%B7%20Cursor-FF8205.svg"></a>
-  <a href="https://github.com/Cinct00/ai-toolkit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Cinct00/ai-toolkit?style=social"></a>
+  <a href="https://github.com/Cinct00/kickoff/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Cinct00/kickoff?style=social"></a>
 </p>
 
 <p align="center">
@@ -64,15 +64,15 @@ doctor / audit / catalog refresh keep installs current, duplicates out and the a
 ### On a new device
 
 ```bash
-git clone https://github.com/Cinct00/ai-toolkit ~/.ai-toolkit
+git clone https://github.com/Cinct00/kickoff ~/.kickoff
 ```
 
 ```bash
-python3 ~/.ai-toolkit/scripts/toolkit.py install --dry-run
+python3 ~/.kickoff/scripts/toolkit.py install --dry-run
 ```
 
 ```bash
-python3 ~/.ai-toolkit/scripts/toolkit.py install
+python3 ~/.kickoff/scripts/toolkit.py install
 ```
 
 `install` detects every AI client you have and wires Kickoff into each one: it registers this marketplace and the upstream ones, then installs the toolkit plugins plus your plugin profile.
@@ -81,23 +81,23 @@ python3 ~/.ai-toolkit/scripts/toolkit.py install
 |---|---|
 | Claude Code (`claude`) | `claude plugin marketplace add …` + `claude plugin install <plugin>@<marketplace>` for the toolkit and every profile plugin |
 | GitHub Copilot CLI (`copilot`) | the same with `copilot plugin …` (Copilot reads the same marketplace format) |
-| GitHub Copilot, user level (`~/.copilot` exists) | skills → `~/.copilot/skills`, agents → `~/.copilot/agents`, hooks → `~/.copilot/hooks/ai-toolkit.json`, codemap MCP → `~/.copilot/mcp-config.json`: one install serves every repo on the device (CLI, cloud-agent-style sessions and VS Code) |
+| GitHub Copilot, user level (`~/.copilot` exists) | skills → `~/.copilot/skills`, agents → `~/.copilot/agents`, hooks → `~/.copilot/hooks/kickoff.json`, codemap MCP → `~/.copilot/mcp-config.json`: one install serves every repo on the device (CLI, cloud-agent-style sessions and VS Code) |
 | Everything else (Codex, Cursor, Gemini CLI…) | toolkit skills symlinked into `~/.agents/skills` (`--skills-dir` to add more) |
 | Shell | a `codemap` command in `~/.local/bin` |
 
 Options: `--bundle core|dev|full`, `--target claude|copilot|copilot-user|claude-user|skills`, `--no-upstream`, `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
 
-Stay current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync` and healthy with `doctor` (see [Keeping it alive](#keeping-it-alive)).
+Stay current with `python3 ~/.kickoff/scripts/toolkit.py sync` and healthy with `doctor` (see [Keeping it alive](#keeping-it-alive)).
 
 ### Just the marketplace
 
 ```
-/plugin marketplace add Cinct00/ai-toolkit          # Claude Code
+/plugin marketplace add Cinct00/kickoff          # Claude Code
 /plugin install kickoff@kickoff
 ```
 
 ```bash
-copilot plugin marketplace add Cinct00/ai-toolkit
+copilot plugin marketplace add Cinct00/kickoff
 ```
 
 ```bash
@@ -107,7 +107,7 @@ copilot plugin install kickoff@kickoff
 ### Supercharge a whole team's repo (including the Copilot cloud agent)
 
 ```bash
-python3 ~/.ai-toolkit/scripts/toolkit.py adopt path/to/project --bundle dev --upstream feature-dev@claude-plugins-official
+python3 ~/.kickoff/scripts/toolkit.py adopt path/to/project --bundle dev --upstream feature-dev@claude-plugins-official
 ```
 
 This writes `extraKnownMarketplaces` + `enabledPlugins` into the project's `.claude/settings.json` **and** `.github/copilot/settings.json` (read by Copilot CLI *and* the Copilot cloud agent), adds a kickoff block to `AGENTS.md`, makes `CLAUDE.md` import it, and starts a gaps ledger. `--mode vendor` copies the skills and agents into `.claude/` instead, for clients without plugin support, and never overwrites files your team has customised (`--force` to override). Or, from inside the project, just ask your agent to run the `toolkit-adopt` skill: it inventories the repo and picks the set for you.
@@ -192,7 +192,7 @@ Agents love to fetch a file from GitHub, query Context7 or hit a docs site when 
 |---|---|---|
 | `harvest` | kickoff | Turns reusable work from the current session into new or improved skills, agents, hooks and kickoff routes, written in a portable format th… |
 | `kickoff` | kickoff | Routes a task to the right skills, agents and plugin commands on whatever platform you are running on (Claude Code, Claude app, GitHub Copi… |
-| `toolkit-adopt` | kickoff | Brings the AI toolkit into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work ther… |
+| `toolkit-adopt` | kickoff | Brings Kickoff into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for e… |
 | `change-review` | codemap | Review a pull request, branch or local diff from its structural change map instead of a raw diff: symbol-level changes, a risk-ranked revie… |
 | `codemap` | codemap | Navigate a codebase through its indexed map instead of grepping and reading whole files: overview, ranked repo map, symbol search, definiti… |
 | `architecting-solutions` | engineering-craft | How to design a solution before building it — generating options, weighing trade-offs, choosing where to spend design effort, and writing d… |

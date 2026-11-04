@@ -25,11 +25,11 @@ When it finds a local copy, the hook **denies the first remote call** and gives 
 | `strict` | Always deny a remote call that has a local copy. The agent must update the local copy (`git pull`) or you must relax the mode. |
 | `off` | Disabled |
 
-Set the mode with `AI_TOOLKIT_LOCAL_FIRST=once|strict|off`, or with `"mode"` in a config file.
+Set the mode with `KICKOFF_LOCAL_FIRST=once|strict|off`, or with `"mode"` in a config file.
 
 ## Configuration
 
-All optional. User level: `~/.config/ai-toolkit/local-first.json` (honours `$XDG_CONFIG_HOME`).
+All optional. User level: `~/.config/kickoff/local-first.json` (honours `$XDG_CONFIG_HOME`).
 
 ```json
 {
@@ -43,11 +43,11 @@ All optional. User level: `~/.config/ai-toolkit/local-first.json` (honours `$XDG
 }
 ```
 
-- `roots`: where to look for clones, in addition to `~/src`, `~/code`, `~/projects`, `~/repos`, `~/dev`, `~/git`, `~/work`, `~/workspace`, `~/ghq`, `~/go/src`, `~/source/repos` and the directories next to the current project. `AI_TOOLKIT_LOCAL_ROOTS` (path-separator list) adds more. The clone index is cached for 10 minutes in `~/.cache/ai-toolkit/`.
+- `roots`: where to look for clones, in addition to `~/src`, `~/code`, `~/projects`, `~/repos`, `~/dev`, `~/git`, `~/work`, `~/workspace`, `~/ghq`, `~/go/src`, `~/source/repos` and the directories next to the current project. `KICKOFF_LOCAL_ROOTS` (path-separator list) adds more. The clone index is cached for 10 minutes in `~/.cache/kickoff/`.
 - `docs`: keys are either a library or topic name (matched against library arguments and as a whole word in docs/web search queries) or a URL prefix (the rest of the URL is mapped onto the folder).
 - `ignore_tools`: regexes of tool names to leave alone.
 
-Project level: `<repo>/.ai-toolkit/local-first.json` may set `mode`, `ignore_tools`, and `docs` entries with paths **inside the repository** (for example `"docs": {"our-sdk": "docs/sdk"}`). A repository can't add scan roots or point the hook outside itself, because its contents are untrusted.
+Project level: `<repo>/.kickoff/local-first.json` may set `mode`, `ignore_tools`, and `docs` entries with paths **inside the repository** (for example `"docs": {"our-sdk": "docs/sdk"}`). A repository can't add scan roots or point the hook outside itself, because its contents are untrusted.
 
 ## Security notes
 
@@ -67,14 +67,14 @@ Project level: `<repo>/.ai-toolkit/local-first.json` may set `mode`, `ignore_too
 Claude Code:
 
 ```
-/plugin marketplace add Cinct00/ai-toolkit
+/plugin marketplace add Cinct00/kickoff
 /plugin install local-first@kickoff
 ```
 
 GitHub Copilot CLI:
 
 ```bash
-copilot plugin marketplace add Cinct00/ai-toolkit
+copilot plugin marketplace add Cinct00/kickoff
 copilot plugin install local-first@kickoff
 ```
 

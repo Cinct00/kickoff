@@ -1,18 +1,18 @@
-# Set up ai-toolkit on this device (Windows PowerShell / pwsh).
+# Set up Kickoff on this device (Windows PowerShell / pwsh).
 #
-#   irm https://raw.githubusercontent.com/Cinct00/ai-toolkit/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/Cinct00/kickoff/main/install.ps1 | iex
 #   .\install.ps1 --dry-run            # any toolkit.py install options pass through
 #
-# Clones (or updates) the toolkit into $env:AI_TOOLKIT_HOME (default ~\.ai-toolkit),
+# Clones (or updates) the toolkit into $env:KICKOFF_HOME (default ~\.kickoff),
 # then runs `toolkit.py install`. Skills are copied, not symlinked, on Windows.
 # Everything runs inside a function so that, under `irm | iex`, a failure returns to the prompt instead of
 # closing the user's PowerShell window, and $ErrorActionPreference does not leak into their session.
-function Install-AiToolkit {
+function Install-Kickoff {
     param([string[]]$PassThru)
     $ErrorActionPreference = 'Stop'
 
-    $Repo = if ($env:AI_TOOLKIT_REPO) { $env:AI_TOOLKIT_REPO } else { 'https://github.com/Cinct00/ai-toolkit.git' }
-    $HomeDir = if ($env:AI_TOOLKIT_HOME) { $env:AI_TOOLKIT_HOME } else { Join-Path $HOME '.ai-toolkit' }
+    $Repo = if ($env:KICKOFF_REPO) { $env:KICKOFF_REPO } else { 'https://github.com/Cinct00/kickoff.git' }
+    $HomeDir = if ($env:KICKOFF_HOME) { $env:KICKOFF_HOME } else { Join-Path $HOME '.kickoff' }
 
     if (-not (Get-Command git -ErrorAction SilentlyContinue)) { Write-Error 'git is required' -ErrorAction Continue; return 1 }
     $Py = @('python3', 'python', 'py') | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue } | Select-Object -First 1
@@ -32,7 +32,7 @@ function Install-AiToolkit {
     return $LASTEXITCODE
 }
 
-$code = Install-AiToolkit -PassThru $args
+$code = Install-Kickoff -PassThru $args
 $global:LASTEXITCODE = $code
 # Only a script run from a file may exit; under `irm | iex` exit would close the user's terminal.
 if ($PSCommandPath) { exit $code }

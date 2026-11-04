@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ai-toolkit command line.
+"""Kickoff command line.
 
 One stdlib-only script that builds, validates, installs and spreads the toolkit
 across Claude Code, GitHub Copilot (CLI, cloud agent, VS Code) and any client
@@ -40,8 +40,8 @@ LOCAL_MARKETPLACE = "kickoff"  # = toolkit.json "name"; plugins install as <plug
 NAME_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 GEN_BEGIN = "<!-- BEGIN GENERATED:{} -->"
 GEN_END = "<!-- END GENERATED:{} -->"
-ADOPT_BEGIN = "<!-- ai-toolkit:begin -->"
-ADOPT_END = "<!-- ai-toolkit:end -->"
+ADOPT_BEGIN = "<!-- kickoff:begin -->"
+ADOPT_END = "<!-- kickoff:end -->"
 
 
 # --------------------------------------------------------------------------- utils
@@ -595,7 +595,7 @@ def _source_label(src) -> str:
 def cmd_catalog(args) -> int:
     cfg = load_config()
     active = set(profile_refs(cfg))
-    cache = Path(args.cache or Path(tempfile.gettempdir()) / "ai-toolkit-catalog")
+    cache = Path(args.cache or Path(tempfile.gettempdir()) / "kickoff-catalog")
     cache.mkdir(parents=True, exist_ok=True)
     stamp = _dt.date.today().isoformat()
     marketplaces = []
@@ -688,7 +688,7 @@ def cmd_catalog(args) -> int:
 
 def toolkit_home_marker() -> Path:
     base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "ai-toolkit" / "home"
+    return base / "kickoff" / "home"
 
 
 def _plugin_refs_for(cfg: dict, bundle: str, with_upstream: bool) -> tuple[list[str], list[str]]:
@@ -797,7 +797,7 @@ def _install_copilot_user(cfg: dict, bundle: str, ledger: Ledger, copy: bool, dr
         if cm.is_file():
             servers.update(_abs_plugin_paths(json.loads(cm.read_text(encoding="utf-8")).get("mcpServers") or {}, pdir))
     if hooks:
-        hp = home / "hooks" / "ai-toolkit.json"
+        hp = home / "hooks" / "kickoff.json"
         _write_json_file(hp, {"version": 1, "hooks": hooks}, dry_run)
         ledger.add("file", hp, None, "copilot-user")
     if servers:
@@ -866,7 +866,7 @@ def _install_shim(ledger: Ledger, dry_run: bool) -> None:
     script = PLUGINS_DIR / "codemap" / "scripts" / "codemap.py"
     if not script.is_file():
         return
-    bindir = Path(os.environ.get("AI_TOOLKIT_BIN", Path.home() / ".local" / "bin"))
+    bindir = Path(os.environ.get("KICKOFF_BIN", Path.home() / ".local" / "bin"))
     if os.name == "nt":
         dest, body = bindir / "codemap.cmd", f'@echo off\r\npython "{script}" %*\r\n'
     else:
@@ -969,8 +969,8 @@ def _link_or_copy(src: Path, dest: Path, copy: bool, dry_run: bool) -> bool:
     """Link or copy a skill directory. Returns False when dest belongs to the user and was left alone."""
     if dest.is_symlink() and dest.resolve() == src.resolve():
         return True
-    if dest.exists() and not dest.is_symlink() and not (dest / ".ai-toolkit").exists():
-        warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
+    if dest.exists() and not dest.is_symlink() and not (dest / ".kickoff").exists():
+        warn(f"{dest} exists and is not managed by Kickoff; leaving it")
         return False
     if dry_run:
         info(f"  [dry-run] {'copy' if copy else 'link'} {dest} -> {src}")
@@ -982,7 +982,7 @@ def _link_or_copy(src: Path, dest: Path, copy: bool, dry_run: bool) -> bool:
         shutil.rmtree(dest)
     if copy or os.name == "nt":
         shutil.copytree(src, dest)
-        (dest / ".ai-toolkit").write_text(str(src) + "\n", encoding="utf-8")
+        (dest / ".kickoff").write_text(str(src) + "\n", encoding="utf-8")
     else:
         dest.symlink_to(src, target_is_directory=True)
     info(f"  {'copied' if copy else 'linked'} {dest.name}")
@@ -995,7 +995,7 @@ def _link_or_copy_file(src: Path, dest: Path, copy: bool, dry_run: bool, owned: 
     if dest.is_symlink() and dest.resolve() == src.resolve():
         return True
     if dest.exists() and not dest.is_symlink() and not owned and not _same_file(dest, src):
-        warn(f"{dest} exists and is not managed by ai-toolkit; leaving it")
+        warn(f"{dest} exists and is not managed by Kickoff; leaving it")
         return False
     if dry_run:
         info(f"  [dry-run] {'copy' if copy else 'link'} {dest} -> {src}")
@@ -1019,7 +1019,7 @@ def _same_file(a: Path, b: Path) -> bool:
 
 
 def _global_instruction_block() -> str:
-    return (f"{ADOPT_BEGIN}\n## AI toolkit\n\n"
+    return (f"{ADOPT_BEGIN}\n## Kickoff\n\n"
             "For any substantial task, load the `kickoff` skill first: it routes the task to the right skills, "
             "agents and plugin commands, checks for gaps, and finishes with a harvest step that grows the toolkit.\n"
             "Look locally before remotely: read local clones, installed dependencies and local docs before querying "
@@ -1069,15 +1069,15 @@ def _merge_json(path: Path, patch: dict, dry_run: bool) -> None:
 
 def _project_block(cfg: dict, plugins: list[str], vendored: bool) -> str:
     where = ("vendored into `.claude/skills/` and `.claude/agents/` (read by Claude Code and GitHub Copilot)"
-             if vendored else "installed as plugins from the `ai-toolkit` marketplace (see `.claude/settings.json` "
+             if vendored else "installed as plugins from the `kickoff` marketplace (see `.claude/settings.json` "
              "and `.github/copilot/settings.json`)")
-    return (f"{ADOPT_BEGIN}\n## AI toolkit\n\n"
+    return (f"{ADOPT_BEGIN}\n## Kickoff\n\n"
             f"This repository uses [{cfg['name']}](https://github.com/{cfg['repository']}): {', '.join(f'`{p}`' for p in plugins)}, {where}.\n\n"
             "- Start every substantial task with the `kickoff` skill. It picks the skills, agents and commands for the task, "
             "says the route in one line, does the work, then runs `harvest`.\n"
             "- Harvested skills and agents for this project go in `.claude/skills/` and `.claude/agents/` so every client sees them; "
             "anything reusable across projects should be promoted to the toolkit (`toolkit.py promote`).\n"
-            "- Gaps the toolkit could not fill are logged in `.github/ai-toolkit/gaps.md`.\n"
+            "- Gaps the toolkit could not fill are logged in `.github/kickoff/gaps.md`.\n"
             f"{ADOPT_END}\n")
 
 
@@ -1092,7 +1092,7 @@ def cmd_adopt(args) -> int:
             die(f"unknown toolkit plugin '{p}' (choose from: {', '.join(cfg['plugins'])})")
     upstream = [r for r in (args.upstream or [])]
     info(f"adopting into {proj} ({args.mode}): {', '.join(plugins)}" + (f" + {', '.join(upstream)}" if upstream else ""))
-    lock_path = proj / ".github" / "ai-toolkit" / "lock.json"
+    lock_path = proj / ".github" / "kickoff" / "lock.json"
     try:
         previous = json.loads(lock_path.read_text(encoding="utf-8")).get("vendored") or {}
     except (OSError, json.JSONDecodeError, AttributeError):
@@ -1124,7 +1124,7 @@ def cmd_adopt(args) -> int:
                 vendor.file(af, proj / ".claude" / "agents" / af.name.replace(".agent.md", ".md"))
                 if args.github_agents:
                     vendor.file(af, proj / ".github" / "agents" / af.name)
-            vend_root = f".github/ai-toolkit/plugins/{pname}"
+            vend_root = f".github/kickoff/plugins/{pname}"
             runtime = [d for d in ("scripts", "hooks") if (pdir / d).is_dir()]
             if (pdir / "scripts").is_dir() or (args.hooks and (pdir / "hooks").is_dir()):
                 # Hooks and MCP servers need the plugin's runtime files inside the repo.
@@ -1144,7 +1144,7 @@ def cmd_adopt(args) -> int:
                     for e in entries:
                         e.setdefault("env", {})["PLUGIN_ROOT"] = vend_root
                 content = dump_json(data)
-                dest = proj / ".github" / "hooks" / f"ai-toolkit-{pname}.json"
+                dest = proj / ".github" / "hooks" / f"kickoff-{pname}.json"
                 if args.dry_run:
                     info(f"  [dry-run] write {dest}")
                 else:
@@ -1176,7 +1176,7 @@ def cmd_adopt(args) -> int:
     elif "@AGENTS.md" not in claude_md.read_text(encoding="utf-8"):
         _upsert_block(claude_md, f"{ADOPT_BEGIN}\n@AGENTS.md\n{ADOPT_END}\n", args.dry_run)
 
-    gaps = proj / ".github" / "ai-toolkit" / "gaps.md"
+    gaps = proj / ".github" / "kickoff" / "gaps.md"
     if not gaps.exists():
         if args.dry_run:
             info(f"  [dry-run] create {gaps}")
@@ -1204,7 +1204,7 @@ def cmd_adopt(args) -> int:
 
 REVIEW_WORKFLOW = """name: change-map
 
-# Structural, risk-ranked change map on every pull request (ai-toolkit codemap review).
+# Structural, risk-ranked change map on every pull request (Kickoff codemap review).
 # Posts a sticky PR comment with a Mermaid dependency view, writes the job summary,
 # and uploads an interactive HTML report plus an AI-review pack (review-pack.txt).
 on:
@@ -1343,7 +1343,7 @@ def _tree_hash(path: Path) -> str | None:
         if path.is_file():
             return hashlib.sha1(path.read_bytes()).hexdigest()
         for f in sorted(path.rglob("*")):
-            if f.is_file() and f.name != ".ai-toolkit" and "__pycache__" not in f.parts:
+            if f.is_file() and f.name != ".kickoff" and "__pycache__" not in f.parts:
                 h.update(str(f.relative_to(path)).encode())
                 h.update(f.read_bytes())
     except OSError:
@@ -1451,7 +1451,7 @@ def doctor_findings(cfg: dict, repo: Path | None, quick: bool = False) -> list:
                               (lambda af=af: af.unlink()) if user_level else None))
             else:
                 found.append(("warn", f"{base}/{af.name} differs from the toolkit agent (stale or customized)", None))
-    lock = repo / ".github" / "ai-toolkit" / "lock.json"
+    lock = repo / ".github" / "kickoff" / "lock.json"
     if lock.is_file():
         try:
             lk = json.loads(lock.read_text(encoding="utf-8"))
@@ -1482,7 +1482,7 @@ def _toolkit_owned(path: Path, kind: str) -> bool:
     if kind == "link":
         return False  # the toolkit wrote a link here; a real file or directory now means the user replaced it
     if path.is_dir():
-        return (path / ".ai-toolkit").exists()
+        return (path / ".kickoff").exists()
     return path.is_file()
 
 
@@ -1498,7 +1498,7 @@ def _recopy(path: Path, src: Path) -> None:
     if path.is_dir():
         shutil.rmtree(path)
         shutil.copytree(src, path)
-        (path / ".ai-toolkit").write_text(str(src) + "\n", encoding="utf-8")
+        (path / ".kickoff").write_text(str(src) + "\n", encoding="utf-8")
     else:
         shutil.copy2(src, path)
 
@@ -1680,7 +1680,7 @@ def cmd_status(args) -> int:
             def managed(x: Path) -> bool:
                 if x.is_symlink():
                     return str(x.resolve()).startswith(str(PLUGINS_DIR))
-                return (x / ".ai-toolkit").exists()
+                return (x / ".kickoff").exists()
             info(f"{d}: {sum(managed(x) for x in p.iterdir())} toolkit skills")
     n_skills = len(list(PLUGINS_DIR.glob("*/skills/*/SKILL.md")))
     n_agents = len(list(PLUGINS_DIR.glob("*/agents/*.agent.md")))
