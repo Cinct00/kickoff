@@ -1,0 +1,22 @@
+{
+  "name": "communication-and-leadership",
+  "version": "2.3.0",
+  "description": "Skills for writing, teaching, presenting, persuading, hard conversations, meetings and leading a team.",
+  "author": {
+    "name": "gimarais"
+  },
+  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/communication-and-leadership",
+  "repository": "https://github.com/gimarais/ai-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "writing",
+    "communication",
+    "leadership",
+    "meetings",
+    "negotiation"
+  ],
+  "category": "productivity",
+  "skills": [
+    "skills/"
+  ]
+}

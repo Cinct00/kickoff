@@ -1,0 +1,17 @@
+{
+  "name": "thinking-tools",
+  "version": "2.3.0",
+  "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
+  "author": {
+    "name": "gimarais"
+  },
+  "homepage": "https://github.com/gimarais/ai-toolkit/tree/main/plugins/thinking-tools",
+  "repository": "https://github.com/gimarais/ai-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "reasoning",
+    "decision-making",
+    "research",
+    "systems-thinking"
+  ]
+}
