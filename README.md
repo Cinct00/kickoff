@@ -1,12 +1,38 @@
-# 🚀 Kickoff
+<p align="center">
+  <img src="docs/img/kickoff-logo.svg" alt="Kickoff" width="560">
+</p>
 
-### Your AI agents, but *dramatically* better. Every session. Every tool. Every device.
+<p align="center">
+  <b>The self-growing, token-frugal toolkit for AI coding agents.</b><br>
+  One install. Every agent. Smarter every session.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Cinct00/ai-toolkit/actions/workflows/validate.yml"><img alt="CI" src="https://github.com/Cinct00/ai-toolkit/actions/workflows/validate.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9%2B-3776AB.svg?logo=python&logoColor=white">
+  <img alt="Zero dependencies" src="https://img.shields.io/badge/dependencies-zero-brightgreen.svg">
+  <a href="docs/platforms.md"><img alt="Works with Claude Code and GitHub Copilot" src="https://img.shields.io/badge/works%20with-Claude%20Code%20%C2%B7%20Copilot%20%C2%B7%20Codex%20%C2%B7%20Cursor-FF8205.svg"></a>
+  <a href="https://github.com/Cinct00/ai-toolkit/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/Cinct00/ai-toolkit?style=social"></a>
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#why-kickoff">Why Kickoff</a> ·
+  <a href="#whats-inside">What's inside</a> ·
+  <a href="docs/architecture.md">Architecture</a> ·
+  <a href="docs/contributing.md">Contributing</a>
+</p>
+
+---
 
 **Kickoff** is the self-growing, token-frugal brain upgrade for AI coding agents. One install drops the same **routing engine, 30+ expert skills, specialist sub-agents, guard-rail hooks and a lightning-fast code map** into **Claude Code, the Claude app, GitHub Copilot (CLI, cloud agent, VS Code) and any Agent Skills client**. It wires in a hand-picked profile of Anthropic, GitHub and partner plugins, and when it hits a gap it searches a catalog of **~700 more**.
 
-And it **learns**. Every task ends with a *harvest*: the procedures, fixes and lessons from that session flow straight back into the toolkit as new skills, agents, hooks and routes. Your setup gets smarter every time you use it. 🧠⚡
+And it **learns**. Every task ends with a *harvest*: the procedures, fixes and lessons from that session flow straight back into the toolkit as new skills, agents, hooks and routes. Your setup gets smarter every time you use it.
 
-> **96% fewer tokens** to find and understand code · **91–97% fewer** to orient in a new repo · **~0 tokens** for guard-rails that only speak up when it matters
+| 96% | 91–97% | 99.9% | 0 |
+|:---:|:---:|:---:|:---:|
+| fewer tokens to find and understand code | fewer tokens to orient in a new repo | C#/Rust parser recall vs tree-sitter | tokens spent by guard-rails until they matter |
 
 ```
 task ──▶ kickoff ──▶ route: judgment skill + procedure tool ──▶ do the work ──▶ harvest
@@ -19,21 +45,21 @@ doctor / audit / catalog refresh keep installs current, duplicates out and the a
 
 ---
 
-## ✨ Why Kickoff hits different
+## Why Kickoff
 
 | | |
 |---|---|
-| 🧭 **It routes, so your agent doesn't flail** | `kickoff` classifies every substantial task and loads exactly the right skills, agents and plugin commands for the platform you're on. No more prompt roulette. |
-| 🗺️ **It sees code at ~5% of the cost** | `codemap` indexes symbols, imports, references and packages, and answers with surgical, line-numbered precision instead of grep-and-read floods. |
-| 🔍 **It reviews PRs like a principal engineer** | `codemap review` turns any diff into a risk-ranked structural change map: broken callers, missing tests, dependency changes and an interactive HTML report. |
-| 🏠 **It looks local first** | The `local-first` hook catches remote MCP, web and `curl`/`gh` lookups for code or docs you already have on disk, and points the agent at the local copy. Faster answers, the right version, zero tokens when it stays quiet. |
-| 🌱 **It grows itself** | Harvest writes reusable work back into the toolkit. Promote, commit, push, and every device and every adopted repo levels up. |
-| 🛡️ **It's built to be trusted** | Repositories are treated as untrusted input: no symlink escapes, no runaway files, a read-only MCP tool, hooks that fail open, and upstream plugins referenced, never copied. |
-| 🔌 **It goes everywhere** | Claude Code, Copilot CLI, Copilot cloud agent, VS Code, Codex, Cursor and Gemini CLI. One source of truth, generated for each client. |
+| **It routes, so your agent doesn't flail** | `kickoff` classifies every substantial task and loads exactly the right skills, agents and plugin commands for the platform you're on. No more prompt roulette. |
+| **It sees code at ~5% of the cost** | `codemap` indexes symbols, imports, references and packages, and answers with surgical, line-numbered precision instead of grep-and-read floods. |
+| **It reviews PRs like a principal engineer** | `codemap review` turns any diff into a risk-ranked structural change map: broken callers, missing tests, dependency changes and an interactive HTML report. |
+| **It looks local first** | The `local-first` hook catches remote MCP, web and `curl`/`gh` lookups for code or docs you already have on disk, and points the agent at the local copy. Faster answers, the right version, zero tokens when it stays quiet. |
+| **It grows itself** | Harvest writes reusable work back into the toolkit. Promote, commit, push, and every device and every adopted repo levels up. |
+| **It's built to be trusted** | Repositories are treated as untrusted input: no symlink escapes, no runaway files, a read-only MCP tool, hooks that fail open, and upstream plugins referenced, never copied. |
+| **It goes everywhere** | Claude Code, Copilot CLI, Copilot cloud agent, VS Code, Codex, Cursor and Gemini CLI. One source of truth, generated for each client. |
 
 ---
 
-## ⚡ Quick start: 60 seconds to a smarter agent
+## Quick start
 
 ### On a new device
 
@@ -61,7 +87,7 @@ python3 ~/.ai-toolkit/scripts/toolkit.py install
 
 Options: `--bundle core|dev|full`, `--target claude|copilot|copilot-user|claude-user|skills`, `--no-upstream`, `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
 
-Stay current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync` and healthy with `doctor` (see [Keeping it alive](#-keeping-it-alive)).
+Stay current with `python3 ~/.ai-toolkit/scripts/toolkit.py sync` and healthy with `doctor` (see [Keeping it alive](#keeping-it-alive)).
 
 ### Just the marketplace
 
@@ -88,7 +114,7 @@ This writes `extraKnownMarketplaces` + `enabledPlugins` into the project's `.cla
 
 ---
 
-## 🧰 What's inside
+## What's inside
 
 ### Toolkit plugins
 
@@ -120,7 +146,7 @@ Installed by `toolkit.py install` from their upstream marketplaces, so they stay
 | work-and-domain | `productivity@knowledge-work-plugins`, `cowork-plugin-management@knowledge-work-plugins`, `market-researcher@claude-for-financial-services`, `ai-governance-legal@claude-for-legal`, `learn-with-coursera@claude-plugins-official` |
 <!-- END GENERATED:profile -->
 
-### 🗺️ codemap: navigate code at ~5% of the tokens
+### codemap: navigate code at ~5% of the tokens
 
 `codemap` indexes a repository's symbols, imports, references and packages into SQLite (in your user cache, never the repo) and answers in compact, line-numbered text:
 
@@ -136,7 +162,7 @@ codemap impact src/models/user.py     # dependents by distance + tests to run
 
 Measured on real open-source repos (Python, TypeScript, Go, Java, C#, Rust): **96% fewer tokens** to locate and understand a symbol than grep-and-read, **91–97% fewer** to orient in a new repo. It's also a single-tool, read-only MCP server, so Claude Code and Copilot call it directly. C# and Rust get dedicated structural parsers that match tree-sitter (**99.9% and 100% recall** on 37k declarations), Python uses its own `ast`, and TS/JS, Go, Java, Kotlin, Scala, C/C++, PHP, Ruby, Swift and Markdown use patterns. Pure stdlib: nothing to `pip install`. Design, benchmarks and the alternatives we rejected (Docker in-memory DBs, graph DBs, LSP, embeddings) are in [docs/codemap.md](docs/codemap.md).
 
-### 🔍 Change review: see what a PR *really* changed
+### Change review: see what a PR *really* changed
 
 `codemap review` turns a PR, branch or local diff into a **structural change map**:
 - Symbol-level changes (`~` signature, `-` removed, `→` renamed or moved, `*` modified, `+` added).
@@ -148,11 +174,11 @@ It renders as a PR comment with a Mermaid dependency view, an interactive HTML r
 
 ![Change map report](docs/img/change-map-report.png)
 
-### 🏠 local-first: stop paying for what you already have
+### local-first: stop paying for what you already have
 
 Agents love to fetch a file from GitHub, query Context7 or hit a docs site when the exact same content is sitting in a local clone, `node_modules`, a virtualenv or your docs folder. The `local-first` PreToolUse hook spots that, blocks the first remote call and hands the agent the local paths. Need the remote version anyway? Repeat the call and it goes through. Calls with no local copy pass silently, so it costs **zero tokens** until it saves you some. Details in [plugins/local-first](plugins/local-first/README.md).
 
-### 📚 The catalog
+### The catalog
 
 [`catalog/CATALOG.md`](catalog/CATALOG.md) lists every plugin in the tracked marketplaces (Anthropic official, knowledge-work, agent skills, financial services, legal, GitHub `copilot-plugins` and `awesome-copilot`), with their skills, agents, commands, hooks and MCP servers. Kickoff ships a grep-friendly copy ([`catalog.tsv`](plugins/kickoff/skills/kickoff/references/catalog.tsv)) so it finds an existing plugin before building anything new. Refresh with `python3 scripts/toolkit.py catalog`.
 
@@ -204,14 +230,14 @@ Agents love to fetch a file from GitHub, query Context7 or hit a docs site when 
 
 ---
 
-## 🌱 How it grows
+## How it grows
 
 1. **Kickoff** routes every substantial task and checks the catalog. Missing tool → install line or recommendation. Nothing fits → a logged gap.
 2. **Harvest** runs at the end (a `Stop` hook in Claude Code reminds once if it was skipped). It turns recurring procedures, corrections and gaps into skills, agents, hooks or new kickoff routes, written in the portable format **into this repo** when it is on disk, or into the project's `.claude/` otherwise.
 3. **Promote** project-local discoveries with `toolkit.py promote <dir> --plugin <plugin>`.
-4. **Validate, commit, push**, and every device picks it up with `toolkit.py sync`; every adopted project picks it up on its next plugin update. Compounding returns, on autopilot. 📈
+4. **Validate, commit, push**, and every device picks it up with `toolkit.py sync`; every adopted project picks it up on its next plugin update. Compounding returns, on autopilot.
 
-## 🩺 Keeping it alive
+## Keeping it alive
 
 | | |
 |---|---|
@@ -224,6 +250,10 @@ See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot use
 
 ---
 
-## Licensing
+## Contributing
+
+New skills, agents, hooks and routes are welcome: most arrive through `harvest`, and [docs/contributing.md](docs/contributing.md) covers adding them by hand. Before opening a PR, run `python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate` and `python3 -m unittest discover -s tests`; every PR gets a codemap change map.
+
+## License
 
 Kickoff is [MIT](LICENSE). Upstream plugins are **referenced, not copied**: each is installed from its own marketplace under its own license (most Anthropic plugins are Apache-2.0; some, such as `claude-security` and the `document-skills`, are proprietary and only installable, not redistributable). `toolkit.py validate` refuses vendored files carrying proprietary license markers.
