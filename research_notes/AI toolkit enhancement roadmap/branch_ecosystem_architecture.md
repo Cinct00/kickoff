@@ -1,6 +1,6 @@
 # Branch ecosystem architecture: the plugin marketplace and the dynamic agent/skill layer (Cinct00/ai-toolkit, unmerged branches)
 
-Scope: the marketplace, plugins, skills, agents, hooks and `toolkit.py` layer on the four stacked, unmerged branches. Codemap and change-review internals are covered by another researcher and appear here only where they touch the ecosystem. The primary state is the tip `origin/claude/csharp-rust-precision` (HEAD 1310ad7). It was read from a detached read-only worktree at `/tmp/claude-0/-home-user-ai-toolkit/b5675dc7-f18b-544b-bc17-7168c8b9107e/scratchpad/tip`.
+Scope: the marketplace, plugins, skills, agents, hooks and `toolkit.py` layer on the four stacked, unmerged branches. Codemap and change-review internals are covered by another researcher and appear here only where they touch the ecosystem. The primary state is the tip `origin/claude/csharp-rust-precision` (HEAD 1310ad7). It was read from a detached read-only worktree at a temporary worktree of the tip.
 
 Citation convention. `TIP` = `https://github.com/Cinct00/ai-toolkit/blob/claude/csharp-rust-precision`. Line anchors refer to the tip unless a different branch is named. Commit-message citations use `https://github.com/Cinct00/ai-toolkit/commit/<sha>`.
 
@@ -358,7 +358,7 @@ The tip has 55 unit tests. Only 9 are about the ecosystem layer (`tests/test_too
   | bench_codemap.py, eval_extraction.py | 0 (scripts) |
 
   The `def test` total is 55; the unittest run reported 53 executed, which suggests a couple of definitions are not collected or are nested. Source: `grep -c "def test" tests/*.py`; local run
-- **Local run on the tip:** `python3 -m unittest discover -s tests` gives "Ran 53 tests in 9.429s — OK" on Python 3.13.18. `python3 -m pytest` reports "No module named pytest". Source: local run in `/tmp/claude-0/-home-user-ai-toolkit/b5675dc7-f18b-544b-bc17-7168c8b9107e/scratchpad/tip`
+- **Local run on the tip:** `python3 -m unittest discover -s tests` gives "Ran 53 tests in 9.429s — OK" on Python 3.13.18. `python3 -m pytest` reports "No module named pytest". Source: local run in a temporary worktree of the tip
 - **`test_toolkit.py` covers:**
   - `build --check` is current
   - `validate` passes
