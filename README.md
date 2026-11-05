@@ -251,7 +251,7 @@ Everything discovered, and anything you are about to install, goes through `tool
 | `toolkit.py audit` | Always-on token cost per bundle, oversized descriptions, overlapping skills, routes and profile plugins that vanished upstream, skills untouched for six months. |
 | `toolkit.py discover` / `vet` | Inventory of everything agent-related on the device and repo; security scan of any plugin, skill, hook or MCP config (`--git owner/repo` to vet before installing). |
 | `toolkit.py catalog` | Rescans upstream marketplaces; a weekly workflow opens a PR when something new appears. |
-| `python3 -m unittest discover -s tests` | 124 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
+| `python3 -m unittest discover -s tests` | 125 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
 
 See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot user-level migration, [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
 
