@@ -41,6 +41,9 @@ RULES = [
      "md", "instructions that try to override the user or hide actions from them"),
     ("high", "hidden-unicode", HIDDEN, "all", "invisible or bidirectional characters can hide instructions"),
     ("high", "plain-http-mcp", r"\"(url|serverUrl)\"\s*:\s*\"http://(?!localhost|127\.0\.0\.1|\[::1\])", "shell", "MCP traffic without TLS"),
+    ("high", "embedded-secret", r"\bghp_[A-Za-z0-9]{36}\b|\bgithub_pat_[A-Za-z0-9_]{60,}|\bsk-(ant-[a-z0-9]+-)?[A-Za-z0-9_-]{32,}|\bAKIA[0-9A-Z]{16}\b"
+     r"|\bxox[abprs]-[A-Za-z0-9-]{20,}|-----BEGIN ([A-Z]+ )?PRIVATE KEY-----", "all",
+     "contains what looks like a live credential (rotate it, then remove it)"),
     ("medium", "secret-access", r"~/\.ssh|\bid_rsa\b|\bid_ed25519\b|\.aws/credentials|~/\.netrc|gh\s+auth\s+token|security find-generic-password",
      "shell", "reads credential files"),
     ("medium", "secret-access", r"(read|cat|open|send|upload|copy)\b[^.\n]{0,40}(~/\.ssh|\bid_rsa\b|\.aws/credentials|~/\.netrc|\.env\b)", "md",

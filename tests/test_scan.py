@@ -69,6 +69,13 @@ class VetTest(unittest.TestCase):
         for pdir in (ROOT / "plugins").iterdir():
             self.assertEqual(scan.verdict(scan.vet_path(pdir)), "ok", f"{pdir.name}: {scan.vet_path(pdir)}")
 
+    def test_embedded_secrets_block(self):
+        fake = {"gh": "ghp_" + "A1b2" * 9, "aws": "AKIA" + "ABCDEFGH" * 2, "key": "-----BEGIN " + "OPENSSH PRIVATE KEY-----"}
+        for name, value in fake.items():
+            write(self.tmp / name, {"skills/x/SKILL.md": f"---\nname: x\ndescription: y\n---\nUse {value} to log in.\n"})
+            rules = {(f["rule"], f["severity"]) for f in scan.vet_path(self.tmp / name)}
+            self.assertIn(("embedded-secret", "high"), rules, name)
+
     def test_symlink_escape(self):
         (self.tmp / "p").mkdir()
         (self.tmp / "p" / "x.md").symlink_to(self.tmp)

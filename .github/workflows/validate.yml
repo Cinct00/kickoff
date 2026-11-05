@@ -20,7 +20,7 @@ jobs:
         run: python3 scripts/toolkit.py validate
       - name: Unit tests (codemap + toolkit)
         run: python3 -m unittest discover -s tests -v
-      - name: Security scan of every toolkit plugin (blocks on high-risk patterns, incl. harvested additions)
+      - name: Security scan of every toolkit plugin (blocks on high-risk patterns and leaked credentials, incl. harvested additions)
         run: python3 scripts/toolkit.py vet plugins/*
       - name: Audit (routes and profile must resolve; token report)
         run: python3 scripts/toolkit.py audit --strict --no-git
