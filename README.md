@@ -178,6 +178,12 @@ It renders as a PR comment with a Mermaid dependency view, an interactive HTML r
 
 Agents love to fetch a file from GitHub, query Context7 or hit a docs site when the exact same content is sitting in a local clone, `node_modules`, a virtualenv or your docs folder. The `local-first` PreToolUse hook spots that, blocks the first remote call and hands the agent the local paths. Need the remote version anyway? Repeat the call and it goes through. Calls with no local copy pass silently, so it costs **zero tokens** until it saves you some. Details in [plugins/local-first](plugins/local-first/README.md).
 
+### discover and vet: know what you have, trust what you add
+
+Most of what an agent needs is often already on the machine: Copilot skills, agents and prompts in `~/.copilot` and `.github/`, Claude agents, VS Code MCP servers, team instructions. `toolkit.py discover` inventories all of it (Copilot, Claude Code, Agent Skills, Codex, Gemini, VS Code, plus the current repo) into `~/.config/kickoff/local-inventory.tsv`, refreshed in the background once a day, and kickoff checks it **before** the catalog.
+
+Everything discovered, and anything you are about to install, goes through `toolkit.py vet`: a static scan for pipe-to-shell installers, permission-bypass flags, prompt-injection text, hidden Unicode, model base-URL hijacks, unpinned or plain-HTTP MCP servers, credential reads and symlink escapes. Vet a plugin straight from GitHub with `toolkit.py vet --git owner/repo --subdir plugins/name`. Kickoff vets every non-official plugin before recommending it, and `doctor` flags anything installed that scans as high-risk. A clean scan is not a proof of safety, but a flagged one is a reason to read before you run.
+
 ### The catalog
 
 [`catalog/CATALOG.md`](catalog/CATALOG.md) lists every plugin in the tracked marketplaces (Anthropic official, knowledge-work, agent skills, financial services, legal, GitHub `copilot-plugins` and `awesome-copilot`), with their skills, agents, commands, hooks and MCP servers. Kickoff ships a grep-friendly copy ([`catalog.tsv`](plugins/kickoff/skills/kickoff/references/catalog.tsv)) so it finds an existing plugin before building anything new. Refresh with `python3 scripts/toolkit.py catalog`.
@@ -243,8 +249,9 @@ Agents love to fetch a file from GitHub, query Context7 or hit a docs site when 
 |---|---|
 | `toolkit.py doctor [--repo PATH] [--fix]` | Broken or stale user-level installs, new toolkit items not yet installed, uncommitted harvests, and **repo-vendored copies that shadow your user-level skills** (Copilot lets project skills override personal ones). `--fix` repairs only what the toolkit provably wrote. Runs automatically (quietly) once a day at session start. |
 | `toolkit.py audit` | Always-on token cost per bundle, oversized descriptions, overlapping skills, routes and profile plugins that vanished upstream, skills untouched for six months. |
+| `toolkit.py discover` / `vet` | Inventory of everything agent-related on the device and repo; security scan of any plugin, skill, hook or MCP config (`--git owner/repo` to vet before installing). |
 | `toolkit.py catalog` | Rescans upstream marketplaces; a weekly workflow opens a PR when something new appears. |
-| `python3 -m unittest discover -s tests` | 118 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
+| `python3 -m unittest discover -s tests` | 124 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
 
 See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot user-level migration, [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
 

@@ -49,10 +49,30 @@ def build_context() -> str:
     if gaps:
         parts.append(f"{gaps} open toolkit gap(s) are logged in this repo's gaps ledger; harvest can close them.")
     if home:
+        refresh_inventory(Path(home))
         nudge = doctor_nudge(Path(home))
         if nudge:
             parts.append(nudge)
     return " ".join(parts)
+
+
+def refresh_inventory(home: Path) -> None:
+    """Keep ~/.config/kickoff/local-inventory.tsv (local skills/agents/hooks/MCP + vet verdicts) at most a day old.
+    Runs detached so the session never waits for it."""
+    import subprocess
+    import time
+    inv = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "local-inventory.tsv"
+    try:
+        if inv.exists() and time.time() - inv.stat().st_mtime < 86400:
+            return
+        kwargs = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL, "cwd": os.getcwd()}
+        if os.name == "nt":
+            kwargs["creationflags"] = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
+        else:
+            kwargs["start_new_session"] = True
+        subprocess.Popen([sys.executable, str(home / "scripts" / "toolkit.py"), "discover"], **kwargs)
+    except Exception:
+        pass
 
 
 def doctor_nudge(home: Path) -> str:

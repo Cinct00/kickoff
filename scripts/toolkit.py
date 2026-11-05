@@ -1503,6 +1503,86 @@ def _recopy(path: Path, src: Path) -> None:
         shutil.copy2(src, path)
 
 
+def cmd_discover(args) -> int:
+    """Everything agent-related already on this device and in the repo, for kickoff to route to first."""
+    import scan
+    repo = None
+    cand = Path(args.repo).expanduser().resolve() if args.repo else Path.cwd()
+    top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=cand, capture_output=True, text=True) \
+        if shutil.which("git") else None
+    if top is not None and top.returncode == 0:
+        repo = Path(top.stdout.strip())
+    elif args.repo:
+        repo = cand
+    items = scan.discover(Path.home(), repo, ROOT, with_vet=not args.no_vet)
+    out = toolkit_home_marker().parent / "local-inventory.tsv"
+    if not args.dry_run:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(scan.to_tsv(items), encoding="utf-8")
+    if args.json:
+        print(dump_json(items))
+        return 0
+    from collections import Counter
+    counts = Counter((i["kind"], i["source"]) for i in items)
+    kinds = sorted({k for k, _ in counts})
+    info(f"found {len(items)} item(s){' in ' + str(repo) + ' and' if repo else ''} at user level:")
+    for k in kinds:
+        info(f"  {k:13} {counts[(k, 'local')]:4} local  {counts[(k, 'kickoff')]:4} from kickoff")
+    flagged = [i for i in items if i.get("verdict") in ("block", "review")]
+    for i in flagged:
+        mark = "!" if i["verdict"] == "block" else "?"
+        info(f"  {mark} {i['verdict']:6} {i['kind']} {i['name']} ({i['scope']}, {i['client']}): {i['path']}")
+    if flagged:
+        info("  run `toolkit.py vet <path>` for details")
+    if not args.dry_run:
+        info(f"inventory written to {out} (kickoff greps it before searching the catalog)")
+    return 1 if any(i.get("verdict") == "block" for i in items) else 0
+
+
+def cmd_vet(args) -> int:
+    """Static security scan of a plugin, skill, agent, hook or MCP config before trusting it."""
+    import scan
+    import tempfile
+    targets = [Path(t).expanduser() for t in args.paths]
+    tmp = None
+    if args.git:
+        repo, _, ref = args.git.partition("@")
+        if not re.match(r"^[\w.-]+/[\w.-]+$", repo) and not repo.startswith("https://"):
+            die("--git takes owner/repo[@ref] or an https:// URL")
+        tmp = Path(tempfile.mkdtemp(prefix="kickoff-vet-"))
+        if not _git_clone(repo, tmp / "src", ref or None):
+            die(f"could not clone {args.git}")
+        targets.append(tmp / "src" / (args.subdir or ""))
+    if not targets:
+        die("give a path, or --git owner/repo[@ref] [--subdir path]")
+    worst = "ok"
+    report = []
+    try:
+        for t in targets:
+            if not t.exists():
+                die(f"{t} does not exist")
+            findings = scan.vet_path(t)
+            v = scan.verdict(findings)
+            worst = max(worst, v, key=["ok", "review", "block"].index)
+            report.append({"target": str(t), "verdict": v, "findings": findings})
+    finally:
+        if tmp is not None:
+            shutil.rmtree(tmp, ignore_errors=True)
+    if args.json:
+        print(dump_json(report))
+    else:
+        for r in report:
+            info(f"{r['verdict'].upper():6} {r['target']}")
+            for f in r["findings"]:
+                info(f"  {f['severity']:6} {f['rule']:18} {f['file']}:{f['line']}  {f['why']}")
+                if f["excerpt"]:
+                    info(f"         {f['excerpt']}")
+        info({"ok": "no known-risky patterns found (a static scan cannot prove safety; read what you install)",
+              "review": "review the findings above before installing",
+              "block": "do not install unless you have read and trust the flagged code"}[worst])
+    return 1 if worst == "block" or (args.strict and worst == "review") else 0
+
+
 def cmd_doctor(args) -> int:
     cfg = load_config()
     repo = None
@@ -1513,6 +1593,12 @@ def cmd_doctor(args) -> int:
         if repo.resolve() == ROOT.resolve():
             repo = None  # the toolkit itself: vendored-copy checks do not apply
     found = doctor_findings(cfg, repo, args.quick)
+    if not args.quick:
+        import scan
+        for it in scan.discover(Path.home(), repo, ROOT):
+            if it.get("verdict") == "block":
+                found.append(("warn", f"{it['kind']} '{it['name']}' ({it['scope']}, {it['client']}) has high-risk patterns: "
+                              f"run `toolkit.py vet {it['path']}` and remove it unless you trust it", None))
     if args.summary:
         warns = sum(1 for s, _, _ in found if s == "warn")
         if warns:
@@ -1753,6 +1839,22 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--quick", action="store_true", help="device checks only, no repository scan")
     d.add_argument("--summary", action="store_true", help="one line, only when there are issues (for hooks)")
     d.set_defaults(func=cmd_doctor)
+
+    dc = sub.add_parser("discover", help="inventory the skills, agents, prompts, hooks and MCP servers already on this device "
+                                          "and in the repo (Copilot, Claude, Agent Skills, Codex, Gemini, VS Code)")
+    dc.add_argument("--repo", help="repository to include (default: the current git repo)")
+    dc.add_argument("--json", action="store_true")
+    dc.add_argument("--no-vet", action="store_true", help="skip the security scan of each item")
+    dc.add_argument("--dry-run", action="store_true", help="do not write ~/.config/kickoff/local-inventory.tsv")
+    dc.set_defaults(func=cmd_discover)
+
+    v = sub.add_parser("vet", help="static security scan of a plugin/skill/agent/hook/MCP config before you trust it")
+    v.add_argument("paths", nargs="*", help="files or directories to scan")
+    v.add_argument("--git", help="clone owner/repo[@ref] (or an https URL) shallowly and scan it")
+    v.add_argument("--subdir", help="with --git: scan only this path inside the repo (e.g. plugins/foo)")
+    v.add_argument("--json", action="store_true")
+    v.add_argument("--strict", action="store_true", help="exit 1 on medium findings too")
+    v.set_defaults(func=cmd_vet)
 
     au = sub.add_parser("audit", help="token cost, overlaps, stale routes and stale skills in the toolkit")
     au.add_argument("--overlap", type=float, default=0.3, help="vocabulary overlap threshold (default 0.3)")

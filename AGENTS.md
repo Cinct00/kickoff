@@ -13,7 +13,8 @@ A plugin marketplace and skills library that must work identically in Claude Cod
 - `plugins/<name>/.claude-plugin/plugin.json` and `plugins/<name>/plugin.json`: **generated** (Claude and Copilot manifests).
 - `.claude-plugin/marketplace.json` and `.github/plugin/marketplace.json`: **generated**, identical.
 - `catalog/`: **generated** by `toolkit.py catalog` (index.json, CATALOG.md) plus the hand-kept `gaps.md` ledger. The kickoff skill's `references/catalog.tsv` is generated too.
-- `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+): build, validate, catalog, install, adopt, promote, doctor, audit, sync.
+- `scripts/toolkit.py`: the CLI (stdlib-only Python 3.9+): build, validate, catalog, install, adopt, promote, doctor, audit, sync, discover, vet.
+- `scripts/scan.py`: local discovery and the `vet` security rules. New rules need a case in `tests/test_scan.py`, and every toolkit plugin must still vet `ok` (CI enforces it).
 - `plugins/codemap/scripts/`: the codemap engine (`codemap_core/`), also stdlib-only.
 - `.github/actions/change-map/`: the reusable PR change-map action (used by other repos via `adopt --review-workflow`).
 - `tests/`: unit tests (`python3 -m unittest discover -s tests`), the codemap token benchmark, and `eval_extraction.py` (C#/Rust accuracy vs tree-sitter; run it after any parser change).
