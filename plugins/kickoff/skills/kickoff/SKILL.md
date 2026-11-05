@@ -68,6 +68,7 @@ The best results come from pairing one of each. When two have the same name (e.g
 | Bring this toolkit into another repo, or set up AI tooling there | — | `toolkit-adopt` (this toolkit), then `claude-code-setup` claude-automation-recommender for repo-specific automations |
 | Improve this agent setup | — | `claude-code-setup` claude-automation-recommender, `claude-md-management` claude-md-improver, `hookify` for repeated mistakes |
 | Toolkit upkeep: stale or duplicate skills, broken installs, Copilot user-level migration, token cost | — | `toolkit.py doctor [--repo] [--fix]` and `toolkit.py audit` (from the toolkit checkout); `toolkit.py install` to re-sync user-level copies |
+| Is the toolkit working here? Verify an install or update; is a plugin, skill or MCP server safe to add? | — | `toolkit.py selftest` (every hook, MCP, local-first, vet, discover: PASS/FAIL); `toolkit.py vet <path>` or `vet --git <owner/repo> --subdir <path>`; `toolkit.py discover` for what is already installed |
 | Create or improve a skill, agent or hook | — | `skill-creator` for skills; the `harvest` skill for agents, hooks and where to put them |
 | Nothing above fits, or you are unsure what exists | — | `toolkit-scout` agent (searches the full catalog and returns a route plus gaps) |
 
