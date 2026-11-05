@@ -1,0 +1,95 @@
+name: codemap change map
+description: >
+  Structural, risk-ranked change map for a pull request: symbol-level changes, callers outside the diff that a
+  change may break, affected and missing tests, dependency changes. Posts a sticky PR comment with a Mermaid
+  dependency view, writes the job summary, and uploads an interactive HTML report plus an AI-review pack.
+author: Cinct00
+branding:
+  icon: map
+  color: blue
+
+inputs:
+  base:
+    description: Base ref or SHA to compare against (default the pull request base SHA, else origin's default branch).
+    default: ""
+  comment:
+    description: Post or update a sticky PR comment ("true" or "false").
+    default: "true"
+  budget:
+    description: Token budget for the AI-review pack (review-pack.txt).
+    default: "8000"
+  github-token:
+    description: Token used to post the comment.
+    default: ${{ github.token }}
+
+outputs:
+  risk:
+    description: Overall risk level (low, medium or high).
+    value: ${{ steps.map.outputs.risk }}
+  dir:
+    description: Directory with comment.md, change-map.html, review-pack.txt and change-map.json.
+    value: ${{ steps.map.outputs.dir }}
+  review-pack:
+    description: Path to the risk-ordered AI-review pack, ready to include in an AI reviewer's prompt.
+    value: ${{ steps.map.outputs.pack }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build change map
+      id: map
+      shell: bash
+      env:
+        # The script comes from this action's own (pinned) ref, never from the pull request checkout.
+        CODEMAP: ${{ github.action_path }}/../../../plugins/codemap/scripts/codemap.py
+        BASE: ${{ inputs.base || github.event.pull_request.base.sha }}
+        BUDGET: ${{ inputs.budget }}
+        CODEMAP_CACHE: ${{ runner.temp }}/codemap-cache
+      run: |
+        set -euo pipefail
+        out="$RUNNER_TEMP/change-map"
+        mkdir -p "$out"
+        if [ -z "$BASE" ]; then base_args=(); else base_args=(--base "$BASE"); fi
+        python3 "$CODEMAP" index --quiet
+        python3 "$CODEMAP" review "${base_args[@]}" --head HEAD --format json --out "$out/change-map.json"
+        python3 "$CODEMAP" --no-refresh review "${base_args[@]}" --head HEAD --format md --out "$out/comment.md"
+        python3 "$CODEMAP" --no-refresh review "${base_args[@]}" --head HEAD --format html --out "$out/change-map.html"
+        python3 "$CODEMAP" --no-refresh review "${base_args[@]}" --head HEAD --format context --budget "$BUDGET" --out "$out/review-pack.txt"
+        cat "$out/comment.md" >> "$GITHUB_STEP_SUMMARY"
+        {
+          echo "dir=$out"
+          echo "pack=$out/review-pack.txt"
+          python3 -c 'import json,sys; print("risk=" + json.load(open(sys.argv[1]))["summary"]["level"])' "$out/change-map.json"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Upload report
+      id: upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: change-map
+        path: ${{ steps.map.outputs.dir }}
+        retention-days: 14
+
+    - name: Post or update the PR comment
+      if: inputs.comment == 'true' && github.event.pull_request.number
+      shell: bash
+      continue-on-error: true  # fork PRs get a read-only token; the job summary still has everything
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR: ${{ github.event.pull_request.number }}
+        REPO: ${{ github.repository }}
+        DIR: ${{ steps.map.outputs.dir }}
+        REPORT_URL: ${{ steps.upload.outputs.artifact-url }}
+      run: |
+        set -euo pipefail
+        body="$DIR/comment.md"
+        if [ -n "${REPORT_URL:-}" ]; then
+          printf '\n\n📎 [Interactive report and AI-review pack](%s) (download `change-map`, open `change-map.html`)\n' "$REPORT_URL" >> "$body"
+        fi
+        id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+               --jq '.[] | select(.body | startswith("<!-- codemap-change-map -->")) | .id' | head -n 1)
+        if [ -n "$id" ]; then
+          gh api -X PATCH "repos/$REPO/issues/comments/$id" -F body=@"$body" > /dev/null
+        else
+          gh api "repos/$REPO/issues/$PR/comments" -F body=@"$body" > /dev/null
+        fi
