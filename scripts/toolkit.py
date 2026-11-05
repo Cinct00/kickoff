@@ -1639,7 +1639,7 @@ def cmd_vet(args) -> int:
 def cmd_selftest(args) -> int:
     """Run every component end to end on this machine and report PASS / FAIL / SKIP."""
     import selftest
-    return selftest.run(args.json)
+    return selftest.run(args.json, toolkit_home_marker().parent / "selftest.json" if args.save else None)
 
 
 def cmd_doctor(args) -> int:
@@ -1919,6 +1919,8 @@ def main(argv: list[str] | None = None) -> int:
 
     st = sub.add_parser("selftest", help="prove every hook, the codemap MCP server, local-first, vet and discover work on this machine")
     st.add_argument("--json", action="store_true")
+    st.add_argument("--save", action="store_true", help="also record the result in ~/.config/kickoff/selftest.json "
+                                                         "(the session hook re-runs it weekly and warns on failures)")
     st.set_defaults(func=cmd_selftest)
 
     au = sub.add_parser("audit", help="token cost, overlaps, stale routes and stale skills in the toolkit")

@@ -204,14 +204,14 @@ def check_discover(r: Report, env: dict, sandbox: Path) -> None:
     r.add("PASS", "discover runs on this device", f"{len(real)} item(s) found", (time.monotonic() - t0) * 1000)
 
 
-def run(as_json: bool = False) -> int:
+def run(as_json: bool = False, save: Path | None = None) -> int:
     r = Report()
     r.add("PASS" if sys.version_info >= (3, 9) else "FAIL", "Python 3.9+", sys.version.split()[0])
     with tempfile.TemporaryDirectory(prefix="kickoff-selftest-") as tmp:
         sandbox = Path(tmp)
         # Hooks run against a throwaway home and cache so the self-test never touches real state.
         env = {**os.environ, "XDG_CACHE_HOME": str(sandbox / "cache"), "XDG_CONFIG_HOME": str(sandbox / "config"),
-               "KICKOFF_HOME": str(ROOT), "TMPDIR": str(sandbox),
+               "KICKOFF_HOME": str(ROOT), "TMPDIR": str(sandbox), "KICKOFF_SELFTEST": "1",
                "CODEMAP_CACHE": str(sandbox / "codemap"), "CODEMAP_HOOK": "0", "KICKOFF_HARVEST_CHECK": "1"}
         for fn, args in ((check_hooks, (r, env, sandbox)), (check_local_first, (r, env)),
                          (check_codemap_mcp, (r, env, sandbox)), (check_vet, (r,)), (check_discover, (r, env, sandbox))):
@@ -219,6 +219,10 @@ def run(as_json: bool = False) -> int:
                 fn(*args)
             except Exception as e:  # a crashing check is a failure, not a crash of the whole self-test
                 r.add("FAIL", fn.__name__.replace("check_", ""), f"{type(e).__name__}: {e}")
+    if save is not None:
+        save.parent.mkdir(parents=True, exist_ok=True)
+        save.write_text(json.dumps({"at": time.time(), "failed": [x["check"] for x in r.failed], "rows": r.rows}, indent=1),
+                        encoding="utf-8")
     if as_json:
         print(json.dumps(r.rows, indent=1))
     else:

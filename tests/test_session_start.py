@@ -81,5 +81,14 @@ class KickoffSessionStartTest(unittest.TestCase):
         self.assertIn("toolkit doctor: 1 issue(s)", self.context())
 
 
+    def test_failing_selftest_is_reported(self):
+        self.fake_toolkit(self.home / ".kickoff")
+        res = self.cfg / "kickoff" / "selftest.json"
+        res.parent.mkdir(parents=True, exist_ok=True)
+        res.write_text(json.dumps({"failed": ["local-first: Copilot preToolUse hook"]}))
+        self.assertIn("1 check(s) failing (local-first: Copilot preToolUse hook)", self.context())
+        self.assertNotIn("selftest", self.context(env={"KICKOFF_SELFTEST": "1"}), "no nudges inside a self-test")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -48,8 +48,11 @@ def build_context() -> str:
     gaps = open_gaps(Path.cwd())
     if gaps:
         parts.append(f"{gaps} open toolkit gap(s) are logged in this repo's gaps ledger; harvest can close them.")
-    if home:
+    if home and os.environ.get("KICKOFF_SELFTEST") != "1":  # never recurse from inside a self-test
         refresh_inventory(Path(home))
+        broken = selftest_nudge(Path(home))
+        if broken:
+            parts.append(broken)
         nudge = doctor_nudge(Path(home))
         if nudge:
             parts.append(nudge)
@@ -73,6 +76,32 @@ def refresh_inventory(home: Path) -> None:
         subprocess.Popen([sys.executable, str(home / "scripts" / "toolkit.py"), "discover"], **kwargs)
     except Exception:
         pass
+
+
+def selftest_nudge(home: Path) -> str:
+    """Re-run `toolkit.py selftest --save` in the background once a week; report the last run's failures."""
+    import subprocess
+    import time
+    result = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "selftest.json"
+    line = ""
+    try:
+        data = json.loads(result.read_text(encoding="utf-8")) if result.exists() else {}
+        failed = data.get("failed") or []
+        if failed:
+            line = (f"Kickoff selftest: {len(failed)} check(s) failing ({'; '.join(failed[:3])}). "
+                    f"Tell the user and run `python3 {home / 'scripts' / 'toolkit.py'} selftest` before relying on hooks.")
+        if not result.exists() or time.time() - result.stat().st_mtime > 7 * 86400:
+            result.parent.mkdir(parents=True, exist_ok=True)
+            result.touch()  # claim the week before starting, so parallel sessions do not all run it
+            kwargs = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+            if os.name == "nt":
+                kwargs["creationflags"] = 0x00000008 | 0x00000200
+            else:
+                kwargs["start_new_session"] = True
+            subprocess.Popen([sys.executable, str(home / "scripts" / "toolkit.py"), "selftest", "--save"], **kwargs)
+    except Exception:
+        return ""
+    return line
 
 
 def doctor_nudge(home: Path) -> str:
