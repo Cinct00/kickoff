@@ -39,8 +39,8 @@ def build_context() -> str:
     parts = [
         "The Kickoff toolkit is installed (skills: kickoff, harvest, toolkit-adopt, codemap, plus judgment skills such as "
         "understanding-the-problem, debugging-systematically, reviewing-code, writing-clearly).",
-        "For any substantial task, load the `kickoff` skill first: it routes the task to the right skills, "
-        "agents and plugin commands for this platform, checks the catalog for gaps, and ends with `harvest`.",
+        "For any substantial task, load the `kickoff` skill first: it prefers this repo's and your own skills, "
+        "agents and prompts, falls back to Kickoff's generic ones and the catalog, and ends with `harvest`.",
     ]
     home = toolkit_home()
     if home:

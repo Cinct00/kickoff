@@ -43,12 +43,17 @@ Improvements beat duplicates. Before creating anything:
 
 Find the toolkit checkout: `$KICKOFF_HOME`, else the path in `~/.config/kickoff/home`, else `~/.kickoff`. If the current repository *is* the toolkit (it has `toolkit.json` and `plugins/kickoff/`), use it.
 
-- **Cross-project artefact and the toolkit is available** → write it into the toolkit, in the plugin it belongs to:
+Decide **whose** knowledge it is before deciding where it goes. Kickoff is for generic method that helps anyone; it is never the default home for something learned at work.
+
+- **Specific to this repository or codebase** (its build, deploy, conventions, services) → the project, where every client and teammate reads it: `.github/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md`, `.github/agents/<name>.agent.md`, `.github/prompts/<name>.prompt.md`.
+- **Specific to the user's work or domain, across repos** (their company's systems, a regulated domain, internal tools, client names) → the user's own level, never the toolkit: Copilot `~/.copilot/skills/<name>/` and `~/.copilot/agents/`, Claude `~/.claude/skills/<name>/` and `~/.claude/agents/`, or `~/.agents/skills/<name>/` for other clients. It must not be committed to a public toolkit.
+- **Generic, cross-project method that any user would benefit from, and the toolkit is available** → write it into the toolkit, in the plugin it belongs to:
   - skill: `plugins/<plugin>/skills/<name>/SKILL.md`
   - agent: `plugins/<plugin>/agents/<name>.agent.md`
   - hook: both `plugins/<plugin>/hooks/hooks.json` (Claude format) and `plugins/<plugin>/hooks/copilot-hooks.json` (Copilot format), calling one shared script
   - then run `python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate` in the toolkit.
-- **Project-specific, or no toolkit here** (e.g. Copilot cloud agent in someone else's repo) → write into the project where every client reads it: `.claude/skills/<name>/SKILL.md`, `.claude/agents/<name>.md`. Mention that `toolkit.py promote <path> --plugin <plugin>` moves it into the toolkit later.
+- **Generic, but no toolkit here** (e.g. Copilot cloud agent in someone else's repo) → write it into the project as above and mention that `toolkit.py promote <path> --plugin <plugin>` can move it into the toolkit later, once it holds no work or client detail.
+- **Unsure** → ask the user with one line ("team-only, or shareable in Kickoff?"); default to the project or user level.
 - **Claude app** → call `propose_skills` once with all skill proposals (max 3). An improvement must carry the complete updated SKILL.md, not a partial edit, so read the current one first. Write agent or hook files and send them with `SendUserFile`.
 
 Choosing the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; routing and toolkit mechanics → `kickoff`. If none fits, propose a new plugin (it also needs an entry in `toolkit.json`).

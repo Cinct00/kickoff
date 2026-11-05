@@ -12,13 +12,20 @@ It works the same on every platform. Only the way a tool is *invoked* changes; s
 ## How to run it
 
 0. **Know your platform.** One glance at your tool list settles it: `Skill` + `Agent` tools → Claude Code; `Skill` + `Artifact`/`propose_skills` → Claude app; `runSubagent`/`agent` tool or `.github/` customizations → GitHub Copilot; otherwise a generic Agent Skills client. Names in this file are bare (`reviewing-code`); resolve them with the platform table in [references/platforms.md](references/platforms.md).
-1. **Classify** the task using the routing table. If it spans two rows, take the earlier row first; the later one happens in sequence.
-2. **Load judgment skills** by name. Load at most three up front, and load others when the work reaches that phase.
-3. **Check availability and gaps** (below). This is quick: a glance at what is loaded, and one search of the catalog if something is missing.
-4. **State the route** in one line, ending with the harvest step, e.g. `Route: understanding-the-problem → feature-dev → pr-review-toolkit review → harvest`. Name anything missing inline: `(no security scanner here — install claude-security@claude-plugins-official)`. Then start. Do not ask permission to use a skill.
-5. **Run the procedure** through the plugin command or agent in the "Drive with" column.
-6. **Follow links**: when a loaded skill writes `[[name]]`, that is a pointer to the skill `name`. Load it only if that part of the work is actually happening.
-7. **Harvest** once the work is verified (or the session is wrapping up early). Load the `harvest` skill and follow it. This step is mandatory on every kickoff run.
+1. **Local first.** The user's own tools know their domain; this toolkit only knows general method. Before the routing table, look for what already fits, in this order:
+   1. **This repository**: its skills, agents, prompts, instructions and MCP servers (`.github/`, `.claude/`, `.agents/`, `.vscode/mcp.json`, `AGENTS.md`).
+   2. **The user's own** (work, team and domain tools): user-level skills, agents, prompts, hooks and MCP servers that did not come from Kickoff.
+   3. **Kickoff's generic skills** (the routing table below), and the user's plugin profile.
+   4. **The catalog** of plugins nobody has installed yet.
+
+   Search the loaded tool list and `~/.config/kickoff/local-inventory.tsv` (columns `kind name scope client source verdict path description`; `scope=project` is level 1, `source=local` is level 2, `source=kickoff` is level 3) for the task's domain words. When a repo or user item fits, it leads the route; add a Kickoff judgment skill only for method it does not cover (e.g. `deploy-helper (team) → testing-strategy → harvest`). Never replace a domain tool with a generic one because the generic one has a routing row.
+2. **Classify** the task using the routing table, for whatever step 1 did not cover. If it spans two rows, take the earlier row first; the later one happens in sequence.
+3. **Load judgment skills** by name. Load at most three up front, and load others when the work reaches that phase.
+4. **Check availability and gaps** (below). This is quick: a glance at what is loaded, and one search of the catalog if something is missing.
+5. **State the route** in one line, ending with the harvest step, e.g. `Route: understanding-the-problem → feature-dev → pr-review-toolkit review → harvest`. Name anything missing inline: `(no security scanner here — install claude-security@claude-plugins-official)`. Then start. Do not ask permission to use a skill.
+6. **Run the procedure** through the plugin command or agent in the "Drive with" column.
+7. **Follow links**: when a loaded skill writes `[[name]]`, that is a pointer to the skill `name`. Load it only if that part of the work is actually happening.
+8. **Harvest** once the work is verified (or the session is wrapping up early). Load the `harvest` skill and follow it. This step is mandatory on every kickoff run.
 
 ## Two kinds of tool
 

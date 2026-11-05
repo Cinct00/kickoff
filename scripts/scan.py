@@ -271,8 +271,10 @@ def discover(home: Path, repo: Path | None, toolkit_root: Path | None = None, wi
             data = _json(pm)
             if data.get("name"):
                 add("plugin", data["name"], scope, client, pdir, str(data.get("description", ""))[:160], pdir)
-    order = {"plugin": 0, "skill": 1, "agent": 2, "prompt": 3, "command": 4, "instructions": 5, "hook": 6, "mcp": 7}
-    return sorted(items, key=lambda x: (order.get(x["kind"], 9), x["scope"], x["client"], x["name"]))
+    # Precedence order, as kickoff routes: this repo's own tools, then the user's (work/domain), then Kickoff's.
+    tier = lambda x: 0 if x["scope"] == "project" else 1 if x["source"] == "local" else 2
+    order = {"skill": 0, "agent": 1, "prompt": 2, "command": 3, "instructions": 4, "mcp": 5, "hook": 6, "plugin": 7}
+    return sorted(items, key=lambda x: (tier(x), order.get(x["kind"], 9), x["client"], x["name"]))
 
 
 def to_tsv(items: list[dict]) -> str:

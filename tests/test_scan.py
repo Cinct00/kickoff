@@ -125,6 +125,8 @@ class DiscoverTest(unittest.TestCase):
         self.assertEqual(verdicts["evil"], "block")
         self.assertEqual(verdicts["deploy-helper"], "ok")
         self.assertEqual(verdicts["jira"], "review")  # unpinned npx server
+        tiers = [0 if i["scope"] == "project" else 1 if i["source"] == "local" else 2 for i in items]
+        self.assertEqual(tiers, sorted(tiers), "repo tools first, then the user's own, then Kickoff's")
         tsv = (self.home / ".config" / "kickoff" / "local-inventory.tsv").read_text()
         self.assertIn("deploy-helper", tsv)
 

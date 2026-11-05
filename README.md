@@ -238,8 +238,8 @@ Everything discovered, and anything you are about to install, goes through `tool
 
 ## How it grows
 
-1. **Kickoff** routes every substantial task and checks the catalog. Missing tool → install line or recommendation. Nothing fits → a logged gap.
-2. **Harvest** runs at the end (a `Stop` hook in Claude Code reminds once if it was skipped). It turns recurring procedures, corrections and gaps into skills, agents, hooks or new kickoff routes, written in the portable format **into this repo** when it is on disk, or into the project's `.claude/` otherwise.
+1. **Kickoff** routes every substantial task, **local first**: this repo's own skills, agents and prompts, then your own (work, team and domain tools in `~/.copilot`, `~/.claude`, `~/.agents`), then Kickoff's generic skills, then the catalog. Your domain knowledge always outranks generic method. Missing tool → install line or recommendation. Nothing fits → a logged gap.
+2. **Harvest** runs at the end (a `Stop` hook in Claude Code reminds once if it was skipped) and decides *whose* knowledge it learned: repo-specific lessons go into the project (`.github/`, `.claude/`), work and domain lessons into your user level, and only generic, shareable method comes back into Kickoff. Work detail never lands in a public toolkit by default.
 3. **Promote** project-local discoveries with `toolkit.py promote <dir> --plugin <plugin>`.
 4. **Validate, commit, push**, and every device picks it up with `toolkit.py sync`; every adopted project picks it up on its next plugin update. Compounding returns, on autopilot.
 
