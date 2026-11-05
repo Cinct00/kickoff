@@ -54,6 +54,8 @@ Decide **whose** knowledge it is before deciding where it goes. Kickoff is for g
   - then run `python3 scripts/toolkit.py build && python3 scripts/toolkit.py validate` in the toolkit.
 - **Generic, but no toolkit here** (e.g. Copilot cloud agent in someone else's repo) → write it into the project as above and mention that `toolkit.py promote <path> --plugin <plugin>` can move it into the toolkit later, once it holds no work or client detail.
 - **Unsure** → ask the user with one line ("team-only, or shareable in Kickoff?"); default to the project or user level.
+
+When a shell and the toolkit checkout are available, create the file with `python3 <toolkit>/scripts/toolkit.py new <skill|agent|prompt|instructions> <name> -d "<what it does. Use when …>" --scope <project|user|toolkit> [--plugin <p>]`, then fill in the sections. It picks the right path for every client, refuses to overwrite, vets the file and refreshes the local inventory so kickoff routes to it next time.
 - **Claude app** → call `propose_skills` once with all skill proposals (max 3). An improvement must carry the complete updated SKILL.md, not a partial edit, so read the current one first. Write agent or hook files and send them with `SendUserFile`.
 
 Choosing the plugin: engineering method → `engineering-craft`; reasoning → `thinking-tools`; people and writing → `communication-and-leadership`; routing and toolkit mechanics → `kickoff`. If none fits, propose a new plugin (it also needs an entry in `toolkit.json`).

@@ -138,6 +138,35 @@ class DiscoverTest(unittest.TestCase):
         self.assertIn("deploy-helper", tsv)
 
 
+class NewTest(unittest.TestCase):
+    def test_scaffolds_in_the_right_places_and_registers_in_inventory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home, repo = Path(tmp) / "home", Path(tmp) / "repo"
+            (home / ".claude").mkdir(parents=True)
+            repo.mkdir()
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            env = {**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(home / ".config"),
+                   "COPILOT_HOME": str(home / ".copilot"), "CLAUDE_CONFIG_DIR": str(home / ".claude")}
+            run = lambda *a, rc=0: self.assertEqual(subprocess.run([sys.executable, str(TOOLKIT), "new", *a], cwd=repo, env=env,
+                                                                  capture_output=True, text=True).returncode, rc, a)
+            run("skill", "release-checklist", "-d", "Runs our release checklist. Use when shipping a service.")
+            run("agent", "billing-expert", "-d", "Knows our billing system. Use when touching invoices.", "--scope", "user")
+            run("instructions", "python-style", "-d", "House Python rules", "--apply-to", "**/*.py")
+            run("skill", "release-checklist", "-d", "dup. Use when x.", rc=1)          # never overwrites
+            run("skill", "Bad_Name", "-d", "x. Use when y.", rc=1)
+            run("prompt", "p", "-d", "x", "--scope", "user", rc=1)                     # prompts are project-only
+            run("skill", "s", "-d", "x. Use when y.", "--scope", "toolkit", rc=1)      # toolkit needs --plugin
+            skill = repo / ".github" / "skills" / "release-checklist" / "SKILL.md"
+            self.assertTrue(skill.read_text().startswith("---\nname: release-checklist\ndescription: Runs our release"))
+            self.assertTrue((home / ".copilot" / "agents" / "billing-expert.agent.md").is_file())
+            self.assertTrue((home / ".claude" / "agents" / "billing-expert.md").is_file())
+            self.assertIn('applyTo: "**/*.py"', (repo / ".github" / "instructions" / "python-style.instructions.md").read_text())
+            inv = (home / ".config" / "kickoff" / "local-inventory.tsv").read_text()
+            self.assertIn("release-checklist", inv)
+            self.assertIn("billing-expert", inv)
+            self.assertEqual(scan.verdict(scan.vet_path(skill.parent)), "ok")
+
+
 class SelftestTest(unittest.TestCase):
     def test_selftest_passes_and_leaves_no_state(self):
         with tempfile.TemporaryDirectory() as home:
