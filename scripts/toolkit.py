@@ -957,6 +957,21 @@ def cmd_install(args) -> int:
                 ledger.add("block", f, None, "instructions")
 
     ledger.save(cfg, targets, args.bundle)
+    if not args.dry_run:
+        # First inventory now, so kickoff can route to the user's own tools from the very first session.
+        try:
+            import scan
+            inv = toolkit_home_marker().parent / "local-inventory.tsv"
+            inv.parent.mkdir(parents=True, exist_ok=True)
+            items = scan.discover(Path.home(), None, ROOT)
+            inv.write_text(scan.to_tsv(items), encoding="utf-8")
+            own = sum(1 for i in items if i["source"] == "local")
+            risky = [i for i in items if i.get("verdict") == "block"]
+            info(f"\n== local inventory: {own} of your own skills/agents/prompts/hooks/MCP servers found ({inv})")
+            for i in risky:
+                warn(f"{i['kind']} '{i['name']}' at {i['path']} has high-risk patterns; run `toolkit.py vet {i['path']}`")
+        except Exception as e:  # never fail an install over the inventory
+            warn(f"local inventory skipped: {e}")
     if failures:
         info("\nsome installs failed (often: plugin not compatible with that client, or network):")
         for f in failures:

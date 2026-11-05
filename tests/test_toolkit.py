@@ -58,6 +58,7 @@ class ToolkitTest(unittest.TestCase):
         self.assertTrue((self.home / "bin" / "codemap").exists())
         ledger = json.loads((self.home / ".config" / "kickoff" / "installed.json").read_text())
         self.assertEqual(ledger["bundle"], "dev")
+        self.assertTrue((self.home / ".config" / "kickoff" / "local-inventory.tsv").is_file())
 
         # A repo with vendored copies: identical ones shadow user-level installs; edited ones are kept.
         repo = self.tmp / "repo"
