@@ -132,6 +132,18 @@ class ToolkitTest(unittest.TestCase):
             self.assertIn("additionalContext", json.loads(out))
 
 
+class CommunityGateTest(unittest.TestCase):
+    def test_community_profile_plugins_are_skipped_without_opt_in(self):
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("toolkit_mod", TOOLKIT)
+        tk = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(tk)
+        cfg = {"upstream": {"marketplaces": [{"name": "off", "repo": "a/b", "trust": "official"},
+                                             {"name": "comm", "repo": "c/d", "trust": "community"}]}}
+        self.assertEqual(tk._gate_community(cfg, ["x@off", "y@comm"], allow=False), ["x@off"])
+
+
 class InstallSafetyTest(unittest.TestCase):
     """install / doctor / adopt must never delete or overwrite files the user owns."""
 

@@ -697,6 +697,42 @@ def _plugin_refs_for(cfg: dict, bundle: str, with_upstream: bool) -> tuple[list[
     return own, upstream
 
 
+def _gate_community(cfg: dict, refs: list[str], allow: bool) -> list[str]:
+    """Profile plugins from marketplaces marked `trust: community` are skipped unless --allow-community, and even
+    then only installed when `vet` finds no high-risk pattern in them."""
+    trust = {m["name"]: m.get("trust", "community") for m in cfg["upstream"]["marketplaces"]}
+    repo_of = {m["name"]: m["repo"] for m in cfg["upstream"]["marketplaces"]}
+    kept = []
+    for ref in refs:
+        plugin, _, market = ref.partition("@")
+        if trust.get(market) == "official":
+            kept.append(ref)
+            continue
+        if not allow:
+            warn(f"skipping {ref}: '{market}' is community-maintained (pass --allow-community to vet and install it)")
+            continue
+        import scan
+        tmp = Path(tempfile.mkdtemp(prefix="kickoff-gate-"))
+        try:
+            if not _git_clone(repo_of[market], tmp / "m"):
+                warn(f"skipping {ref}: could not fetch {repo_of[market]} to vet it")
+                continue
+            cands = [d for d in (tmp / "m" / "plugins" / plugin, tmp / "m" / plugin) if d.is_dir()]
+            if not cands:
+                warn(f"skipping {ref}: could not find its files in {repo_of[market]} to vet them")
+                continue
+            v = scan.verdict(scan.vet_path(cands[0]))
+            if v == "block":
+                warn(f"skipping {ref}: vet found high-risk patterns (run `toolkit.py vet --git {repo_of[market]} "
+                     f"--subdir {cands[0].relative_to(tmp / 'm').as_posix()}` for details)")
+                continue
+            info(f"  vetted {ref}: {v}")
+            kept.append(ref)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    return kept
+
+
 def _marketplace_source(cfg: dict, local: bool) -> str:
     return str(ROOT) if local else cfg["repository"]
 
@@ -898,6 +934,7 @@ def cmd_install(args) -> int:
         if have["copilot"] or (Path.home() / ".copilot").is_dir():
             targets.add("copilot-user")
     own, upstream = _plugin_refs_for(cfg, args.bundle, not args.no_upstream)
+    upstream = _gate_community(cfg, upstream, args.allow_community)
     market_src = _marketplace_source(cfg, args.local)
     ledger = Ledger(args.dry_run)
     info(f"toolkit home: {ROOT}")
@@ -976,7 +1013,8 @@ def cmd_install(args) -> int:
         info("\nsome installs failed (often: plugin not compatible with that client, or network):")
         for f in failures:
             info(f"  - {f}")
-    info("\ndone. Check health any time with `toolkit.py doctor`; start your next task with `kickoff`.")
+    info("\ndone. Prove it works here with `toolkit.py selftest`, check health any time with `toolkit.py doctor`, "
+         "and start your next task with `kickoff`.")
     return 0
 
 
@@ -1598,6 +1636,12 @@ def cmd_vet(args) -> int:
     return 1 if worst == "block" or (args.strict and worst == "review") else 0
 
 
+def cmd_selftest(args) -> int:
+    """Run every component end to end on this machine and report PASS / FAIL / SKIP."""
+    import selftest
+    return selftest.run(args.json)
+
+
 def cmd_doctor(args) -> int:
     cfg = load_config()
     repo = None
@@ -1815,6 +1859,8 @@ def main(argv: list[str] | None = None) -> int:
                         "skills = ~/.agents/skills. Default auto = claude (if found) + copilot-user (if Copilot is set up) + skills")
     i.add_argument("--bundle", default="full", help="which toolkit bundle (see toolkit.json bundles)")
     i.add_argument("--no-upstream", action="store_true", help="skip the Anthropic/GitHub/partner plugin profile")
+    i.add_argument("--allow-community", action="store_true",
+                   help="also install profile plugins from community marketplaces, after vetting each one")
     i.add_argument("--local", action="store_true", help="register this checkout as the marketplace instead of GitHub")
     i.add_argument("--skills-dir", action="append", help="skills directory to link into (default ~/.agents/skills)")
     i.add_argument("--copy", action="store_true", help="copy skills instead of symlinking")
@@ -1870,6 +1916,10 @@ def main(argv: list[str] | None = None) -> int:
     v.add_argument("--json", action="store_true")
     v.add_argument("--strict", action="store_true", help="exit 1 on medium findings too")
     v.set_defaults(func=cmd_vet)
+
+    st = sub.add_parser("selftest", help="prove every hook, the codemap MCP server, local-first, vet and discover work on this machine")
+    st.add_argument("--json", action="store_true")
+    st.set_defaults(func=cmd_selftest)
 
     au = sub.add_parser("audit", help="token cost, overlaps, stale routes and stale skills in the toolkit")
     au.add_argument("--overlap", type=float, default=0.3, help="vocabulary overlap threshold (default 0.3)")

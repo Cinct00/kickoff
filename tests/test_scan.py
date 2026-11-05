@@ -138,5 +138,17 @@ class DiscoverTest(unittest.TestCase):
         self.assertIn("deploy-helper", tsv)
 
 
+class SelftestTest(unittest.TestCase):
+    def test_selftest_passes_and_leaves_no_state(self):
+        with tempfile.TemporaryDirectory() as home:
+            env = {**os.environ, "HOME": home, "XDG_CONFIG_HOME": str(Path(home) / ".config")}
+            proc = subprocess.run([sys.executable, str(TOOLKIT), "selftest", "--json"], capture_output=True, text=True,
+                                  env=env, timeout=300)
+            rows = json.loads(proc.stdout)
+            self.assertEqual([r for r in rows if r["status"] == "FAIL"], [])
+            self.assertEqual(proc.returncode, 0)
+            self.assertFalse((Path(home) / ".config" / "kickoff").exists(), "selftest must not write real config")
+
+
 if __name__ == "__main__":
     unittest.main()
