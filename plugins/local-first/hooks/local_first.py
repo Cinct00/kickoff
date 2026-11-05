@@ -35,11 +35,29 @@ Usage: local_first.py --format claude|copilot (hook JSON on stdin). Fails open.
 """
 from __future__ import annotations
 
-import hashlib
 import json
+import sys
+
+# Fast path: this hook runs before every Bash call (and, in Copilot, every tool call). Most of them cannot fetch
+# anything remote, so answer before importing or compiling anything else (~25 ms saved per call).
+_RAW = None
+if __name__ == "__main__":
+    _RAW = sys.stdin.read()
+    try:
+        _d = json.loads(_RAW or "{}")
+        _tool = str(_d.get("tool_name") or _d.get("toolName") or "")
+    except ValueError:
+        _tool = ""
+    _local = _tool in ("Read", "Grep", "Glob", "Edit", "Write", "MultiEdit", "NotebookEdit", "LS", "Task", "Agent",
+                       "TodoWrite", "Skill", "view", "edit", "create", "str_replace", "glob", "grep", "read", "write", "ls")
+    _shell_offline = _tool in ("Bash", "bash", "shell", "powershell") and "http" not in _RAW and "gh api" not in _RAW
+    if not _tool or _local or _shell_offline:
+        print("{}" if "copilot" in sys.argv else "")
+        sys.exit(0)
+
+import hashlib
 import os
 import re
-import sys
 import tempfile
 import time
 from pathlib import Path
@@ -512,7 +530,7 @@ def decide(data: dict) -> str | None:
 def main() -> None:
     fmt = sys.argv[sys.argv.index("--format") + 1] if "--format" in sys.argv else "claude"
     try:
-        data = json.loads(sys.stdin.read() or "{}")
+        data = json.loads((_RAW if _RAW is not None else sys.stdin.read()) or "{}")
         reason = decide(data) if isinstance(data, dict) else None
     except Exception:
         reason = None
