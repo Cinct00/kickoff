@@ -6,7 +6,10 @@ The toolkit is meant to grow from use and stay lean and current without anyone r
 
 | Loop | Trigger | What it does | Command |
 |---|---|---|---|
-| **Route** | every substantial task | kickoff picks tools, checks the catalog, logs gaps | `kickoff` skill |
+| **Route** | every substantial task | kickoff picks tools, local first (this repo's, then your own, then Kickoff's, then the catalog), and logs gaps | `kickoff` skill |
+| **Discover** | at install, session start (at most daily, and when you open a different repository), on demand | inventories the skills, agents, prompts, hooks and MCP servers on this device and in the repo into `~/.config/kickoff/local-inventory.tsv`, each with a vet verdict | `toolkit.py discover` |
+| **Vet** | before installing or promoting anything; in CI for every toolkit plugin | static scan for risky patterns and leaked credentials; says what it did not scan | `toolkit.py vet <path>` · `vet --git owner/repo --subdir <path>` |
+| **Self-test** | after install and updates; weekly in the background (your next session is warned if a check fails) | runs every hook, the codemap MCP server, local-first, vet and discover end to end in a sandbox | `toolkit.py selftest` |
 | **Navigate** | every code question | codemap answers from the index; the index refreshes itself per query | `codemap …` |
 | **Harvest** | end of every kickoff run (a Claude `Stop` hook reminds once) | captures procedures, corrections and gaps as skills, agents, hooks or routes; prunes one overlap or stale item | `harvest` skill |
 | **Doctor** | session start, at most daily (one line only if something is wrong); on demand | checks installs on this device and shadowing in the current repo; `--fix` repairs the safe cases | `toolkit.py doctor [--repo] [--fix]` |
@@ -51,6 +54,10 @@ Install the smallest bundle that covers your work on each device (`install --bun
 
 ```bash
 cd ~/.kickoff && git pull
+```
+
+```bash
+python3 scripts/toolkit.py selftest
 ```
 
 ```bash

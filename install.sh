@@ -14,6 +14,8 @@ HOME_DIR="${KICKOFF_HOME:-$HOME/.kickoff}"
 command -v git >/dev/null 2>&1 || { echo "error: git is required" >&2; exit 1; }
 PY="$(command -v python3 || command -v python || true)"
 [ -n "$PY" ] || { echo "error: Python 3.9+ is required" >&2; exit 1; }
+"$PY" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>/dev/null \
+  || { echo "error: Python 3.9+ is required ($PY is $("$PY" -V 2>&1))" >&2; exit 1; }
 
 # If run from inside a checkout, use it in place.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"

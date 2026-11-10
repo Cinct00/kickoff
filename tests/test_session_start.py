@@ -32,8 +32,21 @@ class KickoffSessionStartTest(unittest.TestCase):
     def fake_toolkit(self, path: Path, doctor_output: str = "") -> Path:
         (path / "scripts").mkdir(parents=True)
         (path / "toolkit.json").write_text("{}")
-        (path / "scripts" / "toolkit.py").write_text(f"print({doctor_output!r})\n")
+        # Records how it was called, so tests can see which background commands the hook started.
+        (path / "scripts" / "toolkit.py").write_text(
+            "import sys, pathlib\n"
+            f"open(pathlib.Path(__file__).parent / 'calls.log', 'a').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            f"print({doctor_output!r})\n")
         return path
+
+    def calls(self, toolkit: Path, expect: str = "", wait: float = 5.0) -> str:
+        log, deadline = toolkit / "scripts" / "calls.log", time.time() + wait
+        while time.time() < deadline:
+            text = log.read_text() if log.exists() else ""
+            if not expect or expect in text:
+                return text
+            time.sleep(0.05)
+        return log.read_text() if log.exists() else ""
 
     def run_hook(self, fmt="claude", env=None):
         proc = subprocess.run([sys.executable, str(HOOK), "--format", fmt], input="{}", capture_output=True, text=True,
@@ -80,6 +93,33 @@ class KickoffSessionStartTest(unittest.TestCase):
         os.utime(stamp, (old, old))
         self.assertIn("toolkit doctor: 1 issue(s)", self.context())
 
+
+    def test_inventory_is_refreshed_for_the_repository_in_use(self):
+        tk = self.fake_toolkit(self.home / ".kickoff")
+        (self.cwd / ".git").mkdir()
+        inv = self.cfg / "kickoff" / "local-inventory.tsv"
+        inv.parent.mkdir(parents=True, exist_ok=True)
+        for name in ("last-doctor", "selftest.json"):  # fresh, so only the inventory decision is under test
+            (inv.parent / name).write_text("{}")
+        old = time.time() - 3600
+        inv.write_text(f"# repo: {self.cwd.resolve()}\n")
+        os.utime(inv, (old, old))
+        self.context()
+        self.assertNotIn("discover", self.calls(tk, wait=0.5), "fresh and for this repo: nothing to do")
+        inv.write_text("# repo: /some/other/repo\n")
+        os.utime(inv, (old, old))
+        self.context()
+        self.assertIn("discover", self.calls(tk, "discover"), "project rows describe another repository: refresh")
+
+    def test_an_empty_selftest_result_does_not_block_the_weekly_rerun(self):
+        tk = self.fake_toolkit(self.home / ".kickoff")
+        res = self.cfg / "kickoff" / "selftest.json"
+        res.parent.mkdir(parents=True, exist_ok=True)
+        res.write_text("")  # what a crashed background run leaves behind
+        old = time.time() - 8 * 86400
+        os.utime(res, (old, old))
+        self.assertNotIn("failing", self.context())
+        self.assertIn("selftest --save", self.calls(tk, "selftest --save"))
 
     def test_failing_selftest_is_reported(self):
         self.fake_toolkit(self.home / ".kickoff")

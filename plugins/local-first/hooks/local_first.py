@@ -50,7 +50,8 @@ if __name__ == "__main__":
         _tool = ""
     _local = _tool in ("Read", "Grep", "Glob", "Edit", "Write", "MultiEdit", "NotebookEdit", "LS", "Task", "Agent",
                        "TodoWrite", "Skill", "view", "edit", "create", "str_replace", "glob", "grep", "read", "write", "ls")
-    _shell_offline = _tool in ("Bash", "bash", "shell", "powershell") and "http" not in _RAW and "gh api" not in _RAW
+    _shell_offline = _tool in ("Bash", "bash", "shell", "powershell") and "http" not in _RAW and not (
+        "gh" in _RAW and "api" in _RAW)  # looser than GH_API_RE on purpose: any spacing falls through to the full check
     if not _tool or _local or _shell_offline:
         print("{}" if "copilot" in sys.argv else "")
         sys.exit(0)

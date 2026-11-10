@@ -45,7 +45,7 @@ Find the toolkit checkout: `$KICKOFF_HOME`, else the path in `~/.config/kickoff/
 
 Decide **whose** knowledge it is before deciding where it goes. Kickoff is for generic method that helps anyone; it is never the default home for something learned at work.
 
-- **Specific to this repository or codebase** (its build, deploy, conventions, services) → the project, where every client and teammate reads it: `.github/skills/<name>/SKILL.md` or `.claude/skills/<name>/SKILL.md`, `.github/agents/<name>.agent.md`, `.github/prompts/<name>.prompt.md`.
+- **Specific to this repository or codebase** (its build, deploy, conventions, services) → the project, where every client and teammate reads it: skills in `.claude/skills/<name>/SKILL.md` (the one location both Claude Code and Copilot read; use `.github/skills/` instead only if the repo already keeps its skills there), agents in both `.github/agents/<name>.agent.md` (Copilot) and `.claude/agents/<name>.md` (Claude Code), prompts in `.github/prompts/<name>.prompt.md`.
 - **Specific to the user's work or domain, across repos** (their company's systems, a regulated domain, internal tools, client names) → the user's own level, never the toolkit: Copilot `~/.copilot/skills/<name>/` and `~/.copilot/agents/`, Claude `~/.claude/skills/<name>/` and `~/.claude/agents/`, or `~/.agents/skills/<name>/` for other clients. It must not be committed to a public toolkit.
 - **Generic, cross-project method that any user would benefit from, and the toolkit is available** → write it into the toolkit, in the plugin it belongs to:
   - skill: `plugins/<plugin>/skills/<name>/SKILL.md`

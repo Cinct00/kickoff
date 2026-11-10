@@ -44,7 +44,8 @@ def build_context() -> str:
     ]
     home = toolkit_home()
     if home:
-        parts.append(f"Toolkit checkout: {home} (write cross-project skills/agents/hooks there during harvest).")
+        parts.append(f"Toolkit checkout: {home} (harvest writes only generic, shareable method there; "
+                     "repo and work knowledge stays in the repo or at your user level).")
     gaps = open_gaps(Path.cwd())
     if gaps:
         parts.append(f"{gaps} open toolkit gap(s) are logged in this repo's gaps ledger; harvest can close them.")
@@ -59,15 +60,33 @@ def build_context() -> str:
     return " ".join(parts)
 
 
+def current_repo() -> str:
+    """The repository this session is in (nearest parent with .git), or "-". Must match scan.find_repo."""
+    try:
+        cwd = Path.cwd().resolve()
+    except OSError:
+        return "-"
+    for d in (cwd, *cwd.parents):
+        if (d / ".git").exists():
+            return str(d)
+    return "-"
+
+
 def refresh_inventory(home: Path) -> None:
-    """Keep ~/.config/kickoff/local-inventory.tsv (local skills/agents/hooks/MCP + vet verdicts) at most a day old.
+    """Keep ~/.config/kickoff/local-inventory.tsv (local skills/agents/hooks/MCP + vet verdicts) current: at most a
+    day old, and describing THIS repository (its first line records which repo its project rows belong to).
     Runs detached so the session never waits for it."""
     import subprocess
     import time
     inv = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "local-inventory.tsv"
     try:
         if inv.exists() and time.time() - inv.stat().st_mtime < 86400:
-            return
+            with inv.open(encoding="utf-8", errors="replace") as fh:
+                first = fh.readline().rstrip("\n")
+            if first == f"# repo: {current_repo()}":
+                return
+            if time.time() - inv.stat().st_mtime < 60:
+                return  # another session refreshed it moments ago: do not fight over it
         kwargs = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL, "cwd": os.getcwd()}
         if os.name == "nt":
             kwargs["creationflags"] = 0x00000008 | 0x00000200  # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
@@ -85,8 +104,11 @@ def selftest_nudge(home: Path) -> str:
     result = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config")) / "kickoff" / "selftest.json"
     line = ""
     try:
-        data = json.loads(result.read_text(encoding="utf-8")) if result.exists() else {}
-        failed = data.get("failed") or []
+        try:  # an empty or half-written result must not stop the weekly re-run below
+            data = json.loads(result.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            data = {}
+        failed = [str(f)[:120] for f in data.get("failed") or []] if isinstance(data, dict) else []
         if failed:
             line = (f"Kickoff selftest: {len(failed)} check(s) failing ({'; '.join(failed[:3])}). "
                     f"Tell the user and run `python3 {home / 'scripts' / 'toolkit.py'} selftest` before relying on hooks.")

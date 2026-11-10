@@ -85,7 +85,7 @@ python3 ~/.kickoff/scripts/toolkit.py install
 | Everything else (Codex, Cursor, Gemini CLI…) | toolkit skills symlinked into `~/.agents/skills` (`--skills-dir` to add more) |
 | Shell | a `codemap` command in `~/.local/bin` |
 
-Options: `--bundle core|dev|full`, `--target claude|copilot|copilot-user|claude-user|skills`, `--no-upstream`, `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
+Options: `--bundle core|dev|full`, `--target claude|copilot|copilot-user|claude-user|skills`, `--no-upstream`, `--allow-community` (also install community-marketplace plugins from your profile, after vetting each), `--local` (use this checkout instead of GitHub), `--global-instructions` (adds a kickoff pointer to `~/.claude/CLAUDE.md`, `~/.copilot/copilot-instructions.md`, `~/.codex/AGENTS.md`). Or use `./install.sh` / `./install.ps1`, which clone and run it for you.
 
 Stay current with `python3 ~/.kickoff/scripts/toolkit.py sync` and healthy with `doctor` (see [Keeping it alive](#keeping-it-alive)).
 
@@ -180,9 +180,9 @@ Agents love to fetch a file from GitHub, query Context7 or hit a docs site when 
 
 ### discover and vet: know what you have, trust what you add
 
-Most of what an agent needs is often already on the machine: Copilot skills, agents and prompts in `~/.copilot` and `.github/`, Claude agents, VS Code MCP servers, team instructions. `toolkit.py discover` inventories all of it (Copilot, Claude Code, Agent Skills, Codex, Gemini, VS Code, plus the current repo) into `~/.config/kickoff/local-inventory.tsv`, refreshed in the background once a day, and kickoff checks it **before** the catalog.
+Most of what an agent needs is often already on the machine: Copilot skills, agents and prompts in `~/.copilot` and `.github/`, Claude agents, VS Code MCP servers, team instructions. `toolkit.py discover` inventories all of it (Copilot, Claude Code, Agent Skills, Codex, Gemini, Cursor, VS Code, plus the current repo) into `~/.config/kickoff/local-inventory.tsv`, refreshed in the background once a day and whenever you start a session in a different repository, and kickoff checks it **before** the catalog.
 
-Everything discovered, and anything you are about to install, goes through `toolkit.py vet`: a static scan for pipe-to-shell installers, permission-bypass flags, prompt-injection text, hidden Unicode, model base-URL hijacks, unpinned or plain-HTTP MCP servers, credential reads and symlink escapes. Vet a plugin straight from GitHub with `toolkit.py vet --git owner/repo --subdir plugins/name`. Kickoff vets every non-official plugin before recommending it, and `doctor` flags anything installed that scans as high-risk. A clean scan is not a proof of safety, but a flagged one is a reason to read before you run.
+Everything discovered, and anything you are about to install, goes through `toolkit.py vet`: a static scan for pipe-to-shell installers, permission-bypass flags, prompt-injection text, hidden Unicode, model base-URL hijacks, unpinned or plain-HTTP MCP servers, credential reads, embedded credentials and symlink escapes, and it says what it did not scan (bundled `dist/`, oversized files). Vet a plugin straight from GitHub with `toolkit.py vet --git owner/repo --subdir plugins/name`. Kickoff vets every non-official plugin before recommending it, and `doctor` flags anything installed that scans as high-risk. A clean scan is not a proof of safety, but a flagged one is a reason to read before you run.
 
 ### The catalog
 
@@ -249,11 +249,11 @@ Everything discovered, and anything you are about to install, goes through `tool
 |---|---|
 | `toolkit.py doctor [--repo PATH] [--fix]` | Broken or stale user-level installs, new toolkit items not yet installed, uncommitted harvests, and **repo-vendored copies that shadow your user-level skills** (Copilot lets project skills override personal ones). `--fix` repairs only what the toolkit provably wrote. Runs automatically (quietly) once a day at session start. |
 | `toolkit.py audit` | Always-on token cost per bundle, oversized descriptions, overlapping skills, routes and profile plugins that vanished upstream, skills untouched for six months. |
-| `toolkit.py new skill\|agent\|prompt\|instructions <name> -d "…"` | Scaffolds your own work or domain tool in the right place and format: the repo's `.github/` (default), your user level (`~/.copilot`, plus `~/.claude`), or a Kickoff plugin. Validates, never overwrites, vets it, and registers it so kickoff prefers it at once. |
+| `toolkit.py new skill\|agent\|prompt\|instructions <name> -d "…"` | Scaffolds your own work or domain tool in the right place and format: the repo (default: skills in `.claude/skills/`, which both Claude Code and Copilot read; agents in `.github/agents/` and `.claude/agents/`; prompts and instructions in `.github/`), your user level (`~/.copilot`, plus `~/.claude`), or a Kickoff plugin. Validates, never overwrites, vets it, and registers it so kickoff prefers it at once. |
 | `toolkit.py selftest` | Proves it on **your** machine: runs every hook in both the Claude and Copilot formats with realistic input, the codemap MCP server (including its refusal to write files), the local-first redirect against your own clone, vet against a planted malicious plugin, and discover. PASS / FAIL / SKIP per check, in a sandbox that leaves nothing behind. The session hook re-runs it weekly in the background and warns your next session if a check starts failing. |
 | `toolkit.py discover` / `vet` | Inventory of everything agent-related on the device and repo; security scan of any plugin, skill, hook or MCP config (`--git owner/repo` to vet before installing). |
 | `toolkit.py catalog` | Rescans upstream marketplaces; a weekly workflow opens a PR when something new appears. |
-| `python3 -m unittest discover -s tests` | 129 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
+| `python3 -m unittest discover -s tests` | 147 tests: codemap extraction/resolution/queries/MCP across languages, untrusted-repo safety, change review (incl. HTML escaping), install, adopt, doctor, every hook, the PR action. |
 
 See [docs/maintenance.md](docs/maintenance.md) for the loops and the Copilot user-level migration, [docs/architecture.md](docs/architecture.md) for the design, [docs/platforms.md](docs/platforms.md) for the per-client compatibility matrix, and [docs/contributing.md](docs/contributing.md) for adding components.
 
