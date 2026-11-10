@@ -1,0 +1,19 @@
+{
+  "name": "kickoff",
+  "version": "2.3.0",
+  "description": "The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plugins that fill them, then harvests reusable work back into the toolkit so it grows.",
+  "author": {
+    "name": "Cinct00"
+  },
+  "homepage": "https://github.com/Cinct00/kickoff/tree/main/plugins/kickoff",
+  "repository": "https://github.com/Cinct00/kickoff",
+  "license": "MIT",
+  "keywords": [
+    "routing",
+    "orchestration",
+    "kickoff",
+    "harvest",
+    "gap-analysis",
+    "self-improving"
+  ]
+}
