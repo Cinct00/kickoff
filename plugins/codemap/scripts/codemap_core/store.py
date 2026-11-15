@@ -1,0 +1,556 @@
+"""SQLite-backed index: schema, incremental refresh, ranking."""
+from __future__ import annotations
+
+import json
+import math
+import os
+import re
+import sqlite3
+import time
+from pathlib import Path
+
+from . import SCHEMA_VERSION, VERSION
+from .extract import extract
+from .graph import pagerank
+from .manifests import is_manifest, parse_manifest
+from .resolve import Resolver
+from .util import CODE_LANGS, _glob_match, _skip, content_hash, safe_path, included_ignored, is_generated, load_config, est_tokens, git, is_test_path, lang_of, list_files, read_text, split_words
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS files(
+  id INTEGER PRIMARY KEY, path TEXT UNIQUE NOT NULL, lang TEXT, size INT, mtime REAL, hash TEXT,
+  lines INT, tokens INT, is_test INT DEFAULT 0, package TEXT, rank REAL DEFAULT 0, generated INT DEFAULT 0);
+CREATE TABLE IF NOT EXISTS symbols(
+  id INTEGER PRIMARY KEY, file_id INT NOT NULL, name TEXT NOT NULL, qualname TEXT, kind TEXT, line INT, end_line INT,
+  signature TEXT, doc TEXT, parent_id INT, exported INT, rank REAL DEFAULT 0);
+CREATE INDEX IF NOT EXISTS sym_name ON symbols(name);
+CREATE INDEX IF NOT EXISTS sym_file ON symbols(file_id, line);
+CREATE TABLE IF NOT EXISTS bases(symbol_id INT, base TEXT);
+CREATE INDEX IF NOT EXISTS bases_base ON bases(base);
+CREATE TABLE IF NOT EXISTS idents(file_id INT, name TEXT, count INT, lines TEXT, PRIMARY KEY(file_id, name)) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS idents_name ON idents(name);
+CREATE TABLE IF NOT EXISTS imports(
+  file_id INT, raw TEXT, names TEXT, level INT, line INT, target_id INT, external TEXT);
+CREATE INDEX IF NOT EXISTS imp_file ON imports(file_id);
+CREATE INDEX IF NOT EXISTS imp_target ON imports(target_id);
+CREATE INDEX IF NOT EXISTS imp_ext ON imports(external);
+CREATE TABLE IF NOT EXISTS deps(manifest TEXT, ecosystem TEXT, name TEXT, version TEXT, scope TEXT);
+CREATE TABLE IF NOT EXISTS edges(src INT, dst INT, weight REAL, kind TEXT, PRIMARY KEY(src, dst, kind)) WITHOUT ROWID;
+CREATE INDEX IF NOT EXISTS edges_dst ON edges(dst);
+CREATE TABLE IF NOT EXISTS usage(ts REAL, cmd TEXT, out_tokens INT, avoided_tokens INT);
+CREATE VIRTUAL TABLE IF NOT EXISTS symbols_fts USING fts5(
+  name, words, qualname, signature, path, tokenize = "unicode61 tokenchars '_'");
+"""
+
+RANK_MAX_AGE = 600  # seconds before a lazy refresh also recomputes ranks (small repos only)
+MAX_DEFS_FOR_EDGES = 20  # names defined in more files than this add no ranking edges
+MAX_EDGES_PER_FILE = 40  # strongest outgoing edges stored per file
+LAZY_MIN_GAP = 3  # seconds between lazy refreshes
+
+
+class Store:
+    def __init__(self, root: Path, db_path: Path):
+        self.root = root
+        self.db_path = db_path
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        self.db = sqlite3.connect(str(db_path), timeout=30, isolation_level=None)
+        self.db.row_factory = sqlite3.Row
+        self.db.execute("PRAGMA journal_mode=WAL")
+        self.db.execute("PRAGMA synchronous=NORMAL")
+        self.db.execute("PRAGMA temp_store=MEMORY")
+        ver = self._meta_raw("schema")
+        if ver is not None and ver != str(SCHEMA_VERSION):
+            self._reset()
+        self.db.executescript(SCHEMA)
+        self.set_meta("schema", str(SCHEMA_VERSION))
+        self.set_meta("root", str(root))
+
+    # ------------------------------------------------------------------ meta
+    def _meta_raw(self, key):
+        try:
+            row = self.db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
+        except sqlite3.OperationalError:
+            return None
+        return row[0] if row else None
+
+    def meta(self, key, default=None):
+        v = self._meta_raw(key)
+        return default if v is None else v
+
+    def set_meta(self, key, value):
+        self.db.execute("INSERT OR REPLACE INTO meta(key, value) VALUES(?, ?)", (key, str(value)))
+
+    def _reset(self):
+        for t in ("meta", "files", "symbols", "bases", "idents", "imports", "deps", "edges", "usage", "symbols_fts"):
+            self.db.execute(f"DROP TABLE IF EXISTS {t}")
+
+    def log_usage(self, cmd: str, out_tokens: int, avoided: int):
+        try:
+            self.db.execute("INSERT INTO usage VALUES(?,?,?,?)", (time.time(), cmd, out_tokens, max(0, avoided)))
+        except sqlite3.OperationalError:
+            pass
+
+    # ------------------------------------------------------------------ refresh
+    def refresh(self, lazy: bool = False, force_ranks: bool = False, progress=None) -> dict:
+        """Bring the index in line with the working tree. Returns change stats."""
+        now = time.time()
+        if lazy and now - float(self.meta("last_refresh", 0)) < LAZY_MIN_GAP and not force_ranks:
+            return {"skipped": True}
+        try:
+            self.db.execute("BEGIN IMMEDIATE")
+        except sqlite3.OperationalError:
+            if lazy:
+                return {"busy": True}
+            raise
+        try:
+            stats = self._refresh_locked(lazy, force_ranks, progress)
+            self.db.execute("COMMIT")
+        except BaseException:
+            self.db.execute("ROLLBACK")
+            raise
+        if stats.get("background_needed"):
+            self._spawn_background_index()
+        return stats
+
+    def _spawn_background_index(self):
+        """Start a detached `codemap index` to redo global resolution and ranking (at most once a minute)."""
+        if os.environ.get("CODEMAP_BACKGROUND", "1") == "0":
+            return
+        if time.time() - float(self.meta("bg_index_at", 0)) < 60:
+            return
+        self.set_meta("bg_index_at", time.time())
+        import subprocess
+        import sys
+        script = Path(__file__).resolve().parent.parent / "codemap.py"
+        kwargs = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+        if os.name == "nt":
+            kwargs["creationflags"] = 0x00000008 | 0x00000200
+        else:
+            kwargs["start_new_session"] = True
+        try:
+            subprocess.Popen([sys.executable, str(script), "--repo", str(self.root), "--db", str(self.db_path),
+                              "index", "--quiet"], **kwargs)
+        except OSError:
+            pass
+
+    def _candidates(self, lazy):
+        """Paths to (re)check. Lazy refreshes in git repos ask git what changed instead of stat-ing every file:
+        uncommitted/untracked changes, commits since the last index, and paths that were dirty last time.
+        Returns (paths, full_scan)."""
+        head = git(["rev-parse", "HEAD"], self.root)
+        head = head.strip() if head else ""
+        indexed = self.meta("indexed_head")
+        if not lazy or not head or not indexed:
+            return list_files(self.root), True
+        cands = set(json.loads(self.meta("dirty_paths", "[]")))
+        if indexed != head:
+            diff = git(["diff", "--name-only", "-z", "--no-renames", indexed, head], self.root)
+            if diff is None:  # indexed commit no longer exists (rebase, shallow fetch): rescan everything
+                return list_files(self.root), True
+            cands.update(p for p in diff.split("\0") if p)
+        status = git(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"], self.root)
+        if status is None:
+            return list_files(self.root), True
+        dirty = [entry[3:] for entry in status.split("\0") if len(entry) > 3]
+        cands.update(dirty)
+        self.set_meta("dirty_paths", json.dumps(sorted(dirty)))
+        cfg = load_config(self.root)
+        extra = set(included_ignored(self.root, cfg)) if cfg["include"] else set()
+        if cfg["include"]:  # git status does not report ignored files: check the included ones directly
+            cands |= extra | set(json.loads(self.meta("included_paths", "[]")))
+            self.set_meta("included_paths", json.dumps(sorted(extra)))
+        return sorted(p for p in cands if p in extra or not (_skip(p) or (cfg["exclude"] and _glob_match(p, cfg["exclude"])))), False
+
+    def _refresh_locked(self, lazy, force_ranks, progress):
+        t0 = time.time()
+        paths, full_scan = self._candidates(lazy)
+        if full_scan:
+            existing = {r["path"]: r for r in self.db.execute("SELECT id, path, size, mtime, hash, lang FROM files")}
+            current = set(paths)
+            gone = [p for p in existing if p not in current]
+        else:
+            existing = {}
+            for i in range(0, len(paths), 500):
+                chunk = paths[i:i + 500]
+                for r in self.db.execute(f"SELECT id, path, size, mtime, hash, lang FROM files WHERE path IN "
+                                         f"({','.join('?' * len(chunk))})", chunk):
+                    existing[r["path"]] = r
+            gone = [p for p in paths if p in existing and not (self.root / p).exists()]
+        deleted = [existing[p]["id"] for p in gone]
+        for fid in deleted:
+            self._delete_file_rows(fid, also_file=True)
+        gone_set = set(gone)
+
+        added, changed = 0, []
+        manifests_touched = any(is_manifest(p) for p in gone)
+        packages_changed = False
+        to_parse = []  # (path, old, stat, lang, text, hash)
+        for i, p in enumerate(paths):
+            if p in gone_set:
+                continue
+            if progress and i % 2000 == 0:
+                progress(i, len(paths))
+            full = safe_path(self.root, p)  # skips symlinks leaving the repo, devices, FIFOs
+            if full is None:
+                continue
+            try:
+                st = full.stat()
+            except OSError:
+                continue
+            old = existing.get(p)
+            if old is not None and old["size"] == st.st_size and abs((old["mtime"] or 0) - st.st_mtime) < 1e-6:
+                continue
+            lang = lang_of(p)
+            if is_manifest(p):
+                manifests_touched = True
+            if lang is None:
+                # Non-code file: record it for tree/files queries without reading it.
+                if old is None:
+                    self.db.execute("INSERT INTO files(path, lang, size, mtime, lines, tokens, is_test) VALUES(?,?,?,?,?,?,?)",
+                                    (p, None, st.st_size, st.st_mtime, None, est_tokens(st.st_size), int(is_test_path(p))))
+                    added += 1
+                else:
+                    self.db.execute("UPDATE files SET size=?, mtime=?, tokens=? WHERE id=?",
+                                    (st.st_size, st.st_mtime, est_tokens(st.st_size), old["id"]))
+                continue
+            text = read_text(full)
+            if text is None:
+                continue
+            h = content_hash(text)
+            if old is not None and old["hash"] == h:
+                self.db.execute("UPDATE files SET mtime=?, size=? WHERE id=?", (st.st_mtime, st.st_size, old["id"]))
+                continue
+            to_parse.append((p, old, st, lang, text, h))
+            if len(to_parse) >= PARSE_BATCH:  # parse and store as we go, so memory stays bounded
+                a, pc = self._store_batch(to_parse, changed)
+                added += a
+                packages_changed |= pc
+                to_parse = []
+        a, pc = self._store_batch(to_parse, changed)
+        added += a
+        packages_changed |= pc
+
+        structure_changed = bool(added or deleted or packages_changed)
+        pending = self.meta("needs_full_resolve") == "1"
+        if lazy:
+            # Never do whole-repo work inside a query: resolve just the changed files now, and leave the global
+            # re-resolve and re-rank to the next full `index` (the caller starts one in the background).
+            if changed:
+                self._resolve_imports(changed)
+            if structure_changed:
+                self.set_meta("needs_full_resolve", 1)
+        elif structure_changed or pending:
+            self._resolve_imports(None)
+            self.set_meta("needs_full_resolve", 0)
+        elif changed:
+            self._resolve_imports(changed)
+        if manifests_touched or self.meta("deps_done") is None:
+            self._index_deps()
+            self.set_meta("deps_done", 1)
+
+        dirty = bool(changed or deleted or added)
+        last_rank = float(self.meta("last_rank", 0))
+        need_ranks = force_ranks or last_rank == 0 or (not lazy and (dirty or pending)) \
+            or (lazy and dirty and not structure_changed and time.time() - last_rank > RANK_MAX_AGE
+                and len(changed) < 50 and self._file_count() < 3000)
+        if need_ranks:
+            self._compute_ranks()
+            self.set_meta("last_rank", time.time())
+        elif dirty:
+            self.set_meta("ranks_stale", 1)
+        self.set_meta("last_refresh", time.time())
+        head = git(["rev-parse", "HEAD"], self.root)
+        if head:
+            self.set_meta("git_head", head.strip()[:8])
+            if full_scan or lazy:
+                self.set_meta("indexed_head", head.strip())
+        if full_scan:
+            st = git(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"], self.root)
+            self.set_meta("dirty_paths", json.dumps(sorted(e[3:] for e in (st or "").split("\0") if len(e) > 3)))
+        self.set_meta("version", VERSION)
+        return {"files": len(paths) if full_scan else self._file_count(), "checked": len(paths), "added": added,
+                "updated": len(changed), "deleted": len(deleted), "ranked": need_ranks,
+                "background_needed": lazy and (structure_changed or self.meta("needs_full_resolve") == "1"),
+                "seconds": round(time.time() - t0, 2)}
+
+    def _store_batch(self, batch, changed):
+        """Parse a batch (in parallel when large) and write it. Returns (files added, packages changed)."""
+        added, packages_changed = 0, False
+        for p, old, st, lang, text, h, facts in _parse_batches(batch):
+            if old is not None:
+                fid = old["id"]
+                self._delete_file_rows(fid, also_file=False)
+                prev_pkg = self.db.execute("SELECT package FROM files WHERE id=?", (fid,)).fetchone()[0]
+                packages_changed |= (prev_pkg or "") != (facts.package or "")
+                self.db.execute("UPDATE files SET lang=?, size=?, mtime=?, hash=?, lines=?, tokens=?, is_test=?, package=?, "
+                                "generated=? WHERE id=?",
+                                (lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)),
+                                 facts.package, int(is_generated(p, text)), fid))
+            else:
+                cur = self.db.execute(
+                    "INSERT INTO files(path, lang, size, mtime, hash, lines, tokens, is_test, package, generated) "
+                    "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                    (p, lang, st.st_size, st.st_mtime, h, text.count("\n") + 1, est_tokens(text), int(is_test_path(p)),
+                     facts.package, int(is_generated(p, text))))
+                fid = cur.lastrowid
+                added += 1
+                packages_changed |= bool(facts.package)
+            self._store_facts(fid, p, facts)
+            changed.append(fid)
+        return added, packages_changed
+
+    def _file_count(self) -> int:
+        return self.db.execute("SELECT COUNT(*) FROM files").fetchone()[0]
+
+    def _delete_file_rows(self, fid: int, also_file: bool):
+        sym_ids = [r[0] for r in self.db.execute("SELECT id FROM symbols WHERE file_id=?", (fid,))]
+        if sym_ids:
+            self.db.executemany("DELETE FROM symbols_fts WHERE rowid=?", [(s,) for s in sym_ids])
+            self.db.executemany("DELETE FROM bases WHERE symbol_id=?", [(s,) for s in sym_ids])
+        self.db.execute("DELETE FROM symbols WHERE file_id=?", (fid,))
+        self.db.execute("DELETE FROM idents WHERE file_id=?", (fid,))
+        self.db.execute("DELETE FROM imports WHERE file_id=?", (fid,))
+        self.db.execute("DELETE FROM edges WHERE src=?", (fid,))
+        if also_file:
+            self.db.execute("UPDATE imports SET target_id=NULL WHERE target_id=?", (fid,))
+            self.db.execute("DELETE FROM edges WHERE dst=?", (fid,))
+            self.db.execute("DELETE FROM files WHERE id=?", (fid,))
+
+    def _store_facts(self, fid: int, path: str, facts):
+        ids = []
+        for s in facts.symbols:
+            parent_id = ids[s.parent] if s.parent is not None and s.parent < len(ids) else None
+            cur = self.db.execute(
+                "INSERT INTO symbols(file_id, name, qualname, kind, line, end_line, signature, doc, parent_id, exported) "
+                "VALUES(?,?,?,?,?,?,?,?,?,?)",
+                (fid, s.name, s.qualname or s.name, s.kind, s.line, s.end_line, s.signature, s.doc, parent_id, int(s.exported)))
+            sid = cur.lastrowid
+            ids.append(sid)
+            self.db.execute("INSERT INTO symbols_fts(rowid, name, words, qualname, signature, path) VALUES(?,?,?,?,?,?)",
+                            (sid, s.name, split_words(s.name), s.qualname, s.signature, path))
+            for b in s.bases:
+                self.db.execute("INSERT INTO bases VALUES(?,?)", (sid, b))
+        self.db.executemany("INSERT OR REPLACE INTO idents VALUES(?,?,?,?)",
+                            [(fid, n, c, ",".join(map(str, ls))) for n, (c, ls) in facts.idents.items()])
+        self.db.executemany("INSERT INTO imports(file_id, raw, names, level, line) VALUES(?,?,?,?,?)",
+                            [(fid, i.raw, json.dumps(i.names) if i.names else None, i.level, i.line) for i in facts.imports])
+
+    def _resolve_imports(self, only_files):
+        rows = list(self.db.execute("SELECT id, path, lang, package FROM files WHERE lang IS NOT NULL"))
+        paths = [r["path"] for r in self.db.execute("SELECT path FROM files")]
+        resolver = Resolver(self.root, paths, {r["path"]: r["package"] for r in rows if r["package"]})
+        path_id = {r["path"]: r["id"] for r in self.db.execute("SELECT id, path FROM files")}
+        by_id = {r["id"]: r for r in rows}
+        if only_files is None:  # drop fan-out rows from the previous resolution before re-resolving
+            self.db.execute("DELETE FROM imports WHERE rowid NOT IN (SELECT MIN(rowid) FROM imports GROUP BY file_id, raw, line)")
+        q = "SELECT rowid, file_id, raw, names, level, line FROM imports"
+        if only_files is not None:
+            q += f" WHERE file_id IN ({','.join('?' * len(only_files))})"
+        imports = list(self.db.execute(q, tuple(only_files or ())))
+        updates, extra = [], []
+        for imp in imports:
+            f = by_id.get(imp["file_id"])
+            if f is None:
+                continue
+            names = json.loads(imp["names"]) if imp["names"] else []
+            targets, external = resolver.resolve(f["path"], f["lang"], imp["raw"], names, imp["level"] or 0)
+            tids = [path_id[t] for t in targets if t in path_id and path_id[t] != imp["file_id"]]
+            if not tids and targets and all(path_id.get(t) == imp["file_id"] for t in targets):
+                external = "self"  # refers to this file (e.g. Rust `use self::Kind::*`): not external, no edge
+            updates.append((tids[0] if tids else None, external, imp["rowid"]))
+            for t in tids[1:]:
+                extra.append((imp["file_id"], imp["raw"], imp["names"], imp["level"], imp["line"], t, None))
+        self.db.executemany("UPDATE imports SET target_id=?, external=? WHERE rowid=?", updates)
+        self.db.executemany("INSERT INTO imports(file_id, raw, names, level, line, target_id, external) VALUES(?,?,?,?,?,?,?)", extra)
+        cs = [r["id"] for r in rows if r["lang"] == "csharp"]
+        if cs:
+            cs_set = set(cs)
+            self._csharp_scope_imports(cs if only_files is None else [f for f in only_files if f in cs_set])
+
+    def _csharp_scope_imports(self, file_ids):
+        """C# names resolve through `using` namespaces plus the file's own namespace and its parents.
+
+        Replace namespace-level import rows with one row per file that defines a type this file actually
+        uses, found the way the compiler would look it up. Same-namespace uses (no `using` needed) get
+        implicit rows (line 0).
+        """
+        if not file_ids:
+            return
+        db = self.db
+        type_kinds = "('class','struct','interface','enum','record','delegate')"
+        ns_of = {r[0]: r[1] or "" for r in db.execute("SELECT id, package FROM files WHERE lang='csharp'")}
+        by_ns: dict = {}  # namespace -> type name -> {file ids}
+        for fid, name in db.execute(f"SELECT s.file_id, s.name FROM symbols s JOIN files f ON f.id=s.file_id "
+                                    f"WHERE f.lang='csharp' AND s.kind IN {type_kinds}"):
+            by_ns.setdefault(ns_of.get(fid, ""), {}).setdefault(name, set()).add(fid)
+        known_ns = set(by_ns)
+        # `global using` lines apply to every file of the same project (nearest .csproj directory).
+        paths = {r[0]: r[1] for r in db.execute("SELECT id, path FROM files")}
+        projects = sorted({p.rsplit("/", 1)[0] if "/" in p else "" for p in paths.values() if p.endswith(".csproj")},
+                          key=len, reverse=True)
+
+        def project_of(path):
+            return next((d for d in projects if d == "" or path.startswith(d + "/")), None)
+        global_usings: dict = {}
+        for fid, raw in db.execute("SELECT file_id, raw FROM imports WHERE names LIKE '%global%'"):
+            global_usings.setdefault(project_of(paths.get(fid, "")), set()).add(raw)
+        # MSBuild global usings: <Using Include="Ns" /> in a .csproj (that project) or Directory.Build.props (below it).
+        props = []
+        for path in paths.values():
+            base = path.rsplit("/", 1)[-1]
+            if path.endswith(".csproj") or base == "Directory.Build.props":
+                fp = safe_path(self.root, path)
+                text = read_text(fp) if fp else None
+                if text is None:
+                    continue
+                found = set(re.findall(r'<Using\s+Include="([\w.]+)"(?![^>]*Static="true")', text))
+                if found:
+                    d = path.rsplit("/", 1)[0] if "/" in path else ""
+                    if path.endswith(".csproj"):
+                        global_usings.setdefault(d, set()).update(found)
+                    else:
+                        props.append((d, found))
+        for d, found in props:
+            for proj in projects:
+                if d == "" or proj == d or proj.startswith(d + "/"):
+                    global_usings.setdefault(proj, set()).update(found)
+        for fid in file_ids:
+            own = ns_of.get(fid, "")
+            parts = own.split(".") if own else []
+            scope = {".".join(parts[:k]) for k in range(len(parts), 0, -1)} | {""}
+            using_rows = list(db.execute("SELECT raw, MIN(line) FROM imports WHERE file_id=? GROUP BY raw", (fid,)))
+            usings = {raw: line for raw, line in using_rows if raw in known_ns}
+            scope |= set(usings) | (global_usings.get(project_of(paths.get(fid, "")), set()) & known_ns)
+            used = {r[0] for r in db.execute("SELECT name FROM idents WHERE file_id=?", (fid,))}
+            hits: dict = {}
+            for ns in scope:
+                table = by_ns.get(ns)
+                if not table:
+                    continue
+                small, big = (used, table) if len(used) < len(table) else (table.keys(), used)
+                for name in small:  # iterate the smaller side: names used vs types in the namespace
+                    if name in big:
+                        for t in table[name]:
+                            if t != fid:
+                                hits.setdefault((ns, t), None)
+            db.executemany("DELETE FROM imports WHERE file_id=? AND raw=?", [(fid, ns) for ns in usings])
+            rows = [(fid, ns, None, 0, usings.get(ns, 0), t, None) for (ns, t) in hits]
+            rows += [(fid, ns, None, 0, line, None, None) for ns, line in usings.items()
+                     if not any(h[0] == ns for h in hits)]  # keep unused usings visible, unlinked
+            db.executemany("INSERT INTO imports(file_id, raw, names, level, line, target_id, external) VALUES(?,?,?,?,?,?,?)", rows)
+
+    def _index_deps(self):
+        self.db.execute("DELETE FROM deps")
+        for (path,) in list(self.db.execute("SELECT path FROM files")):
+            if is_manifest(path):
+                for eco, name, ver, scope in parse_manifest(self.root, path):
+                    self.db.execute("INSERT INTO deps VALUES(?,?,?,?,?)", (path, eco, name, ver, scope))
+
+    # ------------------------------------------------------------------ ranking
+    def _compute_ranks(self):
+        """Aider-style: weighted def/ref file graph -> PageRank -> per-symbol scores."""
+        defs: dict = {}
+        for r in self.db.execute("SELECT DISTINCT name, file_id FROM symbols WHERE kind NOT LIKE 'h_' AND kind != 'field'"):
+            defs.setdefault(r[0], set()).add(r[1])
+        code_files = [r[0] for r in self.db.execute("SELECT id FROM files WHERE lang IS NOT NULL")]
+        edges: dict = {}
+        ref_pairs = []  # (src, name, weight)
+        for fid, name, count in self.db.execute(
+                "SELECT i.file_id, i.name, i.count FROM idents i WHERE i.name IN (SELECT name FROM symbols)"):
+            dfiles = defs.get(name)
+            if not dfiles:
+                continue
+            mul = 1.0
+            if len(name) >= 8 and (("_" in name.strip("_")) or re.search(r"[a-z][A-Z]", name)):
+                mul *= 10
+            if name.startswith("_"):
+                mul *= 0.1
+            if len(dfiles) > MAX_DEFS_FOR_EDGES:
+                continue  # defined in many files (Create, Dispose, Item…): almost no signal, quadratic cost
+            if len(dfiles) > 5:
+                mul *= 0.1
+            w = mul * math.sqrt(count)
+            targets = [d for d in dfiles if d != fid]
+            if not targets:
+                continue
+            ref_pairs.append((fid, name, w, targets))
+            for d in targets:
+                row = edges.setdefault(fid, {})
+                row[d] = row.get(d, 0.0) + w / len(dfiles)
+        for src, dst in self.db.execute("SELECT DISTINCT file_id, target_id FROM imports WHERE target_id IS NOT NULL"):
+            row = edges.setdefault(src, {})
+            row[dst] = row.get(dst, 0.0) + 0.5
+        rank = pagerank(code_files, edges)
+
+        self.db.execute("DELETE FROM edges")
+        # Persist only each file's strongest edges: queries need the important neighbours, not the long tail.
+        self.db.executemany("INSERT INTO edges VALUES(?,?,?,?)",
+                            [(s, d, w, "ref") for s, ds in edges.items()
+                             for d, w in sorted(ds.items(), key=lambda kv: -kv[1])[:MAX_EDGES_PER_FILE]])
+        self.db.executemany("UPDATE files SET rank=? WHERE id=?", [(v, k) for k, v in rank.items()])
+
+        out_w = {s: sum(ds.values()) for s, ds in edges.items()}
+        sym_score: dict = {}
+        for src, name, w, targets in ref_pairs:
+            ow = out_w.get(src)
+            if not ow:
+                continue
+            share = rank.get(src, 0.0) * w / len(targets) / ow
+            for d in targets:
+                sym_score[(d, name)] = sym_score.get((d, name), 0.0) + share
+        updates = []
+        for sid, fid, name, exported in self.db.execute("SELECT id, file_id, name, exported FROM symbols"):
+            base = rank.get(fid, 0.0) * (0.02 if exported else 0.005)
+            updates.append((sym_score.get((fid, name), 0.0) + base, sid))
+        self.db.executemany("UPDATE symbols SET rank=? WHERE id=?", updates)
+        self.set_meta("ranks_stale", 0)
+
+
+def open_store(root: Path, db_path: Path) -> Store:
+    return Store(root, db_path)
+
+
+def db_exists(db_path: Path) -> bool:
+    return db_path.exists() and os.path.getsize(db_path) > 0
+
+
+PARALLEL_MIN = 300  # files: below this, parsing in-process is faster than starting workers
+
+
+PARSE_BATCH = 1000  # parse and store this many files at a time to bound memory on large repos
+
+
+def _parse_batches(to_parse, progress=None):
+    """Yield (path, old, stat, lang, text, hash, facts), parsing in bounded batches."""
+    for i in range(0, len(to_parse), PARSE_BATCH):
+        batch = to_parse[i:i + PARSE_BATCH]
+        if progress:
+            progress(i, len(to_parse))
+        for item, facts in zip(batch, _parse_all([(x[4], x[3]) for x in batch])):
+            yield (*item, facts)
+        for j in range(i, min(i + PARSE_BATCH, len(to_parse))):
+            to_parse[j] = None  # release file text as soon as the batch is stored
+
+
+def _parse_one(job):
+    text, lang = job
+    return extract(text, lang)
+
+
+def _parse_all(jobs, progress=None):
+    """Parse files, in parallel worker processes for large batches (CODEMAP_WORKERS=1 disables)."""
+    workers = int(os.environ.get("CODEMAP_WORKERS", "0") or 0) or (os.cpu_count() or 1)
+    if len(jobs) < PARALLEL_MIN or workers <= 1:
+        return [_parse_one(j) for j in jobs]
+    try:
+        from concurrent.futures import ProcessPoolExecutor
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            out = []
+            for i, facts in enumerate(pool.map(_parse_one, jobs, chunksize=32)):
+                out.append(facts)
+                if progress and i % 2000 == 0:
+                    progress(i, len(jobs))
+            return out
+    except (OSError, RuntimeError, ImportError):
+        return [_parse_one(j) for j in jobs]  # restricted environments: fall back to one process

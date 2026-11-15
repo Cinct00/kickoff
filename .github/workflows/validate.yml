@@ -1,0 +1,45 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lint skills, agents, hooks; check generated files are current
+        run: python3 scripts/toolkit.py validate
+      - name: Unit tests (codemap + toolkit)
+        run: python3 -m unittest discover -s tests -v
+      - name: Security scan of every toolkit plugin (blocks on high-risk patterns and leaked credentials, incl. harvested additions)
+        run: python3 scripts/toolkit.py vet plugins/*
+      - name: End-to-end self-test (every hook in both formats, codemap MCP, local-first, vet, discover)
+        run: python3 scripts/toolkit.py selftest
+      - name: Audit (routes and profile must resolve; token report)
+        run: python3 scripts/toolkit.py audit --strict --no-git
+      - name: Hooks run and emit valid JSON
+        run: |
+          set -euo pipefail
+          root=plugins/kickoff
+          echo '{}' | CLAUDE_PLUGIN_ROOT=$root python3 $root/hooks/session_start.py --format claude | python3 -m json.tool >/dev/null
+          cmd=$(python3 -c "import json;print(json.load(open('$root/hooks/copilot-hooks.json'))['hooks']['sessionStart'][0]['bash'])")
+          echo '{}' | PLUGIN_ROOT=$root bash -c "$cmd" | python3 -m json.tool >/dev/null
+          echo '{"transcript_path":"/nonexistent"}' | python3 $root/hooks/harvest_check.py
+      - name: Adopt dry-run into a scratch repo
+        run: |
+          mkdir -p /tmp/proj && git -C /tmp/proj init -q
+          python3 scripts/toolkit.py adopt /tmp/proj --bundle dev --upstream feature-dev@claude-plugins-official
+          python3 scripts/toolkit.py adopt /tmp/proj --mode vendor --plugin kickoff --hooks
+          test -f /tmp/proj/.github/copilot/settings.json
+          test -f /tmp/proj/.claude/skills/kickoff/SKILL.md

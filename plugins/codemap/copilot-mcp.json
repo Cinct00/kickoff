@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "codemap": {
+      "type": "local",
+      "command": "python3",
+      "args": ["${PLUGIN_ROOT}/scripts/codemap.py", "mcp"],
+      "tools": ["*"]
+    }
+  }
+}

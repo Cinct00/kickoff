@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "r=\"${PLUGIN_ROOT:-${COPILOT_PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-}}}\"; if [ -n \"$r\" ] && [ -f \"$r/hooks/local_first.py\" ] && command -v python3 >/dev/null 2>&1; then python3 \"$r/hooks/local_first.py\" --format copilot; else cat >/dev/null; echo '{}'; fi",
+        "powershell": "$r = @($env:PLUGIN_ROOT, $env:COPILOT_PLUGIN_ROOT, $env:CLAUDE_PLUGIN_ROOT) | Where-Object { $_ } | Select-Object -First 1; $f = if ($r) { Join-Path $r 'hooks/local_first.py' } else { '' }; if ($f -and (Test-Path $f) -and (Get-Command python -ErrorAction SilentlyContinue)) { $input | python $f --format copilot } else { '{}' }",
+        "timeoutSec": 5
+      }
+    ]
+  }
+}

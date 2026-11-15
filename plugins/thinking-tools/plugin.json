@@ -1,0 +1,21 @@
+{
+  "name": "thinking-tools",
+  "version": "2.3.0",
+  "description": "Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and research.",
+  "author": {
+    "name": "Cinct00"
+  },
+  "homepage": "https://github.com/Cinct00/kickoff/tree/main/plugins/thinking-tools",
+  "repository": "https://github.com/Cinct00/kickoff",
+  "license": "MIT",
+  "keywords": [
+    "reasoning",
+    "decision-making",
+    "research",
+    "systems-thinking"
+  ],
+  "category": "productivity",
+  "skills": [
+    "skills/"
+  ]
+}
