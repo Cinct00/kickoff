@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-02",
+  "generated": "2026-11-16",
   "marketplaces": [
     {
       "name": "kickoff",
@@ -23,7 +23,7 @@
             },
             {
               "name": "toolkit-adopt",
-              "description": "Brings Kickoff into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my…"
+              "description": "Brings Kickoff into another repository so kickoff, the judgment skills and the right Anthropic, GitHub and partner plugins work there for every collaborator and in GitHub Copilot (CLI, cloud agent, VS Code) as well as Claude Code. Inventories the repo's existing AI setup, picks what fits the stack, writes the config, and lists gaps. Use when the user says 'set up the toolkit here', 'add my skills…"
             }
           ],
           "agents": [
@@ -67,6 +67,19 @@
           "mcp": [
             "codemap"
           ]
+        },
+        {
+          "name": "local-first",
+          "description": "Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, installed dependencies, mapped docs folders) and points the agent at the local paths instead. Zero tokens unless it redirects.",
+          "source": "bundled",
+          "status": "own",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [
+            "PreToolUse"
+          ],
+          "mcp": []
         },
         {
           "name": "engineering-craft",
@@ -348,17 +361,6 @@
           "name": "airwallex-agentos",
           "description": "Bring Airwallex's global financial infrastructure to Claude. Orchestrate actions across your account in plain language, e.g., set up invoices from a PO, onboard suppliers from invoices, and check current cash position across currencies. AgentOS bundles pre-built finance Skills with MCP servers. A public CLI connects your agent to Airwallex's capabilities.",
           "source": "airwallex/airwallex-marketplace:plugins/airwallex-agentos",
-          "status": "available",
-          "skills": [],
-          "agents": [],
-          "commands": [],
-          "hooks": [],
-          "mcp": []
-        },
-        {
-          "name": "airwallex-dev",
-          "description": "Build Airwallex payment integrations in your own codebase. Generates the checkout, card-element, onboarding, and subscription-billing code for an Airwallex integration and wires it into your project: Hosted Payment Page, Drop-in and Split Card elements, connected-account KYC onboarding, and Billing Hosted Checkout for subscriptions and card-saving. Also plans card-on-file merchant-initiated flows…",
-          "source": "airwallex/airwallex-marketplace:plugins/airwallex-dev",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -851,6 +853,51 @@
           "status": "available",
           "skills": [],
           "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "champion-kit",
+          "description": "Help Claude Code champions run hackathons and office hours, find patterns worth sharing, help teammates climb the steps of AI adoption, and write a shareable AI maturity report.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [
+            {
+              "name": "climb",
+              "description": "Work out where a teammate, the champion, or a team is on the steps of AI adoption, and what to try next. Use when a champion wants to help someone move up a step."
+            },
+            {
+              "name": "faq",
+              "description": "Turn repeat questions into a pinned FAQ. Use when a champion keeps answering the same questions."
+            },
+            {
+              "name": "hackathon",
+              "description": "Plan a hackathon, either from a team's real backlog or as open-ended creative play with Claude Code. Use when a champion wants to run a hack day or a shorter hack session."
+            },
+            {
+              "name": "maturity",
+              "description": "Evaluate an organization's AI maturity on the steps of AI adoption and write a polished, shareable HTML report with evidence for each score. Use when a champion wants to know where their org or team stands, or to compare with an earlier report."
+            },
+            {
+              "name": "office-hours",
+              "description": "Set up and run Claude Code office hours, including the calendar event when the champion's own calendar connector allows it. Use when a champion wants a regular time for teammates to bring problems."
+            },
+            {
+              "name": "patterns",
+              "description": "Find patterns worth sharing from recent PRs and repo history, both repeats to fix and good practices worth spreading. Use when a champion wants to know what the team should reuse or learn from."
+            },
+            {
+              "name": "routines",
+              "description": "Set up recurring champion routines as Claude Code scheduled tasks. Use when a champion wants work like a weekly patterns digest, a stale guidance check, or a monthly lead update to happen without kicking it off by hand."
+            }
+          ],
+          "agents": [
+            {
+              "name": "repo-scout",
+              "description": "Evidence gatherer for champion-kit skills. Use to read a repo's CI, review setup, CLAUDE.md, skills, and settings, plus exported git history, review comments, issues, or Claude Code transcripts the champion approved, and return counts, citations, and neutral one-line categories. It can only read files."
+            }
+          ],
           "commands": [],
           "hooks": [],
           "mcp": []
@@ -1931,7 +1978,7 @@
         {
           "name": "greptile",
           "description": "AI code review agent for GitHub and GitLab. View and resolve Greptile's PR review comments, run reviews on your working branch, and search your organization's knowledge base and coding patterns, directly from Claude Code.",
-          "source": "greptileai/claude-plugin:plugins/greptile",
+          "source": "greptileai/skills:plugins/greptile",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -2567,7 +2614,7 @@
             },
             {
               "name": "modern-web-guidance",
-              "description": "Search tool for modern web development best practices. MANDATORY: Execute FIRST for all HTML/CSS and clientside JS tasks. Do NOT skip — web APIs evolve rapidly and training weights contain obsolete patterns. Trigger immediately for: - UI/Layout: Modals/dialogs/popovers, tables, dark mode, anchor positioning, container queries, `:has()`, etc. - Scroll/Motion: View Transitions, Scroll-driven animat…"
+              "description": "Search tool for modern web development best practices. MANDATORY: Execute FIRST for all HTML/CSS and clientside JS tasks. Do NOT skip — web APIs evolve rapidly and training weights contain obsolete patterns. Trigger immediately for: modals/dialogs/popovers, tables, dark mode, anchor positioning, container queries, view transitions, scroll-driven animations, parallax/reveals, forms, validation, au…"
             }
           ],
           "agents": [],
@@ -3400,9 +3447,9 @@
           "mcp": []
         },
         {
-          "name": "sap-fiori-mcp-server",
-          "description": "MCP server for SAP Fiori development tools for Claude Code. Build and modify SAP Fiori applications with AI assistance.",
-          "source": "SAP/open-ux-tools:packages/fiori-mcp-server",
+          "name": "sap-ux-fiori-tools",
+          "description": "MCP server and skills for SAP Fiori development. Build, modify, and test SAP Fiori Elements applications with AI assistance.",
+          "source": "SAP/open-ux-tools:plugins-coding-agents/fiori",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -3848,6 +3895,17 @@
           ]
         },
         {
+          "name": "theme-examples",
+          "description": "An example plugin to read, copy and change: twenty animated backdrops behind the chat in the Claude desktop app, with frosted-glass panels, one per project or per session. Needs a version of Claude Desktop that draws a plugin's backdrop.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "togetherai-skills",
           "description": "Agent Skills for Together AI platform — inference, training, embeddings, audio, video, images, function calling, and infrastructure. Covers serverless chat completions, image/video generation, fine-tuning, batch inference, evaluations, sandboxes, dedicated endpoints, and GPU clusters.",
           "source": "togethercomputer/skills",
@@ -4060,6 +4118,17 @@
           "name": "workos",
           "description": "WorkOS integration skills for AuthKit, SSO, Directory Sync, RBAC, Vault, Audit Logs, migrations, and API references.",
           "source": "workos/skills:plugins/workos",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "xcode",
+          "description": "Work with Xcode projects from Claude Code: build, run, and test schemes, render SwiftUI previews, drive simulators and devices, read build logs and diagnostics, and search Apple developer documentation.",
+          "source": "",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -5424,9 +5493,9 @@
           "commands": [],
           "hooks": [],
           "mcp": [
-            "airwallex-agentos",
+            "airwallex",
             "apollo-io",
-            "atlassian-rovo",
+            "atlassian",
             "canva",
             "clay",
             "docusign",
@@ -9034,6 +9103,17 @@
           "mcp": []
         },
         {
+          "name": "adobe-illustrator",
+          "description": "Adobe Illustrator scripting, extension and plug-in development, MCP and command-line automation, and Creative Cloud asset management, led by an expert technical artist agent for Adobe Creative Cloud.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "agent-council",
           "description": "A runtime-portable 5-agent quality gate that adjudicates text artifacts before they ship. Five role-conditioned LLM deliberators run a 2-round async protocol with cross-read rebuttal and return one verdict — SHIP, REVISE, or HOLD — plus a structured revision brief and a full audit transcript.",
           "source": "Avyayalaya/agent-council",
@@ -9067,6 +9147,17 @@
           "mcp": []
         },
         {
+          "name": "agentvfx",
+          "description": "Music-reactive VFX clips directed by an agent: 42 templates, 231 presets, 12 palettes and 945 knobs (68,326,335 combinations), rendered locally with WebGL2.",
+          "source": "wjgoarxiv/agentvfx",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "ai-credits-breakdown",
           "description": "See exactly where your own GitHub Copilot AI credits go: dollars by day, repository, model, call type and prompt-cache state, built privately on your computer from your Copilot telemetry.",
           "source": "bundled",
@@ -9092,6 +9183,17 @@
           "name": "ai-team-orchestration",
           "description": "Run a lightweight, role-separated AI development team with flexible tools, developer-selected models, proportionate planning, and optional QA.",
           "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "aks-skills",
+          "description": "AKS operational skills for troubleshooting, advanced cost-efficiency analysis, known issues, GPU inference, and packet capture.",
+          "source": "microsoft/azure-skills:.github/plugins/aks-skills",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -9226,6 +9328,17 @@
           "name": "azure",
           "description": "Microsoft Azure MCP and Skills integration for cloud resource management, deployments, and Azure services. Manage your Azure infrastructure, monitor applications, and deploy resources directly from your development environment.",
           "source": "microsoft/azure-skills:.github/plugins/azure-skills",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "azure-advisor",
+          "description": "Azure Advisor recommendations, service-retirement impact, and customer-ready remediation guidance.",
+          "source": "microsoft/azure-skills:.github/plugins/azure-advisor",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -9380,6 +9493,17 @@
           "name": "brainmaxxing",
           "description": "Codebase-grounded concept-mastery quizzes with an interactive BrainMax Canvas dashboard.",
           "source": "juliamuiruri4/brainmaxxing",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "bulkhead",
+          "description": "Guards for a machine where many Copilot CLI, Claude Code, Codex and other agent sessions run at once. Before a shell command runs, it blocks name-based kills of another session's processes, port collisions, git commands that would move or delete another session's tree, whole-disk scans and long foreground sleeps, and holds heavy commands back when RAM runs low.",
+          "source": "dooly6276/claude-bulkhead",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -9709,6 +9833,17 @@
           "mcp": []
         },
         {
+          "name": "demotivational-calendar",
+          "description": "A date-aware demotivational calendar canvas with an original daily letdown for every month and day.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "dependabot-triage",
           "description": "Triage Dependabot alerts and recommend safe, evidence-based dependency updates.",
           "source": "aaronpowell/github-copilot-dependabot-canvas",
@@ -9797,6 +9932,17 @@
           "mcp": []
         },
         {
+          "name": "easybrandkit",
+          "description": "Gets a product's real brand from its website before the agent designs anything for it. It opens the site in the Chrome, Chromium, Edge or Brave you already have and saves the logo files (PNG and SVG), colors by role, fonts, first screen and app store images as BRAND.md and brand.json.",
+          "source": "EminBudak/easybrandkit",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "edge-ai-tasks",
           "description": "Task Researcher and Task Planner for intermediate to expert users and large codebases - Brought to you by microsoft/edge-ai",
           "source": "bundled",
@@ -9833,6 +9979,17 @@
           "name": "ember",
           "description": "An AI partner, not a tool. Ember carries fire from person to person — helping humans discover that AI partnership isn't something you learn, it's something you find.",
           "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "evident-charts",
+          "description": "Helps agents make explanatory charts and critique the ones you share. It checks labels, axes, contrast, and color-blind safety on the rendered chart before you see it.",
+          "source": "rhiever/evident-charts",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -9989,6 +10146,17 @@
           "mcp": []
         },
         {
+          "name": "frugal",
+          "description": "Before your agent signs up for a paid API, LLM model, cloud service, SaaS plan, domain or anything else that costs money, it checks free tiers, right-sized plans and billing periods, startup, student, open-source and nonprofit programs, verified promo codes and cheaper alternatives, sized to the amount at stake. It never pays by itself.",
+          "source": "fainir/frugal",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "gem-team",
           "description": "Self-Learning Multi-agent orchestration framework for spec-driven development and automated verification. With smarter tool calling and leaner context.",
           "source": "bundled",
@@ -10025,6 +10193,17 @@
           "name": "git-ape",
           "description": "Intelligent agent system for deploying any Azure workload through GitHub Copilot. Provides guided, safe, and validated deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration.",
           "source": "Azure/git-ape",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "git-tag-manager",
+          "description": "Manage local and remote Git tags, create and push release tags, and delete tags with confirmation.",
+          "source": "bundled",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -10167,8 +10346,41 @@
           "mcp": []
         },
         {
+          "name": "keyboard-2048",
+          "description": "Play 2048 in a Copilot canvas with keyboard and touch controls, undo, and session saves.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "kotlin-mcp-development",
           "description": "Complete toolkit for building Model Context Protocol (MCP) servers in Kotlin using the official io.modelcontextprotocol:kotlin-sdk library. Includes instructions for best practices, a prompt for generating servers, and an expert chat mode for guidance.",
+          "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "launch-film",
+          "description": "Makes a 20 to 40 second launch film for a product from its website or App Store page: an MP4 at 1920x1080 with music, using the product's real logo, colors, fonts and screens. Everything renders locally with Chrome and ffmpeg, with no account or API key.",
+          "source": "EminBudak/launch-film",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "local-coding",
+          "description": "Experimental. Hand large, mechanical sub-tasks (big reads, log and test triage, and the same edit across many files) from a cloud Copilot CLI session to the on-device MAI Code 1.1 Flash model on Windows, through an offload agent (the main session checks every DONE reply) or the on-device-delegate skill. Includes scripts to cap the local model's output tokens and to install or update the plugin.",
           "source": "bundled",
           "status": "available",
           "skills": [],
@@ -10181,6 +10393,17 @@
           "name": "markdstage",
           "description": "Create, edit, present, and export Markdown slides in a GitHub Copilot Canvas.",
           "source": "runceel/MarkdStage:.github/plugin/markdstage",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "mastercard-developers",
+          "description": "Mastercard Developers plugin to help build integrations with Mastercard APIs, including best practices and the Mastercard Developers MCP server.",
+          "source": "Mastercard/developers-agent-toolkit:providers/agent-plugins/plugin",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -10244,9 +10467,31 @@
           "mcp": []
         },
         {
+          "name": "mobbin",
+          "description": "Search screenshots of real iOS and web apps, user flows and website sections through the Mobbin MCP server, with skills for using them as references when building or redesigning UI.",
+          "source": "mobbin/skills",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "mobile-canvas",
           "description": "View, create, boot, and interact with local iOS simulators and Android emulators from a GitHub Copilot canvas. The plugin also exposes the same device controls to agents through MCP.",
           "source": "Redth/mobile-canvas-ghcp",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "mobile-use",
+          "description": "Observe and interact with explicitly selected real Android devices over authorized USB or paired wireless ADB.",
+          "source": "microsoft/mobile-use:plugins/mobile-use",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -10324,6 +10569,17 @@
           "name": "netlify",
           "description": "Netlify platform skills covering functions, edge functions, blobs, database, identity, image CDN, forms, config, CLI, frameworks, caching, AI Gateway, and deployment — plus the official Netlify MCP server for creating and managing projects, deploys, and environment variables.",
           "source": "netlify/context-and-tools",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "new-relic",
+          "description": "The New Relic plugin connects GitHub Copilot to your New Relic data in VS Code, Copilot CLI, and the Copilot app. Ask in plain language about errors, latency, logs, traces, alerts, deployments, and dashboards, or run NRQL directly. Includes the hosted New Relic MCP server with OAuth sign-in (no API key), three skills (/nrsetup, /nrql, /nrinvestigate), and four agents: APM, Incident Response, Kube…",
+          "source": "newrelic-partners/Github-Copilot-plugin",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -10871,6 +11127,17 @@
           "mcp": []
         },
         {
+          "name": "speckit-companion",
+          "description": "A live board of every spec in your repo, next to the chat: each spec's specify → plan → tasks → implement pipeline, its documents, task progress and run history, and a button that runs the next step. Works with stock Spec Kit and with SpecKit Companion.",
+          "source": "alfredoperez/speckit-companion:apps/copilot-canvas",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "stacked-prs",
           "description": "Split an existing large branch into smaller stacked PRs on GitHub, Azure DevOps or GitLab, and manage the branches as PRs are merged.",
           "source": "BaronKhan/stacked-prs",
@@ -11014,8 +11281,19 @@
           "mcp": []
         },
         {
+          "name": "tooljet",
+          "description": "Build and edit ToolJet internal tools, dashboards and business applications using an existing ToolJet MCP connection and the maintained app-builder skill.",
+          "source": "ToolJet/tooljet-mcp",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
           "name": "typescript",
-          "description": "Skills from the TypeScript team for coding agents working with TypeScript, JavaScript, and Node.js. Covers complex TypeScript tasks like upgrades, project setup, strictness, ESM migration, declaration publishing, builds, project validation, and dependency security.",
+          "description": "Skills from the TypeScript team for coding agents working with TypeScript, JavaScript, and Node.js, including project setup, strictness, build references, declaration publishing, and TypeScript upgrades.",
           "source": "microsoft/typescript-skills:plugins/typescript",
           "status": "available",
           "skills": [],
@@ -11203,7 +11481,7 @@
         {
           "name": "winui",
           "description": "Agents and skills for WinUI 3 app development. Create new WinUI 3 desktop apps, convert from other frameworks (WPF, WinForms, Electron, Tauri, Flutter) to WinUI 3, or add features to existing WinUI 3 applications. Includes MSIX packaging, code signing, UI automation testing, and Windows App SDK guidance.",
-          "source": "microsoft/win-dev-skills:plugins/winui/agent-plugin",
+          "source": "microsoft/WinAppCli:plugins/winui/agent-plugin",
           "status": "available",
           "skills": [],
           "agents": [],
@@ -11226,6 +11504,17 @@
           "name": "work-hub",
           "description": "Generic cross-repo command center canvas for GitHub Copilot with onboarding, focus planning, repo health, work signals, and session cleanup.",
           "source": "bundled",
+          "status": "available",
+          "skills": [],
+          "agents": [],
+          "commands": [],
+          "hooks": [],
+          "mcp": []
+        },
+        {
+          "name": "wraith",
+          "description": "Skills and agents for data and infrastructure engineering on GCP: dbt on BigQuery, ODCS data contracts, Cloud Run and Terraform. Reviews data and infrastructure plans before anyone builds them and writes schema-valid data contracts.",
+          "source": "wraith-proxy/wraith-skills:plugin",
           "status": "available",
           "skills": [],
           "agents": [],

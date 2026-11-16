@@ -1,6 +1,6 @@
 # Catalog
 
-Generated 2026-11-02 by `python3 scripts/toolkit.py catalog`. Do not edit by hand.
+Generated 2026-11-16 by `python3 scripts/toolkit.py catalog`. Do not edit by hand.
 
 Status: **own** = in this repo · **active** = in your profile (`toolkit.json` → `upstream.profile`) · available = installable from that marketplace.
 
@@ -17,6 +17,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `doc-coauthor` | **own** | 1 | 3 | 0 | — | — | Three-stage document co-authoring (context, draft, reader-simulation review) with isolated sub-agents. For RFCs, PRDs, decision docs, architecture specs and pr… |
 | `engineering-craft` | **own** | 11 | 0 | 0 | — | — | Judgment skills for software work: understanding the problem, scoping, implementing, exploring code, architecture, debugging, testing, reviewing, refactoring,… |
 | `kickoff` | **own** | 3 | 1 | 0 | SessionStart, Stop | — | The router. Classifies a task, loads the right skills, agents and plugin commands on whatever platform you are on, checks the catalog for gaps and existing plu… |
+| `local-first` | **own** | 0 | 0 | 0 | PreToolUse | — | Local-first lookups: a PreToolUse hook that stops MCP, WebFetch and curl/gh calls from fetching remote code or docs that already exist on disk (local clones, i… |
 | `thinking-tools` | **own** | 10 | 0 | 0 | — | — | Reasoning skills: first principles, systems thinking, probabilistic thinking, decisions, creativity, maths, scientific method, evaluating information and resea… |
 
 ## claude-plugins-official
@@ -50,7 +51,6 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `aikido` | available | 0 | 0 | 0 | — | — | Aikido Security scanning for Claude Code — SAST, secrets, and IaC vulnerability detection powered by the Aikido MCP server. |
 | `airtable` | available | 0 | 0 | 0 | — | — | Airtable is the database and operations layer for your agents — whether running product, marketing, sales, ops, HR, or a custom business app. It combines struc… |
 | `airwallex-agentos` | available | 0 | 0 | 0 | — | — | Bring Airwallex's global financial infrastructure to Claude. Orchestrate actions across your account in plain language, e.g., set up invoices from a PO, onboar… |
-| `airwallex-dev` | available | 0 | 0 | 0 | — | — | Build Airwallex payment integrations in your own codebase. Generates the checkout, card-element, onboarding, and subscription-billing code for an Airwallex int… |
 | `aiven` | available | 0 | 0 | 0 | — | — | Easily deploy managed PostgreSQL (pg), Kafka, OpenSearch, Clickhouse and other databases, streaming and apps. Free tier available, up and running in minutes. |
 | `alloydb` | available | 0 | 0 | 0 | — | — | Create, connect, and interact with an AlloyDB for PostgreSQL database and data. |
 | `alloydb-omni` | available | 0 | 0 | 0 | — | — | Create, connect, and interact with an AlloyDB Omni database and data. |
@@ -97,6 +97,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `carta-investors` | available | 0 | 0 | 0 | — | — | Carta Investors plugin — skills for querying investor data, performance benchmarks, regulatory reporting, AGM deck generation, brand extraction, and more via t… |
 | `catalyst-by-zoho` | available | 0 | 0 | 0 | — | — | Official Claude Code plugin for Catalyst by Zoho — full-stack serverless cloud platform. With Skills that covers all services, SDKs, CLI, architecture patterns… |
 | `cds-mcp` | available | 0 | 0 | 0 | — | — | AI-assisted development of SAP Cloud Application Programming Model (CAP) projects. Search CDS models and CAP documentation. |
+| `champion-kit` | available | 7 | 1 | 0 | — | — | Help Claude Code champions run hackathons and office hours, find patterns worth sharing, help teammates climb the steps of AI adoption, and write a shareable A… |
 | `chrome-devtools-mcp` | available | 0 | 0 | 0 | — | — | Control and inspect a live Chrome browser from your coding agent. Record performance traces, analyze network requests, check console messages with source-mappe… |
 | `chronograph-gp` | available | 0 | 0 | 0 | — | — | Portfolio monitoring, valuations and analytics for private-capital GP teams using the Chronograph connector: portfolio-company one-pagers, fund quarterly revie… |
 | `chronograph-lp` | available | 0 | 0 | 0 | — | — | Portfolio monitoring and analytics for private-capital LP teams using the Chronograph connector: cashflow forecasting, commitment pacing, look-through exposure… |
@@ -276,9 +277,9 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `salesforce-development` | available | 0 | 0 | 0 | — | — | Build Salesforce apps and agents using these core building blocks: metadata, Apex, deploy/retrieve, security, reporting, and generated installed-versus-availab… |
 | `sanity` | available | 0 | 0 | 0 | — | — | Sanity content platform integration with MCP server, agent skills, and slash commands. Query and author content, build and optimize GROQ queries, design schema… |
 | `sap-cds-mcp` | available | 0 | 0 | 0 | — | — | AI-assisted development of SAP Cloud Application Programming Model (CAP) projects. Search CDS models and CAP documentation. |
-| `sap-fiori-mcp-server` | available | 0 | 0 | 0 | — | — | MCP server for SAP Fiori development tools for Claude Code. Build and modify SAP Fiori applications with AI assistance. |
 | `sap-hana-cli` | available | 0 | 0 | 0 | — | — | 150+ SAP HANA database tools for AI assistants. Query tables, import/export data, profile data quality, compare schemas, manage backups, monitor performance, a… |
 | `sap-mdk-server` | available | 0 | 0 | 0 | — | — | MCP server for SAP Mobile Development Kit (MDK). Build and modify MDK applications with AI assistance — schema lookups, action validation, rule editing, and pr… |
+| `sap-ux-fiori-tools` | available | 0 | 0 | 0 | — | — | MCP server and skills for SAP Fiori development. Build, modify, and test SAP Fiori Elements applications with AI assistance. |
 | `save-to-spotify` | available | 0 | 0 | 0 | — | — | Create polished audio episodes with TTS narration, rich timelines, cover images, and save them to Spotify via the save-to-spotify CLI. |
 | `scandit-sdk` | available | 0 | 0 | 0 | — | — | AI agent skills for integrating the Scandit Data Capture SDK — product selection, documentation, and implementation guides for barcode scanning, ID capture, an… |
 | `semgrep` | available | 0 | 0 | 0 | — | — | Semgrep catches security vulnerabilities in real-time and guides Claude to write secure code from the start. |
@@ -312,6 +313,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `teamcity-cli` | available | 0 | 0 | 0 | — | — | Agent skill for interacting with TeamCity CI/CD using the teamcity CLI. Enables Claude to explore builds, view logs, start jobs, manage queues, agents, and mor… |
 | `telegram` | available | 2 | 0 | 0 | — | telegram | Telegram messaging bridge with built-in access control. Manage pairing, allowlists, and policy via /telegram:access. |
 | `terraform` | available | 0 | 0 | 0 | — | terraform | The Terraform MCP Server provides seamless integration with Terraform ecosystem, enabling advanced automation and interaction capabilities for Infrastructure a… |
+| `theme-examples` | available | 0 | 0 | 0 | — | — | An example plugin to read, copy and change: twenty animated backdrops behind the chat in the Claude desktop app, with frosted-glass panels, one per project or… |
 | `togetherai-skills` | available | 0 | 0 | 0 | — | — | Agent Skills for Together AI platform — inference, training, embeddings, audio, video, images, function calling, and infrastructure. Covers serverless chat com… |
 | `twilio-developer-kit` | available | 0 | 0 | 0 | — | — | Twilio Skills provide procedural knowledge for AI coding agents — which APIs to use, in what order, and what to avoid. Covers SMS, Voice, WhatsApp, Verify, Sen… |
 | `typescript-lsp` | available | 0 | 0 | 0 | — | — | TypeScript/JavaScript language server for enhanced code intelligence |
@@ -332,6 +334,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `wingspan` | available | 0 | 0 | 0 | — | — | Ask Claude about the contractors you pay through Wingspan, what you owe them, and what is holding up a payment, then onboard contractors and log payments as dr… |
 | `wix` | available | 0 | 0 | 0 | — | — | Build, manage, and deploy Wix sites and apps. CLI development skills for dashboard extensions, backend APIs, site widgets, and service plugins with the Wix Des… |
 | `workos` | available | 0 | 0 | 0 | — | — | WorkOS integration skills for AuthKit, SSO, Directory Sync, RBAC, Vault, Audit Logs, migrations, and API references. |
+| `xcode` | available | 0 | 0 | 0 | — | — | Work with Xcode projects from Claude Code: build, run, and test schemes, render SwiftUI previews, drive simulators and devices, read build logs and diagnostics… |
 | `youdotcom-agent-skills` | available | 0 | 0 | 0 | — | — | You.com agent skills for web search, research with citations, and content extraction. Guided integrations for Vercel AI SDK, Claude Agent SDK, OpenAI Agents SD… |
 | `zapier` | available | 0 | 0 | 0 | — | — | Connect 8,000+ apps to your AI workflow. Discover, enable, and execute Zapier actions directly from your client. |
 | `zilliz` | available | 0 | 0 | 0 | — | — | Zilliz Cloud management plugin with 14 skills covering cluster lifecycle, collection schema, vector search, index tuning, bulk import, RBAC, backups, and monit… |
@@ -450,7 +453,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `servicenow-sdk` | available | 0 | 0 | 0 | — | — | Create, edit, and deploy ServiceNow applications with the Fluent SDK effortlessly through Claude. Helps developers build, extend, and manage ServiceNow applica… |
 | `signoz` | available | 0 | 0 | 0 | — | — | Official SigNoz plugin for MCP setup, docs, queries, dashboards, and alerts |
 | `slack-by-salesforce` | available | 2 | 0 | 5 | — | slack | Slack integration for searching messages, sending communications, managing canvases, and more |
-| `small-business` | available | 44 | 0 | 0 | — | airwallex-agentos, apollo-io, atlassian-rovo, canva, clay, docusign, emergent, expensify, gmail, google-calendar, google-drive, gusto, hubspot, intuit-mailchimp, intuit-quickbooks, monday-com, myob, notion, paypal, ramp, ringex-chat, shopify, slack, square, stripe, tiktok, trello, wix, xero, zapier, zoho-books, zoho-crm, zoho-desk, zoho-projects, zoom | Pre-built small business workflows to help you run and grow your business. Supports a majority of the tools you already use. You approve every step that touche… |
+| `small-business` | available | 44 | 0 | 0 | — | airwallex, apollo-io, atlassian, canva, clay, docusign, emergent, expensify, gmail, google-calendar, google-drive, gusto, hubspot, intuit-mailchimp, intuit-quickbooks, monday-com, myob, notion, paypal, ramp, ringex-chat, shopify, slack, square, stripe, tiktok, trello, wix, xero, zapier, zoho-books, zoho-crm, zoho-desk, zoho-projects, zoom | Pre-built small business workflows to help you run and grow your business. Supports a majority of the tools you already use. You approve every step that touche… |
 | `sp-global` | available | 0 | 0 | 0 | — | — | S&P Global - Financial data and analytics skills including company tearsheets, earnings previews, and transaction summaries |
 | `stackhawk-api` | available | 0 | 0 | 0 | — | — | Query the StackHawk platform API for security posture reporting, findings analysis, and app management. Guides agents through authentication, data retrieval, a… |
 | `stackhawk-hawkscan` | available | 0 | 0 | 0 | — | — | Configure, run, and interpret HawkScan DAST results. Generates stackhawk.yml configs, runs scans via CLI or Docker, and transforms security findings into prior… |
@@ -563,12 +566,15 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `accessibility-agents` | available | 0 | 0 | 0 | — | — | WCAG 2.2 AA enforcement as Agent Skills: six router skills that dispatch accessibility specialists for web, document, markdown, desktop and GitHub work, hooks… |
 | `accessibility-kanban` | available | 0 | 0 | 0 | — | — | Kanban board to manage accessibility issues, allow you to plan, track, and complete remediation work. |
 | `acreadiness-cockpit` | available | 0 | 0 | 0 | — | — | Drive Microsoft AgentRC from Copilot chat: assess AI readiness, generate Copilot instructions (flat or nested with applyTo globs for monorepos), and manage pol… |
+| `adobe-illustrator` | available | 0 | 0 | 0 | — | — | Adobe Illustrator scripting, extension and plug-in development, MCP and command-line automation, and Creative Cloud asset management, led by an expert technica… |
 | `agent-council` | available | 0 | 0 | 0 | — | — | A runtime-portable 5-agent quality gate that adjudicates text artifacts before they ship. Five role-conditioned LLM deliberators run a 2-round async protocol w… |
 | `agent-radar` | available | 0 | 0 | 0 | — | — | See a live map of the Copilot agents on your computer, their sub-agents, their commands, and where their data goes. |
 | `agentcouncil` | available | 0 | 0 | 0 | — | — | Multi-model council for Copilot CLI: three subagents on different model families (Anthropic, OpenAI, Google) answer independently, then build on each other or… |
+| `agentvfx` | available | 0 | 0 | 0 | — | — | Music-reactive VFX clips directed by an agent: 42 templates, 231 presets, 12 palettes and 945 knobs (68,326,335 combinations), rendered locally with WebGL2. |
 | `ai-credits-breakdown` | available | 0 | 0 | 0 | — | — | See exactly where your own GitHub Copilot AI credits go: dollars by day, repository, model, call type and prompt-cache state, built privately on your computer… |
 | `ai-ready` | available | 0 | 0 | 0 | — | — | Analyze any repository and generate AI-ready configuration — AGENTS.md, copilot-instructions.md, CI workflows, issue templates, and more. Mines your PR review… |
 | `ai-team-orchestration` | available | 0 | 0 | 0 | — | — | Run a lightweight, role-separated AI development team with flexible tools, developer-selected models, proportionate planning, and optional QA. |
+| `aks-skills` | available | 0 | 0 | 0 | — | — | AKS operational skills for troubleshooting, advanced cost-efficiency analysis, known issues, GPU inference, and packet capture. |
 | `anarlog` | available | 0 | 0 | 0 | — | — | Query Anarlog meetings locally, or connect through OAuth to read opted-in Cloud snapshots. |
 | `apify` | available | 0 | 0 | 0 | — | — | Helps devs extract data from any website with thousands of trusted scrapers, crawlers, and automations from Apify Store. Integrate ready-made Actors to access… |
 | `apng-studio` | available | 0 | 0 | 0 | — | — | Interactive GitHub Copilot app canvas extension for building Animated PNG (APNG) files from frames. Draw or upload frames, tune per-frame timing and compositin… |
@@ -581,6 +587,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `aws-cloud-development` | available | 0 | 0 | 0 | — | — | Comprehensive AWS cloud development tools including Infrastructure as Code, serverless functions, architecture patterns, and cost optimization for building sca… |
 | `aws-core` | available | 0 | 0 | 0 | — | — | Build, deploy, and operate applications on AWS. Skills for infrastructure as code (CDK, CloudFormation), core services (Lambda, API Gateway, Step Functions, EC… |
 | `azure` | available | 0 | 0 | 0 | — | — | Microsoft Azure MCP and Skills integration for cloud resource management, deployments, and Azure services. Manage your Azure infrastructure, monitor applicatio… |
+| `azure-advisor` | available | 0 | 0 | 0 | — | — | Azure Advisor recommendations, service-retirement impact, and customer-ready remediation guidance. |
 | `azure-cloud-development` | available | 0 | 0 | 0 | — | — | Comprehensive Azure cloud development tools including Infrastructure as Code, serverless functions, architecture patterns, and cost optimization for building s… |
 | `azure-cost-health-check` | available | 0 | 0 | 0 | — | — | Read-only Azure cost, forecasts, budget alerts, Advisor recommendations, and AI billing analysis in a Copilot canvas. |
 | `azure-functions` | available | 0 | 0 | 0 | — | — | Create, edit, modernize, review, run, deploy, and monitor Azure Function Apps in a Copilot canvas, with optional AI help. Includes official function templates,… |
@@ -595,6 +602,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `blea` | available | 0 | 0 | 0 | — | — | Safe, agent-first Bluetooth Low Energy diagnostics with portable evidence capture/diff/replay and guarded writes through a Skill, CLI, and local MCP server. |
 | `bootui` | available | 0 | 0 | 0 | — | — | Diagnose running Spring Boot and Quarkus applications with BootUI. Includes a setup and troubleshooting skill plus a local MCP connection for runtime diagnosti… |
 | `brainmaxxing` | available | 0 | 0 | 0 | — | — | Codebase-grounded concept-mastery quizzes with an interactive BrainMax Canvas dashboard. |
+| `bulkhead` | available | 0 | 0 | 0 | — | — | Guards for a machine where many Copilot CLI, Claude Code, Codex and other agent sessions run at once. Before a shell command runs, it blocks name-based kills o… |
 | `cache-stats` | available | 0 | 0 | 0 | — | — | Shows live prompt-cache reuse, expiry, token composition, and AI Credit cost for the current GitHub Copilot session without making model calls. |
 | `canvas-authoring` | available | 0 | 0 | 0 | — | — | Toolkit setup and Azure or counter starters for the host’s native `create-canvas` skill; skill-only, not a canvas extension. Includes prebuilt packages and gui… |
 | `cast-imaging` | available | 0 | 0 | 0 | — | — | A comprehensive collection of specialized agents for software analysis, impact assessment, structural quality advisories, and architectural review using CAST I… |
@@ -624,6 +632,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `datadog` | available | 0 | 0 | 0 | — | — | Use Datadog directly in Copilot / VS Code through a preconfigured Datadog MCP server. Query logs, metrics, traces, dashboards, and more through natural convers… |
 | `dataverse` | available | 0 | 0 | 0 | — | — | Microsoft Dataverse plugin for coding agents, covering record CRUD, bulk data operations, advanced queries, schema and metadata, administration, security, envi… |
 | `dataverse-sdk-for-python` | available | 0 | 0 | 0 | — | — | Comprehensive collection for building production-ready Python integrations with Microsoft Dataverse. Includes official documentation, best practices, advanced… |
+| `demotivational-calendar` | available | 0 | 0 | 0 | — | — | A date-aware demotivational calendar canvas with an original daily letdown for every month and day. |
 | `dependabot-triage` | available | 0 | 0 | 0 | — | — | Triage Dependabot alerts and recommend safe, evidence-based dependency updates. |
 | `devops-oncall` | available | 0 | 0 | 0 | — | — | A focused set of prompts, instructions, and a chat mode to help triage incidents and respond quickly with DevOps tools and Azure resources. |
 | `diagram-viewer` | available | 0 | 0 | 0 | — | — | Render diagrams, click nodes to drill down, and view agent-generated explanations directly in the canvas. |
@@ -632,10 +641,12 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `dotnet-test` | available | 0 | 0 | 0 | — | — | Skills for running, generating, analyzing, and improving .NET tests: test execution, filtering, platform detection, coverage, testability, and MSTest workflows. |
 | `doublecheck` | available | 0 | 0 | 0 | — | — | Three-layer verification pipeline for AI output. Extracts claims, finds sources, and flags hallucination risks so humans can verify before acting. |
 | `draw` | available | 0 | 0 | 0 | — | — | Draw simple diagrams in a Copilot canvas: shapes, arrows that stay attached, text and a freehand pen. Copilot can read, create and edit the same drawing, tidy… |
+| `easybrandkit` | available | 0 | 0 | 0 | — | — | Gets a product's real brand from its website before the agent designs anything for it. It opens the site in the Chrome, Chromium, Edge or Brave you already hav… |
 | `edge-ai-tasks` | available | 0 | 0 | 0 | — | — | Task Researcher and Task Planner for intermediate to expert users and large codebases - Brought to you by microsoft/edge-ai |
 | `edit-tutorial` | available | 0 | 0 | 0 | — | — | Turn the code edits Copilot made in your session into an interactive lesson: a step-by-step walkthrough of each change with before/after views and quizzes, the… |
 | `elasticsearch` | available | 0 | 0 | 0 | — | — | Official Elastic plugin for GitHub Copilot — translate natural language to ES/QL queries, ingest data, manage Elasticsearch security (authn, authz, audit), and… |
 | `ember` | available | 0 | 0 | 0 | — | — | An AI partner, not a tool. Ember carries fire from person to person — helping humans discover that AI partnership isn't something you learn, it's something you… |
+| `evident-charts` | available | 0 | 0 | 0 | — | — | Helps agents make explanatory charts and critique the ones you share. It checks labels, axes, contrast, and color-blind safety on the rendered chart before you… |
 | `excel-cli` | available | 0 | 0 | 0 | — | — | Let your coding agent work with real Microsoft Excel workbooks from the terminal: formulas, Power Query, PivotTables, charts, and VBA. Same features as Excel M… |
 | `excel-mcp` | available | 0 | 0 | 0 | — | — | Let an AI assistant create and update Microsoft Excel workbooks: work with cells, formulas, Power Query, PivotTables, charts, and VBA in the desktop app. Requi… |
 | `eyeball` | available | 0 | 0 | 0 | — | — | Document analysis with inline source screenshots. When you ask Copilot to analyze a document, Eyeball generates a Word doc where every factual claim includes a… |
@@ -649,10 +660,12 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `foundry-agentic-loop` | available | 0 | 0 | 0 | — | — | Build agentic solutions on Microsoft Foundry, GitHub and Azure. Prototype in an existing Foundry project, or run spec-driven development (SDD): a dynamic workf… |
 | `foundry-hosted-agent-copilotkit` | available | 0 | 0 | 0 | — | foundry, microsoft-learn | Build CopilotKit + AG-UI web apps on Microsoft Foundry hosted agents (Microsoft Agent Framework): wiring, native Foundry primitives, human-in-the-loop approval… |
 | `frontend-web-dev` | available | 0 | 0 | 0 | — | — | Essential prompts, instructions, and chat modes for modern frontend web development including React, Angular, Vue, TypeScript, and CSS frameworks. |
+| `frugal` | available | 0 | 0 | 0 | — | — | Before your agent signs up for a paid API, LLM model, cloud service, SaaS plan, domain or anything else that costs money, it checks free tiers, right-sized pla… |
 | `gem-team` | available | 0 | 0 | 0 | — | — | Self-Learning Multi-agent orchestration framework for spec-driven development and automated verification. With smarter tool calling and leaner context. |
 | `gesture-review` | available | 0 | 0 | 0 | — | — | Review pull requests with a live camera feed and approve or reject using thumbs-up/thumbs-down gestures. |
 | `gh-skills-builder` | available | 0 | 0 | 0 | — | — | Design, build, review, and publish GitHub Skills-style exercises with one coordinating agent and five Agent Skills for learner journeys, workflow-backed valida… |
 | `git-ape` | available | 0 | 0 | 0 | — | — | Intelligent agent system for deploying any Azure workload through GitHub Copilot. Provides guided, safe, and validated deployments using ARM templates, with bu… |
+| `git-tag-manager` | available | 0 | 0 | 0 | — | — | Manage local and remote Git tags, create and push release tags, and delete tags with confirmation. |
 | `git-worktree-explorer` | available | 0 | 0 | 0 | — | — | Visualize the active Git repository through worktrees, branches, commits, and optional GitHub pull request context. |
 | `github-copilot-modernization` | available | 0 | 0 | 0 | — | — | Autonomous application modernization using multi-agent orchestration for GitHub Copilot CLI. Supports Java upgrades (8→21, Spring Boot 2.x→3.x), .NET moderniza… |
 | `github-security` | available | 0 | 0 | 0 | — | — | Review your session's changes for vulnerabilities and fix code scanning alerts |
@@ -665,14 +678,20 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `jira-workbench` | available | 0 | 0 | 0 | — | — | A Copilot app canvas that shows any Jira project's full hierarchy (epics, issues and subtasks) and traces each item to its Copilot sessions and GitHub pull req… |
 | `jupyter-notebooks` | available | 0 | 0 | 0 | — | — | Create, edit, run, save, and checkpoint Jupyter notebooks in an interactive Copilot canvas. |
 | `keep-the-why` | available | 0 | 0 | 0 | — | — | Preserves or recovers the reasoning behind a codebase — architectural decisions, rejected alternatives, workarounds, incident learnings, operational constraint… |
+| `keyboard-2048` | available | 0 | 0 | 0 | — | — | Play 2048 in a Copilot canvas with keyboard and touch controls, undo, and session saves. |
 | `kotlin-mcp-development` | available | 0 | 0 | 0 | — | — | Complete toolkit for building Model Context Protocol (MCP) servers in Kotlin using the official io.modelcontextprotocol:kotlin-sdk library. Includes instructio… |
+| `launch-film` | available | 0 | 0 | 0 | — | — | Makes a 20 to 40 second launch film for a product from its website or App Store page: an MP4 at 1920x1080 with music, using the product's real logo, colors, fo… |
+| `local-coding` | available | 0 | 0 | 0 | — | — | Experimental. Hand large, mechanical sub-tasks (big reads, log and test triage, and the same edit across many files) from a cloud Copilot CLI session to the on… |
 | `markdstage` | available | 0 | 0 | 0 | — | — | Create, edit, present, and export Markdown slides in a GitHub Copilot Canvas. |
+| `mastercard-developers` | available | 0 | 0 | 0 | — | — | Mastercard Developers plugin to help build integrations with Mastercard APIs, including best practices and the Mastercard Developers MCP server. |
 | `mcp-m365-copilot` | available | 0 | 0 | 0 | — | — | Comprehensive collection for building declarative agents with Model Context Protocol integration for Microsoft 365 Copilot |
 | `megalinter` | available | 0 | 0 | 0 | — | — | Set up, run and fix MegaLinter on any repository: 100+ linters for 69+ languages, 23+ formats and 21+ tooling formats, from CI or locally. |
 | `microsoft-docs` | available | 0 | 0 | 0 | — | — | Access official Microsoft documentation, API references, and code samples for Azure, .NET, Windows, and more. |
 | `microsoft-events` | available | 0 | 0 | 0 | — | — | Connect your project to Microsoft Build and Ignite sessions — discover relevant talks, explore what's new for your stack, and plan next steps from your develop… |
 | `microsoft-foundry` | available | 0 | 0 | 0 | — | — | Skills and interactive Copilot canvas for designing, configuring, testing and deploying agents to Microsoft Foundry. |
+| `mobbin` | available | 0 | 0 | 0 | — | — | Search screenshots of real iOS and web apps, user flows and website sections through the Mobbin MCP server, with skills for using them as references when build… |
 | `mobile-canvas` | available | 0 | 0 | 0 | — | — | View, create, boot, and interact with local iOS simulators and Android emulators from a GitHub Copilot canvas. The plugin also exposes the same device controls… |
+| `mobile-use` | available | 0 | 0 | 0 | — | — | Observe and interact with explicitly selected real Android devices over authorized USB or paired wireless ADB. |
 | `modern-web-guidance` | available | 0 | 0 | 0 | — | — | Modern Web Guidance is an agent skill and CLI tool designed to help AI coding agents build web applications using modern, secure, and high-performance APIs rat… |
 | `modernization-workflow` | available | 0 | 0 | 0 | — | — | Visualize and guide the GitHub Copilot Modernize CLI Assess, Plan, and Execute workflow for .NET, Java, and C++ application repositories. |
 | `modernize-dotnet` | available | 0 | 0 | 0 | — | — | AI-powered .NET modernization and upgrade assistant. Helps upgrade .NET Framework and .NET applications to the latest versions of .NET. |
@@ -680,6 +699,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `msgraph-developer-skills` | available | 0 | 0 | 0 | — | — | Builds and modernizes Microsoft Graph applications with minimal, purpose-built API clients. The plugin identifies the required Microsoft Graph endpoints and th… |
 | `napkin` | available | 0 | 0 | 0 | — | — | Visual whiteboard collaboration for Copilot CLI. Opens an interactive whiteboard in your browser where you can draw, sketch, and add sticky notes — then share… |
 | `netlify` | available | 0 | 0 | 0 | — | — | Netlify platform skills covering functions, edge functions, blobs, database, identity, image CDN, forms, config, CLI, frameworks, caching, AI Gateway, and depl… |
+| `new-relic` | available | 0 | 0 | 0 | — | — | The New Relic plugin connects GitHub Copilot to your New Relic data in VS Code, Copilot CLI, and the Copilot app. Ask in plain language about errors, latency,… |
 | `nitrosend` | available | 0 | 0 | 0 | — | — | Prepare and review email campaigns, automation flows, contacts and transactional messages in Nitrosend through its hosted OAuth MCP server. Includes a scoped s… |
 | `noob-mode` | available | 0 | 0 | 0 | — | — | Plain-English translation layer for non-technical Copilot CLI users. Translates every approval prompt, error message, and technical output into clear, jargon-f… |
 | `openapi-to-application-csharp-dotnet` | available | 0 | 0 | 0 | — | — | Generate production-ready .NET applications from OpenAPI specifications. Includes ASP.NET Core project scaffolding, controller generation, entity framework int… |
@@ -729,6 +749,7 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `software-engineering-team` | available | 0 | 0 | 0 | — | — | 7 specialized agents covering the full software development lifecycle from UX design and architecture to security and DevOps. |
 | `sonarqube` | available | 0 | 0 | 0 | — | — | SonarQube is the AI code quality and security verification platform used by millions of developers to catch bugs, vulnerabilities, and leaked secrets. This plu… |
 | `spacefast` | available | 0 | 0 | 0 | — | — | Build and publish websites, dashboards, reports, and small web tools with Spacefast. Includes skills for editing Spaces, sharing previews, connecting domains,… |
+| `speckit-companion` | available | 0 | 0 | 0 | — | — | A live board of every spec in your repo, next to the chat: each spec's specify → plan → tasks → implement pipeline, its documents, task progress and run histor… |
 | `stacked-prs` | available | 0 | 0 | 0 | — | — | Split an existing large branch into smaller stacked PRs on GitHub, Azure DevOps or GitLab, and manage the branches as PRs are merged. |
 | `statuslines` | available | 0 | 0 | 0 | — | — | A checkout-aware session dashboard for Copilot CLI: group pull requests and linked issues by branch/worktree, show local changes and upstream/base divergence,… |
 | `stripe` | available | 0 | 0 | 0 | — | — | Accept payments and grow your business. Stripe's agent plugin includes best practices, upgrade guidance, and our MCP server. |
@@ -742,7 +763,8 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `tiny-tool-town-submitter` | available | 0 | 0 | 0 | — | — | Inspect a repository, improve Tiny Tool Town readiness, submit its listing issue, and launch remediation work. |
 | `tmforge` | available | 0 | 0 | 0 | — | — | The Strider agent that comes with the tmforge plugin adds evidence-backed STRIDE threat modeling to GitHub Copilot, with structured risk assessment, determinis… |
 | `token-pacman` | available | 0 | 0 | 0 | — | — | Visualizes live session AI-credit usage as a Pac-Man board with pellets, ghosts, fruit milestones, and game-over limits. |
-| `typescript` | available | 0 | 0 | 0 | — | — | Skills from the TypeScript team for coding agents working with TypeScript, JavaScript, and Node.js. Covers complex TypeScript tasks like upgrades, project setu… |
+| `tooljet` | available | 0 | 0 | 0 | — | — | Build and edit ToolJet internal tools, dashboards and business applications using an existing ToolJet MCP connection and the maintained app-builder skill. |
+| `typescript` | available | 0 | 0 | 0 | — | — | Skills from the TypeScript team for coding agents working with TypeScript, JavaScript, and Node.js, including project setup, strictness, build references, decl… |
 | `typescript-mcp-development` | available | 0 | 0 | 0 | — | — | Complete toolkit for building Model Context Protocol (MCP) servers in TypeScript/Node.js using the official SDK. Includes instructions for best practices, a pr… |
 | `typespec-m365-copilot` | available | 0 | 0 | 0 | — | — | Comprehensive collection of prompts, instructions, and resources for building declarative agents and API plugins using TypeSpec for Microsoft 365 Copilot exten… |
 | `ui-theme-designer` | available | 0 | 0 | 0 | — | — | Equips AI coding agents with knowledge and tooling for working with UI theme designer, the SAP Design System, and SAP Fiori design tokens. |
@@ -762,3 +784,4 @@ Machine-readable versions: [`index.json`](index.json) and the kickoff skill's [`
 | `winui` | available | 0 | 0 | 0 | — | — | Agents and skills for WinUI 3 app development. Create new WinUI 3 desktop apps, convert from other frameworks (WPF, WinForms, Electron, Tauri, Flutter) to WinU… |
 | `wiqd` | available | 0 | 0 | 0 | — | — | Developer toolkit for building, validating, provisioning, and publishing Microsoft 365 Copilot plugins, including extensibility capabilities such as declarativ… |
 | `work-hub` | available | 0 | 0 | 0 | — | — | Generic cross-repo command center canvas for GitHub Copilot with onboarding, focus planning, repo health, work signals, and session cleanup. |
+| `wraith` | available | 0 | 0 | 0 | — | — | Skills and agents for data and infrastructure engineering on GCP: dbt on BigQuery, ODCS data contracts, Cloud Run and Terraform. Reviews data and infrastructur… |
